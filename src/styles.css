@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0b1020;
+  --color-surface: #121a2e;
+  --color-fg: #f6f7fb;
+  --color-muted: #a3aec8;
+  --color-primary: #8b5cf6;
+  --color-accent: #42d9cf;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+#playora-boot:empty { display: none; }
+#playora-boot:not(:empty) {
+  margin: 0;
+  padding: 10px 16px;
+  background: var(--color-surface);
+  color: var(--color-fg);
+  text-align: center;
+}

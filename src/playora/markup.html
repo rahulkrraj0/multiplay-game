@@ -1,0 +1,73 @@
+<header class="wrap">
+  <a class="brand" href="#" aria-label="Playora home"><span class="logo">🎮</span>playora<span class="gradient">.</span></a>
+  <nav><a href="#games">Games</a><a href="#game-guides">Game guides</a><a href="#how">How it works</a></nav>
+  <div class="right"><span class="online"><i class="dot"></i> Online multiplayer</span><button class="btn ghost" id="jn">🔗 Join a game</button><a class="btn primary" id="exp" href="#games">Explore games</a></div>
+</header>
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">✦ PLAY WITH FRIENDS · NO SIGN-UP</div>
+      <h1>Play more.<br><span class="gradient">Anywhere.</span></h1>
+      <p>Play solo, challenge the computer, take turns with a friend on one device, or invite friends online for multiplayer fun.</p>
+      <div class="hero-actions"><a class="btn primary" href="#games">Play now <span aria-hidden="true">↗</span></a><button class="btn ghost" id="jn2">Join a friend’s game</button><button class="btn ghost" id="lastRoomRejoin" type="button" hidden>Rejoin last game</button></div>
+      <div class="hero-note">No downloads. Just open your browser and play.</div>
+    </div>
+    <div class="art" aria-label="A collection of colorful game icons">
+      <div class="orb"><div class="orb-inner"><div class="mini">🎲</div><div class="mini">♟️</div><div class="mini">🪜</div><div class="mini">🐍</div></div></div>
+      <div class="float one"><strong>💬 Chat, voice &amp; video</strong><small>Talk while you play</small></div>
+      <div class="float two"><strong>👥 Up to 8 attendees</strong><small>Host picks players; the rest can watch</small></div>
+    </div>
+  </section>
+  <section class="stats" id="features">
+    <div class="stat"><div class="stat-icon">🌐</div><div><b>Online multiplayer</b><span>Direct, no server needed</span></div></div>
+    <div class="stat"><div class="stat-icon">🎧</div><div><b>Voice &amp; video</b><span>With a data saver mode</span></div></div>
+    <div class="stat"><div class="stat-icon">📱</div><div><b>Play anywhere</b><span>Made for mobile</span></div></div>
+  </section>
+  <section id="games">
+    <div class="section-head"><div><h2>Find your next favorite</h2><p>Choose a game and jump straight into the fun.</p></div><label class="search"><span>⌕</span><input id="search" type="search" placeholder="Search games..." aria-label="Search games"></label></div>
+    <div class="filters" aria-label="Filter games"><button class="filter active" data-filter="all">All games</button><button class="filter" data-filter="classic">Classics</button><button class="filter" data-filter="strategy">Strategy</button><button class="filter" data-filter="casual">Casual</button></div>
+    <div class="games" id="gameGrid"></div>
+  </section>
+  <section class="game-guides" id="game-guides">
+    <div class="section-head"><div><h2>Play better, together</h2><p>Explore practical guides to Playora’s games and online lobbies.</p></div></div>
+    <div class="guide-grid">
+      <a class="guide-card" href="/games/chess"><span>Game guide</span><h3>Play Chess online</h3><p>Learn the basics of a match, from opening moves to checkmate.</p><b>Read the Chess guide <span aria-hidden="true">↗</span></b></a>
+      <a class="guide-card" href="/games/tic-tac-toe"><span>Game guide</span><h3>Play Tic-Tac-Toe</h3><p>Get started quickly and make every square count.</p><b>Read the Tic-Tac-Toe guide <span aria-hidden="true">↗</span></b></a>
+      <a class="guide-card" href="/games/snakes-and-ladders"><span>Game guide</span><h3>Snakes &amp; Ladders</h3><p>See how turns, ladders and snakes shape a race to the finish.</p><b>Read the Snakes &amp; Ladders guide <span aria-hidden="true">↗</span></b></a>
+      <a class="guide-card" href="/online-multiplayer"><span>Play with friends</span><h3>Online multiplayer</h3><p>Create a lobby, invite your group and let the host set up a game.</p><b>Explore online play <span aria-hidden="true">↗</span></b></a>
+      <a class="guide-card" href="/how-to-play"><span>Getting started</span><h3>How to play on Playora</h3><p>Choose local play or follow the steps to join a friend’s lobby.</p><b>View the getting-started guide <span aria-hidden="true">↗</span></b></a>
+    </div>
+  </section>
+  <div class="adsense-placement" data-adsense-placement="home" aria-label="Advertisement" hidden></div>
+  <section class="steps" id="how">
+    <div class="step"><b>1</b><h3>Pick a game</h3><p>Choose a solo game, play against the computer, take turns with someone beside you, or create an online lobby.</p></div>
+    <div class="step"><b>2</b><h3>Invite friends</h3><p>Create a lobby and share the Room ID or invite link. Friends open the link (or type the ID) and join, up to 8 attendees.</p></div>
+    <div class="step"><b>3</b><h3>Play, chat and call</h3><p>Use text chat, voice or video while you play. If the host drops, another player takes over.</p></div>
+  </section>
+  <section class="banner" id="about"><div style="display:flex;align-items:center;gap:14px"><span class="banner-icon">✨</span><div><h2>Small break. Big fun.</h2><p>Your game room is always open. Pick a classic and make the next few minutes count.</p></div></div><a href="#games" class="btn primary">Choose a game ↗</a></section>
+</main>
+<footer><div class="wrap footer-row"><a class="brand" href="/"><span class="logo">🎮</span>playora<span class="gradient">.</span></a><span>© <span id="year"></span> Playora. Made for fun.</span><div class="footer-links"><a href="#games">Games</a><a href="#game-guides">Game guides</a><a href="/online-multiplayer">Online play</a><a href="/how-to-play">How to play</a><a href="/privacy-policy">Privacy policy</a></div></div></footer>
+<div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal"><div class="modal-head"><h2 id="modalTitle">Let’s play</h2><button class="close" id="closeModal" aria-label="Close dialog">✕</button></div><div class="game-stage" id="stage"></div><div class="snake-controls" id="snakeControls"><button data-dir="up" aria-label="Up">↑</button><button data-dir="left" aria-label="Left">←</button><button data-dir="down" aria-label="Down">↓</button><button data-dir="right" aria-label="Right">→</button></div><div class="modal-actions"><button class="btn primary" id="startSnake" style="display:none">Start / Restart</button><button class="btn ghost" id="modalDone">Back to games</button></div></div></div>
+
+<main id="invitePage" class="invite-page" hidden><a class="brand" href="/" aria-label="Playora home"><span class="logo">🎮</span>playora<span class="gradient">.</span></a><section class="invite-card"><span class="invite-icon">🎲</span><p class="invite-kicker">YOU’RE INVITED</p><h1>Game night starts here</h1><p>Join your friend’s Playora lobby. Once you’re in, the host will choose the game and start when everyone is ready.</p><div class="invite-code">ROOM <strong id="inviteCode"></strong></div><button class="btn primary" id="inviteJoin">Join lobby</button><p id="inviteStatus" role="status"></p><a class="invite-home" href="/">Not now · Go to Playora</a></section></main>
+
+<div id="room" role="dialog" aria-modal="true" aria-label="Game room"><div class="rbar"><button id="rx" aria-label="Back to games">← Games</button><h2 id="rt">Game</h2><button id="reconnect" class="hide" type="button" aria-label="Reconnect to the current game" title="Reconnect to the current game">↻ Connect</button><button id="bk" class="hide" aria-label="Leave game">← Leave</button><button id="rs" class="hide" aria-label="Restart game">↻ Restart</button><button class="room-media-toggle hide" id="topMic" type="button" aria-label="Turn microphone on" aria-pressed="false" title="Microphone">🎤</button><button class="room-media-toggle hide" id="topVideo" type="button" aria-label="Turn camera on" aria-pressed="false" title="Camera">📹</button><button class="room-media-toggle hide" id="topMenu" type="button" aria-label="Open chat and participants menu" aria-controls="callPanel" aria-expanded="false" title="Menu">☰</button></div><div class="rin">
+<div id="mode" class="hide"><h3 id="mt">Choose how to play</h3><p id="modeHint">Play locally against the computer, take turns with another person on this device, or create an online lobby.</p><div class="mode-options"><button class="p" id="ml">Play vs computer</button><button id="localTwo">User vs User <span>Two people, one device</span></button><button id="mh">Create online lobby <span>Invite friends to your lobby</span></button></div><button id="mb">Back</button></div>
+
+<div id="net" class="hide"><section id="joinProgress" class="join-progress" role="status" aria-live="polite" hidden><span class="join-progress-icon" aria-hidden="true">🎲</span><h3>Connecting to lobby…</h3><p id="joinProgressText">Please wait while we connect you to the host.</p><div class="join-progress-track" role="progressbar" aria-label="Connecting to lobby" aria-valuetext="Connection in progress"><span></span></div><p class="join-progress-note">This usually takes just a few seconds.</p></section><div id="joinOptions"><h3>Play online</h3><p class="join-options-intro">Join a friend’s lobby with a room code, or create a lobby and invite friends.</p><div class="join-options-grid"><section class="join-option"><span class="join-option-icon" aria-hidden="true">✦</span><h4>Create a lobby</h4><p>Choose a game, then share your lobby link or room code.</p><button class="p" id="createLobbyFromJoin">Create lobby</button></section><section class="join-option" id="joinForm"><span class="join-option-icon" aria-hidden="true">🔗</span><h4>Join with a room code</h4><p>Enter the code your friend shared with you.</p><label for="jid">Room code</label><input type="text" id="jid" maxlength="60" placeholder="e.g. K7XQ4M" autocapitalize="characters" autocomplete="off" spellcheck="false"><button class="p" id="jgo">Join lobby</button><p id="jst" role="status"></p><details id="jm"><summary>Can’t connect? Use a manual code</summary><p>1. Paste the code a player sent you:</p><textarea id="oi"></textarea><button class="p" id="gc">Create reply</button><p>2. Send this reply back to that player:</p><textarea id="ac" readonly></textarea><button data-copy="ac">Copy / share reply</button><p>You join the lobby automatically once they connect.</p></details></section></div><button id="nb">Back</button></div></div>
+
+<div id="lobby" class="hide"><h3>Game lobby</h3>
+<div id="rm" class="rmb hide"><label for="rid">Room ID</label><input type="text" id="rid" readonly aria-label="Room ID"><div class="row"><button id="rcp">Copy ID</button><button id="rcl">Copy link</button></div><input type="text" id="rlk" readonly aria-label="Invite link"><button id="rsh">📤 Share invite</button><p id="rst" role="status"></p></div>
+<div id="hostControls" class="hide"><label>Choose a game</label><div id="lobbyGames" class="lobby-games" role="group" aria-label="Choose a game"></div><select id="gameChoice" aria-label="Selected game" tabindex="-1"></select><label for="playerCount">Players to assign</label><select id="playerCount"></select><p id="playerHint">Choose which attendees will play; everyone else can watch.</p></div><div id="guestGameChoices" class="hide"><p class="lobby-games-label">Games in this lobby</p><div id="guestLobbyGames" class="lobby-games" aria-label="Games in this lobby"></div></div><p id="guestChoice">Waiting for the host to choose a game.</p><p id="roomCount"></p><section id="ros" class="attendance-roster" aria-label="Lobby attendees" aria-live="polite"></section><button class="p hide" id="stt" disabled>Connect at least 2 players</button><p id="wt" class="hide">Waiting for the host to start the game…</p>
+<details id="mi"><summary>Invite with a manual code (fallback)</summary><p>1. Send this code to them:</p><textarea id="oc" readonly></textarea><button data-copy="oc">Copy / share code</button><p>2. Paste their reply code:</p><textarea id="ar"></textarea><button class="p" id="hc">Connect</button></details><button id="lb">← Leave</button></div>
+
+<div id="gm" class="hide"><div id="bd"></div><div id="dice" class="hide" aria-hidden="true"></div><button class="p hide" id="rl">🎲 Roll dice</button><div id="lg"></div><div id="st"></div></div>
+<section id="disconnectRecovery" class="disconnect-recovery" role="dialog" aria-modal="true" aria-labelledby="disconnectRecoveryTitle" aria-describedby="disconnectRecoveryMessage" hidden><div class="disconnect-recovery-card"><span class="disconnect-recovery-icon" aria-hidden="true">⌛</span><h3 id="disconnectRecoveryTitle">A player disconnected</h3><p id="disconnectRecoveryMessage">The game is paused while everyone reconnects.</p><div class="disconnect-recovery-actions"><button id="waitForReconnect" type="button">Wait for reconnect</button><button id="finishDisconnectedGame" class="p" type="button">Finish game</button></div></div></section>
+
+<button id="callPanelBackdrop" class="call-panel-backdrop" type="button" aria-label="Close chat and call panel" hidden></button>
+<aside id="callPanel" class="call-panel" aria-labelledby="callPanelTitle" hidden><div class="call-panel-header"><h3 id="callPanelTitle">Chat &amp; calls</h3><div class="call-panel-actions"><button id="panelLeave" type="button">← Leave</button><button id="panelRestart" type="button">↻ Restart</button></div><button id="closeCallPanel" type="button" aria-label="Close chat and call panel">✕</button></div><div id="cp" class="hide">
+<div class="row"><button id="bs">📉 Data saver: on</button><button class="hide" id="chg">Change game</button></div><div id="du"></div><section id="participants" class="participants" hidden aria-label="Participants"><h4>Participants</h4><div id="participantList"></div></section>
+<div id="cl" role="log" aria-live="polite" aria-label="Game chat"></div><div class="row"><input type="text" id="ci" placeholder="Type a message" maxlength="200" aria-label="Type a message"><button class="p" id="cs" style="flex:1;margin:0">Send</button></div></div></aside>
+
+<div id="rvs" aria-label="Participant video tiles"><section id="localVideoTile" class="media-tile self-video" hidden aria-label="Your video"><div class="media-tile-bar"><span>You · camera preview</span><button id="hideLocalVideo" type="button" aria-label="Hide your video popup">✕</button></div><video id="lv" autoplay muted playsinline></video><span class="media-resize" role="separator" aria-label="Resize your video tile" aria-orientation="diagonal"></span></section></div>
+</div></div>

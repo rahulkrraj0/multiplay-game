@@ -1,0 +1,110 @@
+Playora environment variables
+=============================
+
+Set these in Vercel Project Settings > Environment Variables. Add them to
+Production and Preview separately if you use both environments.
+
+Required for deployed matchmaking
+---------------------------------
+
+DATABASE_URL=<pooled PostgreSQL connection string>
+
+Use the pooled connection string from Neon. POSTGRES_URL is also accepted
+instead of DATABASE_URL.
+
+TURN relay option A: Metered Open Relay API
+-------------------------------------------
+
+METERED_DOMAIN=<your-app-name.metered.live>
+METERED_API_KEY=<Open Relay API key from Metered>
+
+The API key is read only by the server. Do not commit real credentials to this
+file, source control, browser code, or chat. If an API key has been exposed,
+reissue it with the provider before use.
+
+TURN relay option B: static Metered TURN credentials
+----------------------------------------------------
+
+TURN_URLS=turn:global.relay.metered.ca:80,turn:global.relay.metered.ca:80?transport=tcp,turn:global.relay.metered.ca:443,turns:global.relay.metered.ca:443?transport=tcp
+TURN_USERNAME=<your TURN username>
+TURN_CREDENTIAL=<your TURN credential>
+
+The TURN URLs above intentionally omit the STUN URL; the app already has STUN
+servers configured. Choose one TURN option: if METERED_DOMAIN and
+METERED_API_KEY are set, the app uses the API option and ignores the static
+TURN values. Remove the Metered API variables to use the static TURN option.
+
+Credentials pasted into chat are considered exposed and are intentionally not
+copied into this file. Rotate/reissue them with Metered, then enter the new
+values directly in Vercel Project Settings > Environment Variables.
+
+Local development
+-----------------
+
+The app uses a local in-memory database if no database URL is set outside
+production. TURN is optional; without TURN settings, direct WebRTC connections
+may still work, but some restrictive networks will block peer connections.
+
+Never put real credentials in a committed text file. Add secrets through the
+environment-variable settings of the service that runs the app.
+
+SEO
+---
+
+VITE_PUBLIC_SITE_URL=https://<your-production-domain> (optional override)
+VITE_GOOGLE_SITE_VERIFICATION=<verification token from Google Search Console>
+VITE_BING_SITE_VERIFICATION=<verification token from Bing Webmaster Tools>
+
+Set this to the production site's HTTPS origin (for example,
+https://www.example.com), without a path, query, or trailing route. If unset,
+Vercel builds use Vercel's VERCEL_PROJECT_PRODUCTION_URL system variable. The
+build uses the production origin for canonical URLs and emits robots.txt and
+sitemap.xml. Do not use a preview deployment URL as the production origin.
+
+Add the Google and Bing verification tokens only after creating the site
+property in the corresponding webmaster console. They are public verification
+values, not account passwords. After deployment, submit /sitemap.xml in both
+consoles.
+
+Google AdSense
+--------------
+
+AdSense is optional and stays disabled until the publisher ID and at least one
+ad-unit slot ID are configured and `VITE_ADSENSE_ENABLED=true`. Create the site
+in AdSense and obtain approval, then set these public Vite variables in Vercel
+for Production. Use Preview only if you intend to test ads there:
+
+VITE_ADSENSE_ENABLED=true
+VITE_ADSENSE_CONSENT_CONFIGURED=true
+VITE_ADSENSE_PUBLISHER_ID=ca-pub-<16-digit-publisher-id>
+VITE_ADSENSE_HOME_SLOT_ID=<home-page-ad-unit-id>
+VITE_ADSENSE_GUIDE_SLOT_ID=<guide-page-ad-unit-id>
+VITE_PUBLIC_SITE_OPERATOR=<legal name of the site operator>
+VITE_PUBLIC_PRIVACY_EMAIL=<public privacy contact email>
+
+Set `VITE_ADSENSE_ENABLED=false` (or remove the variable) to disable ads. Only
+the exact value `true` enables the AdSense master switch; every other required
+setting must also be present. Environment variable changes take effect after a
+new deployment/build.
+
+Advertising is also kept disabled unless
+`VITE_ADSENSE_CONSENT_CONFIGURED=true`, a site operator name and a valid public
+privacy email are set. Set the consent flag only after configuring an
+appropriate Google-certified CMP and consent messages in AdSense Privacy &
+messaging for the regions you serve. This flag is an operator assertion; the
+application cannot check your AdSense account or prove that a CMP is configured.
+Do not enable ads for regions requiring consent until you have verified that
+consent is gathered and passed to Google as required.
+
+Create responsive display ad units in AdSense and use their numeric slot IDs.
+The publisher ID and slot IDs are public identifiers, not secrets. Do not put
+AdSense account passwords or API credentials in this project.
+
+The app places one optional ad on the homepage and one on informational guide
+pages. It does not place ads on the privacy policy, invitation pages, or in
+game rooms. AdSense must approve the site before ads can serve; the integration
+cannot guarantee approval or earnings. For ads.txt authorization, create
+`public/ads.txt` with the exact seller line shown in AdSense (typically
+`google.com, pub-<publisher-id>, DIRECT, f08c47fec0942fa0`) and redeploy.
+Follow Google's consent requirements for visitors in regulated regions,
+including use of a Google-certified CMP where required.
