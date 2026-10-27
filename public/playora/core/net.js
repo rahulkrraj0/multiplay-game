@@ -77,11 +77,15 @@ function updateParticipantList(){
   const title=document.createElement('span');title.className='participant-name';title.textContent=name;row.append(title,mic,video);list.append(row)
  };
  if(peers().length){
+  const audioEnabled=!!(loc.a&&loc.a.enabled),videoEnabled=!!(loc.v&&loc.v.enabled);
+  addRow('You · '+displayName,
+   participantButton('🎤',audioEnabled?'Turn your microphone off':'Turn your microphone on',!audioEnabled,false,()=>tog('a')),
+   participantButton('📹',videoEnabled?'Turn your camera off':'Turn your camera on',!videoEnabled,false,()=>tog('v')));
   peers().slice().sort((a,b)=>a.seat-b.seat).forEach(C=>{
    const audioAvailable=!!C.remoteAudio,videoAvailable=!!(C.remoteVideoTrack&&C.remoteVideoTrack.readyState!=='ended'),audioMuted=!!(C.remoteAudio&&C.remoteAudio.muted),videoHidden=!!C.videoHidden;
    addRow(peerName(C),
-    participantButton('🎤',audioAvailable?(audioMuted?'Unmute '+peerName(C)+' audio':'Mute '+peerName(C)+' audio'):peerName(C)+' microphone unavailable',audioMuted,!audioAvailable,()=>{C.remoteAudio.muted=!C.remoteAudio.muted;updateParticipantList()}),
-    participantButton('📹',videoAvailable?(videoHidden?'Show '+peerName(C)+' video':'Hide '+peerName(C)+' video'):peerName(C)+' camera unavailable',videoHidden||!videoAvailable,!videoAvailable,()=>{C.videoHidden=!C.videoHidden;updateRemoteVideo(C)}))
+    participantButton('🎤',audioAvailable?(audioMuted?'Unmute '+peerName(C)+' audio on this device':'Mute '+peerName(C)+' audio on this device'):peerName(C)+' microphone unavailable',audioMuted,!audioAvailable,()=>{C.remoteAudio.muted=!C.remoteAudio.muted;updateParticipantList()}),
+    participantButton('📹',videoAvailable?(videoHidden?'Show '+peerName(C)+' video on this device':'Hide '+peerName(C)+' video on this device'):peerName(C)+' camera unavailable',videoHidden||!videoAvailable,!videoAvailable,()=>{C.videoHidden=!C.videoHidden;updateRemoteVideo(C)}))
   })
  }
  section.hidden=!list.childElementCount
@@ -192,7 +196,7 @@ function updateGameControls(){const gameActive=!$('gm').classList.contains('hide
  $('chg').classList.toggle('hide',!online||!amHost());$('topMenu').classList.toggle('hide',!callAvailable);
  $('panelLeave').classList.toggle('hide',!callAvailable);$('panelRestart').classList.toggle('hide',!online);
  $('lb').classList.toggle('hide',inLobby);$('rx').classList.toggle('hide',gameActive&&!online);$('bk').classList.toggle('hide',!gameActive||online);$('rs').classList.toggle('hide',!gameActive||online);
- $('topMic').classList.toggle('hide',!lobbyReady);$('topVideo').classList.toggle('hide',!lobbyReady);
+ $('topMic').classList.toggle('hide',!callAvailable);$('topVideo').classList.toggle('hide',!callAvailable);
  $('cp').classList.toggle('hide',!hasPeers);
  if(!callAvailable)closeCallPanel();syncMediaButtons();updateParticipantList()}
 function closeCallPanel(){const panel=$('callPanel'),backdrop=$('callPanelBackdrop');panel.hidden=true;backdrop.hidden=true;$('room').classList.remove('call-panel-open');$('topMenu').setAttribute('aria-expanded','false')}

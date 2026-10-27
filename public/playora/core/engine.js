@@ -13,6 +13,7 @@ const nameForm=$('displayNameForm');nameForm.addEventListener('submit',saveDispl
 function cleanGamePlayerNames(names){return Array.isArray(names)?names.map((name,index)=>cleanPlayerName(name)||'Player '+(index+1)):[]}
 const playerLabel=t=>localBot&&t!==seat?'Computer':gamePlayerNames[t]||G.n[t]||'Player '+(t+1);
 const nm=t=>playerLabel(t),canAct=()=>!S.over&&!disconnectPending&&(seat<0||seat===S.t);
+function isLocalComputerGame(){return localBot}
 
 const GAMES={};const registerGame=g=>GAMES[g.id]=g;
 /* the game room is a full-screen panel over the homepage */
@@ -42,7 +43,7 @@ function scheduleBot(){clearTimeout(aiTimer);if(!localBot||!G||!S||S.over||S.t==
  aiTimer=setTimeout(()=>{aiTimer=undefined;if(!localBot||!G||!S||S.over||S.t===seat)return;const move=G.bot();if(move)act(move)},thinkingTime)}
 $('bd').onclick=e=>{const el=e.target.closest('[data-i],[data-m]');if(el&&canAct())G.click(el)};
 /* dice: offline or as host roll here; any other online player asks the host to roll for them (so a player cannot choose their own roll) */
-const d6=()=>{let x;do x=crypto.getRandomValues(new Uint8Array(1))[0];while(x>=252);return 1+x%6};
+const d6=()=>{const sides=G&&typeof G.rollSides==='function'?G.rollSides():6;let x;do x=crypto.getRandomValues(new Uint8Array(1))[0];while(x>=256-256%sides);return 1+x%sides};
 let dt;const calm=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 function showDice(r){const d=$('dice');clearInterval(dt);d.classList.remove('hide');if(calm()){d.textContent=r;return}
  let k=0;d.classList.add('roll');dt=setInterval(()=>{if(++k<7)d.textContent=1+Math.floor(Math.random()*6);else{clearInterval(dt);d.textContent=r;d.classList.remove('roll')}},70)}

@@ -88,6 +88,9 @@ implementation private, and register one game object.
 - A `bot()` method is optional. When present, local play starts with the user
   at seat 0 and automatically requests a computer action on the other seat.
   Return an action in exactly the same shape accepted by `apply`/`valid`.
+- A game with the shared dice control may provide `rollSides()` to return the
+  number of sides currently allowed (1–6). The engine puts the chosen roll in
+  the action, so `valid()` and `apply()` must accept it without changing it.
 - Set `max` to `1` for a solo-only game. Its Play button starts the game
   directly, without multiplayer choices, and it is omitted from online
   lobbies. Games with `max` greater than `1` offer local and online multiplayer;

@@ -47,6 +47,7 @@
  *   - only 1 token can move  -> it moves by itself (after a short pause)
  *   - 2+ tokens can move     -> a 15 s countdown shows; if nobody picks, the
  *                               best movable token is played automatically.
+ *   - in user-vs-computer play, the user always chooses their own token.
  *   Options: window.ludoAutoMove = false, window.ludoMoveSeconds = 15,
  *            window.ludoIsBotTurn = function (player) { ... }
  *
@@ -1012,6 +1013,7 @@
   function syncAuto() {
     var st = gameState();
     if (window.ludoAutoMove === false || !st || st.over || st.setup || winActive || !st.die) { cancelAuto(); return; }
+    if (typeof isLocalComputerGame === "function" && isLocalComputerGame()) { cancelAuto(); return; }
     if (typeof window.ludoIsBotTurn === "function") {
       try { if (window.ludoIsBotTurn(st.t)) { cancelAuto(); return; } } catch (e) { /* ignore */ }
     }
@@ -1198,6 +1200,10 @@
     S.sixes = 0;
   }
 
+  function rollSides() {
+    return (S.sixes || 0) >= 2 ? 5 : 6;
+  }
+
   function pathIndex(color, position) {
     return (STARTS[color] + position) % TRACK.length;
   }
@@ -1225,9 +1231,7 @@
   }
 
   function applyRoll(roll) {
-    if (!Number.isInteger(roll) || roll < 1 || roll > 6 || S.over || S.die) return;
-    /* two sixes in a row: the next roll can only be 1-5 */
-    if (roll === 6 && (S.sixes || 0) >= 2) roll = 1 + Math.floor(Math.random() * 5);
+    if (!Number.isInteger(roll) || roll < 1 || roll > rollSides() || S.over || S.die) return;
     S.sixes = roll === 6 ? (S.sixes || 0) + 1 : 0;
     S.die = roll;
     S.lastDie = roll;
@@ -1415,7 +1419,7 @@
       return Number.isInteger(action.color) && action.color >= 0 && action.color <= (S.h === 2 ? 1 : 3);
     }
     if (action.r !== undefined) {
-      return Number.isInteger(action.r) && action.r >= 1 && action.r <= 6 && !S.die;
+      return Number.isInteger(action.r) && action.r >= 1 && action.r <= rollSides() && !S.die;
     }
     return !!S.die && Number.isInteger(action.token) &&
       legalTokens(S.t, S.die).indexOf(action.token) >= 0;
@@ -1479,6 +1483,7 @@
     diff: "Easy to learn",
     art: "art-ludo",
     roll: true,
+    rollSides: rollSides,
     cr: function () { return !S.over && !S.die && !S.setup; },
     init: function () {
       for (var i = 0; i < 4; i++) ludoGame.n[i] = SEAT_NAMES[i];
@@ -1513,7 +1518,7 @@
     bot: function () {
       if (S.setup === 1) return { houses: 1 };
       if (S.setup === 2) return { color: 0 };
-      if (!S.die) return { r: 1 + Math.floor(Math.random() * ((S.sixes || 0) >= 2 ? 5 : 6)) };
+      if (!S.die) return { r: 1 + Math.floor(Math.random() * rollSides()) };
       var moves = legalTokens(S.t, S.die);
       if (!moves.length) return null;
       return { token: chooseBotToken(S.t, S.die, moves) };
