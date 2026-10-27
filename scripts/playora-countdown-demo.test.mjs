@@ -12,6 +12,7 @@ function createGame() {
     S: null,
     act: (action) => game.apply(action),
     canAct: () => !sandbox.S.over,
+    nm: (seat) => ["Red", "Blue"][seat],
     registerGame: (registered) => { game = registered; },
   };
   vm.runInNewContext(source, sandbox, { filename: "playora-countdown-demo.js" });

@@ -67,6 +67,10 @@ implementation private, and register one game object.
   strings, numbers, booleans, and null so online state can be JSON-serialized.
 - Keep the active seat in `S.t`. `S.over` should be truthy when the game ends.
   Put a user-readable game result in `S.msg` when appropriate.
+- Use the shared `nm(seat)` helper anywhere player-facing game text needs a
+  player name, including status and winner displays. Do not use a game-specific
+  fixed label or add viewer-local text such as “(you)” to synchronized results;
+  all peers must calculate the same `S.msg`.
 - Send every move through `act(action)`. Do not mutate state directly from click
   handlers: `apply(action)` is the one place that changes game state. Implement
   `valid(action)` to reject malformed or illegal online actions.
@@ -97,6 +101,8 @@ implementation private, and register one game object.
 Every attendee receives the same start action and game actions. Online games
 send moves over a dedicated reliable, ordered WebRTC data channel when it is
 open, falling back to the room's existing channel during setup or recovery.
+Players enter a display name once per browser; the name is remembered on that
+device and shared with the lobby and active game seats.
 The engine applies actions to each attendee's local state, so a game must be deterministic:
 include any random result (such as a dice roll) in the action rather than
 generating it separately in `apply()`. Validate that result in `valid()`.

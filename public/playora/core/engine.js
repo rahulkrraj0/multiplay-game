@@ -1,11 +1,22 @@
 /* engine: screens, turn handling, rendering. Games plug in through registerGame(). */
 const $=i=>document.getElementById(i),SC=['mode','net','lobby','gm'],show=id=>{SC.forEach(x=>$(x).classList.toggle('hide',x!==id));const room=$('room');if(room)room.classList.toggle('game-active',id==='gm')};
-const COL=['#e0463c','#2fa05a','#2f6fd6','#e0b020'];let G,S,seat=-1,pick,sel=-1,np=2,ids=[],dead=new Set(),localBot=false,aiTimer,disconnectPending=false;
-const nm=t=>G.n[t]+(localBot?(seat===t?' (you)':' (computer)'):seat===t?' (you)':''),canAct=()=>!S.over&&!disconnectPending&&(seat<0||seat===S.t);
+const COL=['#e0463c','#2fa05a','#2f6fd6','#e0b020'];let G,S,seat=-1,pick,sel=-1,np=2,ids=[],dead=new Set(),localBot=false,aiTimer,disconnectPending=false,displayName=readDisplayName(),gamePlayerNames=[];
+const DISPLAY_NAME_KEY='playora.display-name.v1';
+function cleanPlayerName(value){return Array.from(String(value||'').normalize('NFC').replace(/[^\p{L}\p{M}\p{N} ._'-]/gu,'').replace(/\s+/g,' ').trim()).slice(0,24).join('')}
+function readDisplayName(){try{return cleanPlayerName(localStorage.getItem('playora.display-name.v1'))}catch(error){console.warn('[playora] Could not read the saved display name.',error);return''}}
+const pendingNameActions=[];
+function ensureDisplayName(onSaved){if(displayName)return true;if(onSaved)pendingNameActions.push(onSaved);const dialog=$('displayNameDialog');dialog.hidden=false;$('displayNameError').hidden=true;$('displayNameInput').focus();return false}
+function saveDisplayName(event){event.preventDefault();const name=cleanPlayerName($('displayNameInput').value);if(!name){$('displayNameError').hidden=false;$('displayNameInput').focus();return}displayName=name;try{localStorage.setItem(DISPLAY_NAME_KEY,displayName)}catch(error){console.warn('[playora] Could not save the display name on this device.',error)}$('displayNameDialog').hidden=true;$('displayNameInput').value='';const actions=pendingNameActions.splice(0);actions.forEach(action=>action())}
+function cancelDisplayName(){pendingNameActions.length=0;$('displayNameDialog').hidden=true;$('displayNameInput').value=''}
+function requireDisplayName(action){if(displayName)return true;ensureDisplayName(action);return false}
+const nameForm=$('displayNameForm');nameForm.addEventListener('submit',saveDisplayName);$('cancelDisplayName').onclick=cancelDisplayName;
+function cleanGamePlayerNames(names){return Array.isArray(names)?names.map((name,index)=>cleanPlayerName(name)||'Player '+(index+1)):[]}
+const playerLabel=t=>localBot&&t!==seat?'Computer':gamePlayerNames[t]||G.n[t]||'Player '+(t+1);
+const nm=t=>playerLabel(t),canAct=()=>!S.over&&!disconnectPending&&(seat<0||seat===S.t);
 
 const GAMES={};const registerGame=g=>GAMES[g.id]=g;
 /* the game room is a full-screen panel over the homepage */
-function openRoom(g){$('topMic').classList.add('hide');$('topVideo').classList.add('hide');$('topMenu').classList.add('hide');$('room').classList.add('open');$('room').classList.toggle('ludo-game',g==='ludo');$('room').scrollTop=0;document.body.style.overflow='hidden';
+function openRoom(g){if(!requireDisplayName(()=>openRoom(g)))return;$('topMic').classList.add('hide');$('topVideo').classList.add('hide');$('topMenu').classList.add('hide');$('room').classList.add('open');$('room').classList.toggle('ludo-game',g==='ludo');$('room').scrollTop=0;document.body.style.overflow='hidden';
  if(g==='join'){$('rt').textContent='Join a game';if(typeof resetJoinScreen==='function')resetJoinScreen();show('net');return}
  pick=g;const x=GAMES[g],max=x.max||2;$('rt').textContent=x.t;
  if(max===1){begin(g,1);return}
@@ -22,7 +33,7 @@ function closeRoom(){if(typeof saveLastRoom==='function')saveLastRoom();leave();
 function render(){$('rl').disabled=false;const[h,s]=G.draw();$('bd').innerHTML=h;$('st').textContent=ids.length&&seat===99?'Spectating · '+(S.msg||s):S.msg||s;$('lg').textContent=typeof S.last==='string'?S.last:'';$('rl').classList.toggle('hide',!(G.roll&&canAct()&&G.cr()))}
 /* begin(game, localPlayers, order): order = list of player ids when playing online (seat = position in the list) */
 function activateGameRuntime(){if(typeof G.onStart==='function')G.onStart();if(ids.length&&typeof startGameChannels==='function')startGameChannels()}
-function begin(g,n,order,vsComputer=false){if(G&&typeof G.onStop==='function')G.onStop();clearTimeout(aiTimer);localBot=vsComputer;disconnectPending=false;if(typeof clearDisconnectRecovery==='function')clearDisconnectRecovery();G=GAMES[g];pick=g;$('room').classList.toggle('ludo-game',g==='ludo');dead=new Set();sel=-1;clearInterval(dt);if(g==='ludo'){$('dice').classList.remove('hide');$('dice').textContent='🎲'}else $('dice').classList.add('hide');if(order){ids=order;np=Math.min(G.max||2,ids.length);seat=ids.indexOf(myId);if(seat<0||seat>=np)seat=99}else{ids=[];np=n;seat=vsComputer?0:-1}S=G.init();$('rt').textContent=G.t;show('gm');render();if(typeof updateGameControls==='function')updateGameControls();if(order&&room.code&&typeof saveLastRoom==='function')saveLastRoom();activateGameRuntime();scheduleBot()}
+function begin(g,n,order,vsComputer=false,playerNames){if(!requireDisplayName(()=>begin(g,n,order,vsComputer,playerNames)))return;if(G&&typeof G.onStop==='function')G.onStop();clearTimeout(aiTimer);localBot=vsComputer;disconnectPending=false;if(typeof clearDisconnectRecovery==='function')clearDisconnectRecovery();G=GAMES[g];pick=g;$('room').classList.toggle('ludo-game',g==='ludo');dead=new Set();sel=-1;clearInterval(dt);if(g==='ludo'){$('dice').classList.remove('hide');$('dice').textContent='🎲'}else $('dice').classList.add('hide');if(order){ids=order;np=Math.min(G.max||2,ids.length);seat=ids.indexOf(myId);if(seat<0||seat>=np)seat=99;gamePlayerNames=cleanGamePlayerNames(playerNames)}else{ids=[];np=n;seat=vsComputer?0:-1;gamePlayerNames=Array.from({length:np},(_,index)=>index===0?displayName:vsComputer?'Computer':'Player '+(index+1))}S=G.init();$('rt').textContent=G.t;show('gm');render();if(typeof updateGameControls==='function')updateGameControls();if(order&&room.code&&typeof saveLastRoom==='function')saveLastRoom();activateGameRuntime();scheduleBot()}
 /* Keep disconnected seats from receiving a turn without treating a disconnect as a win. */
 function fixTurn(){if(S.over||!dead.size)return;const alive=[...Array(np).keys()].filter(i=>!dead.has(i));if(alive.length<2)return;for(let k=0;k<np&&dead.has(S.t);k++){S.t=(S.t+1)%np;S.d=0}}
 function act(a,remote){if(disconnectPending)return;if(!remote&&ids.length){if(typeof sendGameAction==='function')sendGameAction(a);else bcast({k:'a',a})}if(G.roll&&a.r!==undefined)showDice(a.r);G.apply(a);fixTurn();sel=-1;render();scheduleBot()}

@@ -1,4 +1,4 @@
-/* global S, seat, ids, amHost, hostSeat, realtimeSend, registerGame */
+/* global S, seat, ids, amHost, hostSeat, nm, realtimeSend, registerGame */
 (() => {
   "use strict";
 
@@ -15,6 +15,7 @@
   const INPUT_MS = 33;
   const COLORS = ["#4cc9f0", "#ffbe0b"];
   const names = ["Cyan", "Gold"];
+  const carName = (player) => typeof nm === "function" ? nm(player) : names[player];
   const TAU = Math.PI * 2;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const wrap = (value) => ((value % TAU) + TAU) % TAU;
@@ -248,7 +249,7 @@
     data.cars.forEach((car, index) => {
       S.cars[index] = { ...car, controls: { ...car.controls }, inputSeq: S.cars[index]?.inputSeq ?? -1 };
     });
-    S.msg = S.over ? names[S.winner] + " wins the race!" : "";
+    S.msg = S.over ? carName(S.winner) + " wins the race!" : "";
   }
 
   function onRealtimeDisconnect(fromSeat) {
@@ -366,7 +367,7 @@
       ctx.fillStyle = COLORS[S.winner];
       ctx.font = "900 44px system-ui, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(names[S.winner] + " wins!", CX, CY + 12);
+      ctx.fillText(carName(S.winner) + " wins!", CX, CY + 12);
       ctx.fillStyle = "#fff";
       ctx.font = "600 17px system-ui, sans-serif";
       ctx.fillText("The host can restart for another race.", CX, CY + 48);
@@ -380,7 +381,7 @@
           ? S.msg
           : local
             ? "Lap " + Math.min(LAPS_TO_WIN, local.lap + 1) + " of " + LAPS_TO_WIN +
-              " · " + Math.round(local.speed) + " km/h · " + names[localSeat]
+              " · " + Math.round(local.speed) + " km/h · " + carName(localSeat)
             : "Spectating · " + Math.min(LAPS_TO_WIN, S.cars[0].lap + 1) + " of " + LAPS_TO_WIN;
       }
       lastStatusUpdate = now;
@@ -409,7 +410,7 @@
           if (winner >= 0) {
             S.over = 1;
             S.winner = winner;
-            S.msg = names[winner] + " wins the race!";
+            S.msg = carName(winner) + " wins the race!";
             break;
           }
         }

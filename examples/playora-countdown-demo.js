@@ -30,7 +30,7 @@
       S.left -= action.take;
       if (S.left === 0) {
         S.over = 1;
-        S.msg = game.n[S.t] + " wins!";
+        S.msg = nm(S.t) + " wins!";
         return;
       }
       S.t = 1 - S.t;

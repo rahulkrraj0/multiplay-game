@@ -172,6 +172,18 @@
 @media(max-width:520px){#room .media-tile{width:min(200px,calc(100vw - 16px));height:150px;min-width:145px;min-height:110px}#room .media-controls button{font-size:10px;padding:6px 2px}#room .call-panel{inset:auto 0 0;width:100%;height:min(76dvh,680px);padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px));border:1px solid var(--bd);border-bottom:0;border-radius:20px 20px 0 0;box-shadow:0 -18px 50px #0008;animation-name:call-panel-up}#room .call-panel-header{margin-bottom:8px}#room .call-panel #cl{min-height:80px}@keyframes call-panel-up{from{transform:translateY(18px);opacity:.6}to{transform:translateY(0);opacity:1}}}
 #room.game-active .rin{max-width:none;margin:0;padding:5px 0 env(safe-area-inset-bottom,0px)}
 #room.game-active #gm{text-align:center}
+.display-name-backdrop[hidden]{display:none}
+.display-name-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:rgba(5,9,20,.82);backdrop-filter:blur(8px)}
+.display-name-card{width:min(100%,440px);padding:clamp(22px,6vw,34px);border:1px solid rgba(196,181,253,.28);border-radius:22px;background:linear-gradient(150deg,#252a4d,#11192e);box-shadow:0 24px 80px #0009;color:#f6f7fb}
+.display-name-card h2{margin:0;color:#fff;font-size:clamp(22px,5vw,28px)}
+.display-name-card>p{margin:12px 0 20px;color:#c5cce0;line-height:1.55}
+.display-name-card label{display:block;margin-bottom:6px;font-size:14px;font-weight:650}
+.display-name-card input{width:100%;min-height:48px;padding:10px 12px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:#0b1020;color:#f6f7fb;font:inherit}
+.display-name-card #displayNameError{margin:7px 0;color:#ff9b91;font-size:13px}
+.display-name-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.display-name-actions button{min-height:48px;margin:0;padding:10px 14px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:#17213a;color:#f6f7fb;font:inherit}
+.display-name-actions button.p{border:0;background:linear-gradient(135deg,#8b5cf6,#6468f5)}
+.display-name-card input:focus-visible,.display-name-actions button:focus-visible{outline:3px solid #a78bfa;outline-offset:2px}
 #room .disconnect-recovery[hidden]{display:none}
 #room .disconnect-recovery{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:20px;background:rgba(5,9,20,.78);backdrop-filter:blur(8px)}
 #room .disconnect-recovery-card{width:min(100%,440px);padding:clamp(22px,6vw,34px);border:1px solid rgba(196,181,253,.28);border-radius:22px;background:linear-gradient(150deg,#252a4d,#11192e);box-shadow:0 24px 80px #0009;text-align:center}

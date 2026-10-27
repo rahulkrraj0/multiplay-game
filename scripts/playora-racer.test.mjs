@@ -51,6 +51,7 @@ function createRacer({ localSeat = 0, host = true } = {}) {
     },
     cancelAnimationFrame: () => { scheduledFrame = null; },
     seat: localSeat,
+    nm: (player) => ["Rahul", "Riya"][player],
     ids: ["host-id", "guest-id"],
     amHost: () => host,
     hostSeat: () => 0,
@@ -139,5 +140,15 @@ test("realtime racer accepts fresh host snapshots and emits guest input", () => 
     cars: [{ ...hostState.cars[0], x: Number.MAX_VALUE }, hostState.cars[1]],
   });
   assert.equal(state.sequence, before, "invalid state must be ignored");
+  const completedState = racer.game.init();
+  racer.game.onRealtimeMessage(0, "state", {
+    sequence: 5,
+    raceAt: 101_000,
+    startedAt: 100_000,
+    over: 1,
+    winner: 0,
+    cars: completedState.cars,
+  });
+  assert.equal(state.msg, "Rahul wins the race!");
   racer.game.onStop();
 });

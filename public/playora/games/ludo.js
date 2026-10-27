@@ -643,7 +643,7 @@
         winActive = true;
         winColor = color;
         var title = (matched && status.length <= 50) ? status :
-          (color ? PAL[color].name + " wins!" : "We have a winner!");
+          (Number.isInteger(S.win) ? playerName(S.win) + " wins!" : "We have a winner!");
         showCelebration({
           color: color,
           title: title,
@@ -1153,9 +1153,7 @@
   }
 
   function playerName(player) {
-    var cols = S.cols && S.cols[player];
-    if (!cols) return TOKEN_NAMES[player];
-    return cols.length === 2 ? TOKEN_NAMES[cols[0]] + " & " + TOKEN_NAMES[cols[1]] : TOKEN_NAMES[cols[0]];
+    return typeof nm === "function" ? nm(player) : TOKEN_NAMES[player];
   }
 
   function tokenCoords(player, position, token) {
@@ -1450,17 +1448,17 @@
     var can = mine(), off = !can, count = S.p.length, title, sub, btns = "";
     if (S.setup === 1) {
       title = "Houses per player";
-      sub = can ? "How many houses does each player get?" : "Waiting for " + SEAT_NAMES[0] + " to choose\u2026";
+      sub = can ? "How many houses does each player get?" : "Waiting for " + nm(0) + " to choose\u2026";
       btns = setupBtn('data-houses="1"', null, "1 house", "4 tokens each", off) +
              setupBtn('data-houses="2"', null, "2 houses", "8 tokens each", off);
     } else if (S.h === 2) {
       title = "Choose your houses";
-      sub = can ? "Your rival gets the other two houses." : "Waiting for " + SEAT_NAMES[0] + " to choose\u2026";
+      sub = can ? "Your rival gets the other two houses." : "Waiting for " + nm(0) + " to choose\u2026";
       btns = setupBtn('data-color="0"', [0, 2], TOKEN_NAMES[0] + " & " + TOKEN_NAMES[2], "", off) +
              setupBtn('data-color="1"', [1, 3], TOKEN_NAMES[1] + " & " + TOKEN_NAMES[3], "", off);
     } else {
       title = "Choose your house colour";
-      sub = !can ? "Waiting for " + SEAT_NAMES[0] + " to choose\u2026" :
+      sub = !can ? "Waiting for " + nm(0) + " to choose\u2026" :
         count === 2 ? "Your rival gets the opposite house." : "The other players take the next colours clockwise.";
       for (var c = 0; c < 4; c++) btns += setupBtn('data-color="' + c + '"', [c], TOKEN_NAMES[c], "", off);
     }
@@ -1550,7 +1548,7 @@
       }
       if (S.setup) html += setupHtml();
       html += "</div>";
-      var status = S.setup ? SEAT_NAMES[0] + " \u00b7 " + (S.setup === 1 ? "choose houses per player" : "choose your house colour") :
+      var status = S.setup ? nm(0) + " \u00b7 " + (S.setup === 1 ? "choose houses per player" : "choose your house colour") :
         S.over ? S.msg : playerName(player) + " to play" +
         (S.die ? " · rolled " + S.die + (moves.size ? " · choose a highlighted token" : "") : " · roll the dice");
       return [html, status];
@@ -1608,7 +1606,7 @@
     var c = (color || "").toLowerCase();
     winActive = true;
     winColor = PAL[c] ? c : "";
-    showCelebration({ color: winColor, title: title || (winColor ? PAL[c].name + " wins!" : "We have a winner!"), sub: "" });
+    showCelebration({ color: winColor, title: title || (winColor ? playerName(S && Number.isInteger(S.win) ? S.win : 0) + " wins!" : "We have a winner!"), sub: "" });
     manualWin = true;
   };
 

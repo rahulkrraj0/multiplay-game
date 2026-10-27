@@ -36,6 +36,9 @@ If these details leave important rules ambiguous, ask me before implementing.
   offers wait-for-reconnect or finish-game choices, and resumes the saved game
   when the same player rejoins. Do not display a disconnect as a win or add
   game-specific reconnect UI/protocol.
+- Use the shared `nm(seat)` helper for player names in all visible game text,
+  including turn/status labels and winner messages. Keep synchronized results
+  identical on every peer; do not append local-only labels such as “(you)”.
 - Send each player action through `act(action)`. Keep all state changes in
   deterministic `apply(action)` logic. Reject malformed, illegal, and
   out-of-turn online actions in `valid(action)`. Put random outcomes into the

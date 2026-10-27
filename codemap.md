@@ -28,6 +28,7 @@
 - In-game player disconnects pause actions and show a shared recovery dialog rather than setting a game win. Players can keep waiting for the same browser identity to reconnect or ask the current host to finish and return everyone to the lobby.
 - Reopening a saved host room first checks for a live or recently registered host. If one exists, the previous host rejoins as an attendee instead of creating a competing host session.
 - The host's player/viewer assignments and attendance history are shown in the lobby roster. A stable browser key reconnects a returning attendee to their recorded identity; history is stored in that host browser's local storage and shared among connected attendees so it can survive a host handoff.
+- Players are asked for a display name once per browser and it is saved locally. Names travel with lobby and game-seat metadata and appear in attendee/participant lists, chat, game status, and winner messages; rules-based game state stays consistent across peers.
 - `src/routes/api/rtc.ts` exposes the signaling API. `src/lib/multiplayer/signaling.server.ts` stores short-lived peer presence and relays WebRTC setup messages; gameplay remains peer-to-peer.
 - `src/lib/multiplayer/ice-config.server.ts` supplies ICE configuration. `src/lib/multiplayer/p2p.ts` is a separate reusable P2P primitive and is not the classic Playora runtime.
 - `migrations/0002_webrtc_signaling.sql` and `migrations/0003_webrtc_expiry_indexes.sql` define signaling persistence and expiry indexes.

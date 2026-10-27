@@ -363,6 +363,7 @@ function roomJoined() {
   jmsg("");
 }
 async function joinRoom(raw) {
+  if (!requireDisplayName(() => joinRoom(raw))) return;
   const code = parseCode(raw);
   if (code.length < 4) {
     setJoinProgress(false);
@@ -430,6 +431,7 @@ async function joinRoom(raw) {
 }
 
 async function rejoinLastRoom() {
+  if (!requireDisplayName(rejoinLastRoom)) return;
   const saved = readLastRoom();
   if (!saved) {
     updateRejoinButton();
