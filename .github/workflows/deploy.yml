@@ -1,0 +1,60 @@
+name: Deploy Docker stack
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, Linux, X64]
+    env:
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      VITE_PUBLIC_SITE_URL: ${{ secrets.VITE_PUBLIC_SITE_URL }}
+      BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      TURN_URLS: ${{ secrets.TURN_URLS }}
+      TURN_HOSTNAME: ${{ secrets.TURN_HOSTNAME }}
+      TURN_EXTERNAL_IP: ${{ secrets.TURN_EXTERNAL_IP }}
+      TURN_BIND_IP: ${{ secrets.TURN_BIND_IP }}
+      TURN_SHARED_SECRET: ${{ secrets.TURN_SHARED_SECRET }}
+      CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check deployment secrets
+        shell: bash
+        run: |
+          required=(
+            POSTGRES_PASSWORD
+            VITE_PUBLIC_SITE_URL
+            BETTER_AUTH_URL
+            BETTER_AUTH_SECRET
+            TURN_URLS
+            TURN_HOSTNAME
+            TURN_EXTERNAL_IP
+            TURN_BIND_IP
+            TURN_SHARED_SECRET
+            CLOUDFLARE_TUNNEL_TOKEN
+          )
+          for name in "${required[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "GitHub Actions secret $name is required." >&2
+              exit 1
+            fi
+          done
+      - name: Build and redeploy on Linux server
+        shell: bash
+        run: docker compose --profile public up -d --build --pull always --remove-orphans
+      - name: Verify deployment
+        shell: bash
+        run: docker compose ps

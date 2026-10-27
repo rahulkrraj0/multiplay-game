@@ -1,6 +1,10 @@
+import { createHmac } from "node:crypto";
+
 const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
   { urls: ["stun:stun.l.google.com:19302", "stun:stun.cloudflare.com:3478"] },
 ];
+
+const TURN_CREDENTIAL_TTL_SECONDS = 60 * 60;
 
 export interface IceConfiguration {
   iceServers: RTCIceServer[];
@@ -25,22 +29,37 @@ function parseIceServer(value: unknown): RTCIceServer | null {
   };
 }
 
-export function getIceConfiguration(
-  env: Record<string, string | undefined>,
-): IceConfiguration {
+export function getIceConfiguration(env: Record<string, string | undefined>): IceConfiguration {
   const urls = (env.TURN_URLS ?? env.TURN_URL ?? "")
     .split(",")
     .map((url) => url.trim())
     .filter(Boolean);
+  const sharedSecret = env.TURN_SHARED_SECRET?.trim();
   const username = env.TURN_USERNAME?.trim();
   const credential = env.TURN_CREDENTIAL?.trim();
 
-  if (urls.length === 0 || !username || !credential) {
+  if (urls.length === 0) {
     return { iceServers: DEFAULT_ICE_SERVERS, turnConfigured: false };
   }
 
   if (urls.some((url) => !/^turns?:/i.test(url))) {
     throw new Error("TURN_URLS must contain only turn: or turns: URLs.");
+  }
+
+  if (sharedSecret) {
+    const turnUsername = `${Math.floor(Date.now() / 1000) + TURN_CREDENTIAL_TTL_SECONDS}:multiplay-game`;
+    const turnCredential = createHmac("sha1", sharedSecret).update(turnUsername).digest("base64");
+    return {
+      iceServers: [
+        ...DEFAULT_ICE_SERVERS,
+        { urls, username: turnUsername, credential: turnCredential },
+      ],
+      turnConfigured: true,
+    };
+  }
+
+  if (!username || !credential) {
+    return { iceServers: DEFAULT_ICE_SERVERS, turnConfigured: false };
   }
 
   return {

@@ -1,0 +1,14 @@
+.git
+.github
+.env
+.env.*
+!.env.example
+node_modules
+.output
+dist
+build
+.vercel
+.grok
+.tanstack
+coverage
+npm-debug.log

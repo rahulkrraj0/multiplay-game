@@ -1,0 +1,104 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        VITE_PUBLIC_SITE_URL: ${VITE_PUBLIC_SITE_URL:-}
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-multiplay}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-multiplay}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:8080}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET}
+      TURN_URLS: ${TURN_URLS:-}
+      TURN_SHARED_SECRET: ${TURN_SHARED_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:8080/').then(() => process.exit(0)).catch(() => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-multiplay}
+      POSTGRES_USER: ${POSTGRES_USER:-multiplay}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  coturn:
+    image: coturn/coturn:latest
+    command:
+      - -n
+      - --log-file=stdout
+      - --fingerprint
+      - --use-auth-secret
+      - --static-auth-secret=${TURN_SHARED_SECRET:-}
+      - --realm=${TURN_HOSTNAME:-localhost}
+      - --listening-port=3478
+      - --min-port=49160
+      - --max-port=49200
+      - --listening-ip=10.255.233.10
+      - --relay-ip=10.255.233.10
+      - --external-ip=${TURN_EXTERNAL_IP:-127.0.0.1}/10.255.233.10
+      - --user-quota=12
+      - --total-quota=120
+      - --max-bps=1000000
+      - --no-tls
+      - --no-multicast-peers
+      - --denied-peer-ip=10.0.0.0-10.255.255.255
+      - --denied-peer-ip=172.16.0.0-172.31.255.255
+      - --denied-peer-ip=192.168.0.0-192.168.255.255
+      - --denied-peer-ip=127.0.0.0-127.255.255.255
+      - --denied-peer-ip=169.254.0.0-169.254.255.255
+    ports:
+      - "${TURN_BIND_IP:-127.0.0.1}:3478:3478/tcp"
+      - "${TURN_BIND_IP:-127.0.0.1}:3478:3478/udp"
+      - "${TURN_BIND_IP:-127.0.0.1}:49160-49200:49160-49200/udp"
+    networks:
+      turn_network:
+        ipv4_address: 10.255.233.10
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    profiles:
+      - public
+    command:
+      - tunnel
+      - --no-autoupdate
+      - run
+      - --token
+      - ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  turn_network:
+    ipam:
+      config:
+        - subnet: 10.255.233.0/24

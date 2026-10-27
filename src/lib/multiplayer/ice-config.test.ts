@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHmac } from "node:crypto";
 import { test } from "node:test";
 import { getIceConfiguration, getMeteredIceConfiguration } from "./ice-config.server.ts";
 
@@ -20,6 +21,26 @@ test("adds TURN servers from comma-separated environment settings", () => {
     username: "ephemeral-user",
     credential: "ephemeral-password",
   });
+});
+
+test("creates time-limited TURN credentials from a shared secret", () => {
+  const secret = "turn-shared-secret";
+  const config = getIceConfiguration({
+    TURN_URLS: "turn:relay.example:3478?transport=udp",
+    TURN_SHARED_SECRET: secret,
+  });
+  const server = config.iceServers.at(-1);
+  assert.equal(config.turnConfigured, true);
+  assert.ok(server?.username);
+  assert.equal(
+    server?.credential,
+    createHmac("sha1", secret)
+      .update(server?.username ?? "")
+      .digest("base64"),
+  );
+  const expiry = Number(server?.username?.split(":", 1)[0]);
+  assert.ok(expiry > Math.floor(Date.now() / 1000));
+  assert.ok(expiry <= Math.floor(Date.now() / 1000) + 60 * 60);
 });
 
 test("rejects invalid TURN URL schemes", () => {
