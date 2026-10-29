@@ -18,16 +18,36 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const FILES_BEFORE_GAMES = [
+const ENGINE_FILES = [
   "/playora/core/config.js",
   "/playora/core/engine.js",
 ];
 
-const FILES_AFTER_GAMES = [
+const RUNTIME_FILES = [
   "/playora/core/net.js",
   "/playora/core/room.js",
   "/playora/core/site.js",
 ];
+
+type GameCatalogEntry = {
+  file: string;
+  id: string;
+  i: string;
+  t: string;
+  d: string;
+  max: number;
+  cat: string;
+  tag: string;
+  diff: string;
+  art: string;
+};
+
+declare global {
+  interface Window {
+    PLAYORA_GAME_CATALOG?: GameCatalogEntry[];
+    PLAYORA_LOAD_SCRIPT?: (src: string) => Promise<void>;
+  }
+}
 
 function asset(path: string) {
   const host = window.location.hostname.toLowerCase();
@@ -65,15 +85,49 @@ function getInviteRoomCode(value: string) {
 function bootScripts() {
   if (boot) return boot;
   boot = (async () => {
-    for (const file of FILES_BEFORE_GAMES) await loadScript(asset(file));
-    const response = await fetch(asset("/playora/games/manifest.json"), { cache: "no-store" });
+    for (const file of ENGINE_FILES) await loadScript(asset(file));
+    const response = await fetch(asset("/playora/games/catalog.json"), { cache: "force-cache" });
     if (!response.ok) throw new Error("Could not load the game list.");
-    const games: unknown = await response.json();
-    if (!Array.isArray(games) || !games.every((name) => typeof name === "string" && /^[a-z0-9][a-z0-9_-]*\.js$/i.test(name))) {
+    const catalog: unknown = await response.json();
+    if (
+      !Array.isArray(catalog) ||
+      !catalog.every(
+        (game) =>
+          typeof game === "object" &&
+          game !== null &&
+          "file" in game &&
+          typeof game.file === "string" &&
+          /^[a-z0-9][a-z0-9_-]*\.js$/i.test(game.file) &&
+          "id" in game &&
+          typeof game.id === "string" &&
+          /^[a-z0-9][a-z0-9_-]*$/i.test(game.id) &&
+          "i" in game &&
+          typeof game.i === "string" &&
+          "t" in game &&
+          typeof game.t === "string" &&
+          "d" in game &&
+          typeof game.d === "string" &&
+          "max" in game &&
+          typeof game.max === "number" &&
+          Number.isInteger(game.max) &&
+          game.max >= 1 &&
+          "cat" in game &&
+          typeof game.cat === "string" &&
+          "tag" in game &&
+          typeof game.tag === "string" &&
+          "diff" in game &&
+          typeof game.diff === "string" &&
+          "art" in game &&
+          typeof game.art === "string",
+      ) ||
+      new Set(catalog.map((game) => (game as GameCatalogEntry).id)).size !== catalog.length
+    ) {
       throw new Error("The game list is invalid.");
     }
-    for (const file of games) await loadScript(asset(`/playora/games/${file}`));
-    for (const file of FILES_AFTER_GAMES) await loadScript(asset(file));
+    window.PLAYORA_GAME_CATALOG = catalog as GameCatalogEntry[];
+    window.PLAYORA_LOAD_SCRIPT = (file) => loadScript(asset(`/playora/games/${file}`));
+    await loadScript(asset("/playora/core/game-loader.js"));
+    for (const file of RUNTIME_FILES) await loadScript(asset(file));
   })();
   return boot;
 }

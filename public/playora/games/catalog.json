@@ -1,0 +1,98 @@
+[
+  {
+    "file": "carrom.js",
+    "id": "carrom",
+    "i": "🟫",
+    "t": "Carrom",
+    "d": "Flick the striker, pocket your coins, cover the queen and clear the board first. Drag back to aim and release to shoot.",
+    "max": 2,
+    "cat": "classic strategy",
+    "tag": "Flick & pocket",
+    "diff": "Easy to learn",
+    "art": "art-carrom"
+  },
+  {
+    "file": "chess.js",
+    "id": "chess",
+    "i": "♟️",
+    "t": "3D Chess",
+    "d": "The classic game of kings in 3D. Castling, en passant, promotion — all the rules, for two players. Tilt the camera under the board.",
+    "max": 2,
+    "cat": "classic strategy",
+    "tag": "♛ Timeless",
+    "diff": "Deep to master",
+    "art": "art-chess"
+  },
+  {
+    "file": "connect-four.js",
+    "id": "connect-four",
+    "i": "🔴",
+    "t": "Connect Four",
+    "d": "Drop discs and line up four in a row — across, up and down, or on the diagonal. Block your rival to win!",
+    "max": 2,
+    "cat": "classic strategy",
+    "tag": "🔴 Classic",
+    "diff": "Easy to learn",
+    "art": "art-connect-four"
+  },
+  {
+    "file": "ludo.js",
+    "id": "ludo",
+    "i": "🎲",
+    "t": "Ludo",
+    "d": "Roll a six to enter, race your tokens home, and send rivals back to their yards. Pick 1 or 2 houses and your colour inside the game.",
+    "max": 4,
+    "cat": "classic casual",
+    "tag": "Roll & race",
+    "diff": "Easy to learn",
+    "art": "art-ludo"
+  },
+  {
+    "file": "racer.js",
+    "id": "racer",
+    "i": "🏎️",
+    "t": "Realtime Racer",
+    "d": "Race three laps around a top-down track. Steer and accelerate together in real time.",
+    "max": 2,
+    "cat": "racing action",
+    "tag": "Live racing",
+    "diff": "Easy to learn",
+    "art": "art-racer"
+  },
+  {
+    "file": "snl.js",
+    "id": "snl",
+    "i": "🐍",
+    "t": "Snakes & Ladders",
+    "d": "Race to 100: roll a 1 to start (and roll again), cut rivals back to the start, climb ladders, dodge snakes. Choose 1-4 tokens each once the game starts.",
+    "max": 4,
+    "cat": "classic casual",
+    "tag": "1-4 tokens each",
+    "diff": "Easy",
+    "art": "art-snl"
+  },
+  {
+    "file": "ttt.js",
+    "id": "ttt",
+    "i": "❌",
+    "t": "Tic-Tac-Toe",
+    "d": "Three in a row wins. Ink on paper, one quick round at a time.",
+    "max": 2,
+    "cat": "classic casual",
+    "tag": "Quick game",
+    "diff": "Easy",
+    "art": "art-ttt"
+  },
+  {
+    "file": "watersort-game.js",
+    "id": "watersort",
+    "i": "🧪",
+    "t": "Water Sort",
+    "d": "Pour the colours until every tube holds just one. 500 levels, and your progress is saved so you can pick up where you left off.",
+    "max": 1,
+    "cat": "puzzle",
+    "tag": "Pour & sort",
+    "diff": "Easy to learn",
+    "art": "art-watersort"
+  }
+]

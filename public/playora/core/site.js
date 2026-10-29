@@ -23,7 +23,10 @@ document.addEventListener('keydown',e=>{const map={ArrowUp:'up',ArrowDown:'down'
 const card=(g,pl,soon,btn)=>`<article class="game" data-game="${g.id}" data-name="${g.t.toLowerCase()}" data-category="${g.cat||'casual'}" role="button" tabindex="0" aria-label="${soon?'Preview':'Play'} ${g.t}"><div class="game-art ${g.art||'art-ludo'}"><span class="tag${g.hot?' hot':''}">${g.tag||'New'}</span><div class="game-emoji">${g.i||'🎮'}</div></div><div class="game-body"><div class="game-title"><h3>${g.t}</h3><span class="players">${pl}</span></div><p>${g.d||''}</p><div class="game-bottom"><span class="difficulty">● ${g.diff||'Easy to learn'}</span><span class="btn ${soon?'ghost':'primary'} play">${btn}</span></div></div></article>`;
 function buildCards(){const grid=$('gameGrid');
  grid.innerHTML=Object.values(GAMES).map(g=>card(g,(g.max||2)===1?'1 player':'👥 '+(g.max>2?'2–'+g.max:'2')+' players',0,'Play now ↗')).join('')+SOLO.map(g=>card(g,g.pl,g.soon,g.soon?'Preview ↗':'Play now ↗')).join('');
- const activate=tile=>{const game=tile.dataset.game;if(game in GAMES)openRoom(game);else openGame(game)};
+ const activate=async tile=>{const game=tile.dataset.game;const metadata=GAMES[game];if(!metadata)return;
+  const note=$('playora-boot');note.textContent='Loading '+metadata.t+'…';
+  try{await window.ensurePlayoraGame(game);note.textContent='';if(game in GAMES)openRoom(game);else openGame(game)}
+  catch(error){console.error('[playora] Could not load game:',error);note.textContent='Could not load '+metadata.t+'. Check your connection and try again.'}};
  grid.querySelectorAll('.game').forEach(tile=>{tile.onclick=()=>activate(tile);tile.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activate(tile)}}})}
 function filterGames(){const q=$('search').value.toLowerCase().trim();let n=0;
  document.querySelectorAll('#gameGrid .game').forEach(c=>{const m=(c.dataset.name.includes(q)||c.textContent.toLowerCase().includes(q))&&(activeFilter==='all'||c.dataset.category.split(' ').includes(activeFilter));c.style.display=m?'':'none';if(m)n++});
@@ -36,4 +39,4 @@ $('reconnect').onclick=rejoinLastRoom;
 $('year').textContent=new Date().getFullYear();
 buildCards();filterGames();updateRejoinButton();
 const requestedGame=new URLSearchParams(location.search).get('play');
-if(requestedGame&&Object.hasOwn(GAMES,requestedGame)){history.replaceState(null,'',location.pathname+location.hash);openRoom(requestedGame)}
+if(requestedGame&&Object.hasOwn(GAMES,requestedGame)){history.replaceState(null,'',location.pathname+location.hash);void window.ensurePlayoraGame(requestedGame).then(()=>openRoom(requestedGame)).catch(error=>{console.error('[playora] Could not load requested game:',error);$('playora-boot').textContent='Could not load this game. Check your connection and try again.'})}

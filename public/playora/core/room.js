@@ -463,6 +463,14 @@ async function rejoinLastRoom() {
       return;
     }
     setJoinProgress(false);
+    try {
+      await window.ensurePlayoraGame(game);
+    } catch (error) {
+      return jmsg(
+        "Could not load the saved game (" + (error.message || "network") + "). Please try again.",
+        1,
+      );
+    }
     openRoom(game);
     pick = game;
     activeLimit = Math.max(2, Number(saved.limit) || 2);

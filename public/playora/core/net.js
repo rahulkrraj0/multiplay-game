@@ -18,9 +18,9 @@ const snd=(C,o)=>{if(C&&C.dc&&C.dc.readyState==='open')C.dc.send(JSON.stringify(
 const peers=()=>cs.filter(C=>C.open&&C.id),hostSeat=()=>Math.min(js,...peers().map(C=>C.seat)),amHost=()=>js===hostSeat();
 const ready=()=>{const n=peers().length;return n>0&&peers().every(C=>rep[C.id]===n)};
 function mkC(id,s){const C={pc:new RTCPeerConnection(CFG),id,seat:s,open:0,sn:{},disconnectTimer:0};C.pc.onconnectionstatechange=()=>{const state=C.pc.connectionState;if(state==='failed'&&!C.open)linkFailed(C);if(state==='disconnected'){if(!C.disconnectTimer)C.disconnectTimer=setTimeout(()=>{C.disconnectTimer=0;if(C.pc.connectionState==='disconnected')drop(C)},12000);return}clearTimeout(C.disconnectTimer);C.disconnectTimer=0;if(state==='failed'||state==='closed')drop(C)};cs.push(C);return C}
-function wire(C,ch){if(ch.label==='playora-actions'){C.action=ch;ch.onmessage=e=>{try{handleRealtime(C,JSON.parse(e.data))}catch(error){console.warn('[playora] Ignored an invalid game action packet.',error)}};ch.onclose=()=>{C.action=null;C.actionStarting=0};return}
+function wire(C,ch){if(ch.label==='playora-actions'){C.action=ch;ch.onmessage=e=>{C.messageQueue=(C.messageQueue||Promise.resolve()).then(()=>handleRealtime(C,JSON.parse(e.data))).catch(error=>console.warn('[playora] Ignored an invalid game action packet.',error))};ch.onclose=()=>{C.action=null;C.actionStarting=0};return}
 if(ch.label==='playora-realtime'){C.rtc=ch;ch.onmessage=e=>{try{handleRealtime(C,JSON.parse(e.data))}catch(error){console.warn('[playora] Ignored an invalid real-time game packet.',error)}};ch.onclose=()=>{C.rtc=null;C.rtcStarting=0};return}
-C.dc=ch;ch.onmessage=e=>{try{handle(C,JSON.parse(e.data))}catch(error){console.warn('[playora] Ignored an invalid peer message.',error)}};ch.onclose=()=>drop(C);
+C.dc=ch;ch.onmessage=e=>{C.messageQueue=(C.messageQueue||Promise.resolve()).then(()=>handle(C,JSON.parse(e.data))).catch(error=>console.warn('[playora] Ignored an invalid peer message.',error))};ch.onclose=()=>drop(C);
 ch.onopen=()=>{if(C.open)return;C.open=1;if(C.first)snd(C,{k:'hi',id:myId,playerKey,name:displayName});live(C);mesh()};if(ch.readyState==='open')ch.onopen()}
 function startGameChannels(){if(!G||!ids.length||!amHost())return;peers().forEach(C=>{if(!C.open)return;
 if(!C.action&&!C.actionStarting){C.actionStarting=1;try{wire(C,C.pc.createDataChannel('playora-actions'))}catch(error){C.actionStarting=0;console.warn('[playora] Could not create a reliable game action channel.',error)}}
@@ -112,7 +112,7 @@ function drop(C){if(!cs.includes(C))return;clearTimeout(C.disconnectTimer);const
  C.tile?.remove();C.remoteAudio?.remove();delete rep[C.id];if(!wasOpen)return;
  if(G&&S&&ids.length){const g=ids.indexOf(C.id);if(g>=0&&g<np){if(G.realtime&&typeof G.onRealtimeDisconnect==='function')G.onRealtimeDisconnect(g);dead.add(g);syncDisconnectRecovery();render()}}
  $('lg').textContent=peerName(C)+' disconnected'+(!was&&amHost()?' – you are now the host':'');if(!was&&amHost())claimRoom();mesh();updateMediaTilePermissions();updateGameControls()}
-function handle(C,m){switch(m.k){
+async function handle(C,m){if(m.k==='welcome'&&m.st)await window.ensurePlayoraGame(m.st.g);else if((m.k==='start'||m.k==='resume')&&GAMES[m.g])await window.ensurePlayoraGame(m.g);switch(m.k){
  case'hi':if(peers().length>=7){snd(C,{k:'full'});return}C.id=m.id;C.playerKey=typeof m.playerKey==='string'&&/^[a-f0-9]{16}$/i.test(m.playerKey)?m.playerKey:'';C.seat=++hiSeat;C.name=cleanPlayerName(m.name)||'Player '+C.seat;ensureAttendance();if(C.playerKey&&!roomAttendance.roles[C.playerKey])roomAttendance.roles[C.playerKey]=peers().filter(P=>roomAttendance.roles[P.playerKey]==='player').length<activeLimit?'player':'viewer';recordAttendance(C.playerKey,C.seat,true,C.name);snd(C,{k:'welcome',id:myId,key:playerKey,name:displayName,seat:js,you:C.seat,hiSeat,g:pick,limit:activeLimit,rc:room.code,attendance:roomAttendance,playerKeys:activePlayerKeys,playerNames:activePlayerNames,peers:peers().filter(x=>x!==C).map(x=>({id:x.id,seat:x.seat,key:x.playerKey,name:x.name})),st:G&&S&&ids.length?{g:G.id,np,ids,S,playerKeys:activePlayerKeys,playerNames:activePlayerNames,dead:[...dead]}:null});
   bcast({k:'new',id:C.id,seat:C.seat,key:C.playerKey,name:C.name},C);manual();mesh();break;
  case'full':if(C===room.jc)return jfail('That room is full (8 attendees maximum).');drop(C);roomUI('err','That room is full (8 attendees maximum).');return;
@@ -181,10 +181,11 @@ function lobbyUp(){ensureAttendance();const attendees=currentAttendees(),m=atten
  $('guestChoice').textContent=game?'Host selected '+game.t+' · '+activeLimit+' players will play; others can spectate.':'Waiting for the host to choose a game.';
  $('stt').disabled=!readyToStart||!allAssigned;$('stt').textContent=!allAssigned?'Assign exactly '+activeLimit+' players to start':readyToStart?'Start game · '+activeLimit+' players':total<activeLimit?'Waiting for '+activeLimit+' players…':'Connecting players…';
  $('cp').classList.toggle('hide',!peers().length);updateGameControls()}
-function startNet(){const everyone=currentAttendees(),total=everyone.length;
+async function startNet(){const everyone=currentAttendees(),total=everyone.length;
  if(total<activeLimit)return alert('Wait until at least '+activeLimit+' attendees have joined.');
  const players=everyone.filter(A=>(roomAttendance.roles[A.key]||'viewer')==='player').sort((a,b)=>a.seat-b.seat);
  if(players.length!==activeLimit)return alert('Assign exactly '+activeLimit+' attendees as players before starting.');
+ try{await window.ensurePlayoraGame(pick)}catch(error){console.error('[playora] Could not load selected game:',error);roomUI('err','Could not load the selected game. Check your connection and try again.');return}
  const order=players.map(A=>A.id),playerKeys=players.map(A=>A.key),playerNames=players.map(A=>A.name);
  activePlayerKeys=playerKeys;activePlayerNames=playerNames;bcast({k:'start',g:pick,ids:order,playerKeys,playerNames});begin(pick,0,order,false,playerNames)}
 function setLobbyPlayerLimit(limit){activeLimit=limit;ensureAttendance();const attendees=currentAttendees(),players=attendees.filter(A=>(roomAttendance.roles[A.key]||'viewer')==='player');if(players.length>limit)players.slice(limit).forEach(A=>{roomAttendance.roles[A.key]='viewer'});else if(players.length<limit)attendees.filter(A=>!players.includes(A)).slice(0,limit-players.length).forEach(A=>{roomAttendance.roles[A.key]='player'});saveAttendance();updateLobbyControls();lobbyUp()}
