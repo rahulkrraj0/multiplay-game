@@ -17,12 +17,12 @@ function isLocalComputerGame(){return localBot}
 
 const GAMES={};const registerGame=g=>GAMES[g.id]=g;
 /* the game room is a full-screen panel over the homepage */
-function openRoom(g){if(GAMES[g]?.catalogOnly){void window.ensurePlayoraGame(g).then(()=>openRoom(g)).catch(error=>{console.error('[playora] Could not load game:',error);$('playora-boot').textContent='Could not load this game. Check your connection and try again.'});return}if(!requireDisplayName(()=>openRoom(g)))return;$('topMic').classList.add('hide');$('topVideo').classList.add('hide');$('topMenu').classList.add('hide');$('room').classList.add('open');$('room').classList.toggle('ludo-game',g==='ludo');$('room').scrollTop=0;document.body.style.overflow='hidden';
+function openRoom(g){if(GAMES[g]?.catalogOnly){void window.ensurePlayoraGame(g).then(()=>openRoom(g)).catch(error=>{console.error('[playora] Could not load game:',error);$('playora-boot').textContent='Could not load this game. Check your connection and try again.'});return}$('topMic').classList.add('hide');$('topVideo').classList.add('hide');$('topMenu').classList.add('hide');$('room').classList.add('open');$('room').classList.toggle('ludo-game',g==='ludo');$('room').scrollTop=0;document.body.style.overflow='hidden';
  if(g==='join'){$('rt').textContent='Join a game';if(typeof resetJoinScreen==='function')resetJoinScreen();show('net');return}
  pick=g;const x=GAMES[g],max=x.max||2;$('rt').textContent=x.t;
  if(max===1){begin(g,1);return}
  $('mt').textContent='Choose how to play';
- $('ml').textContent='Play vs computer';$('ml').classList.toggle('hide',typeof x.bot!=='function');
+ $('ml').textContent='User vs Computer';$('ml').classList.toggle('hide',typeof x.bot!=='function');
  $('ml').disabled=typeof x.bot!=='function';
  $('localTwo').disabled=max<2;$('localTwo').classList.toggle('hide',max<2);
  $('mh').classList.toggle('hide',max<2);
