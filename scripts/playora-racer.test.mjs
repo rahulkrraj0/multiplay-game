@@ -6,7 +6,7 @@ import vm from "node:vm";
 
 const source = readFileSync(join(process.cwd(), "public", "playora", "games", "racer.js"), "utf8");
 
-function createRacer({ localSeat = 0, host = true } = {}) {
+function createRacer({ localSeat = 0, host = true, computer = false } = {}) {
   let now = 100_000;
   let scheduledFrame;
   let nextFrame = 0;
@@ -52,9 +52,10 @@ function createRacer({ localSeat = 0, host = true } = {}) {
     cancelAnimationFrame: () => { scheduledFrame = null; },
     seat: localSeat,
     nm: (player) => ["Rahul", "Riya"][player],
-    ids: ["host-id", "guest-id"],
+    ids: computer ? [] : ["host-id", "guest-id"],
     amHost: () => host,
     hostSeat: () => 0,
+    isLocalComputerGame: () => computer,
     realtimeSend: (kind, data) => sent.push({ kind, data }),
     console,
   };
@@ -105,6 +106,25 @@ test("realtime racer simulates locally and publishes authoritative snapshots", (
     controls: { throttle: 0, brake: 0, left: 0, right: 0 },
   });
   assert.equal(state.cars[1].controls.throttle, 1, "stale input must be ignored");
+  racer.game.onStop();
+});
+
+test("realtime racer supports an automated computer opponent in local play", () => {
+  const racer = createRacer({ computer: true });
+  const state = racer.game.init();
+  racer.setState(state);
+  racer.game.onStart();
+
+  assert.equal(racer.game.computer, true);
+  let steered = false;
+  for (let frame = 0; frame < 2400; frame += 1) {
+    racer.advanceFrame();
+    steered ||= state.cars[1].controls.left || state.cars[1].controls.right;
+  }
+
+  assert.ok(state.cars[1].speed > 0, "the computer accelerates its car");
+  assert.ok(steered, "the computer steers around the track");
+  assert.ok(state.cars[1].lap > 0, "the computer completes a lap");
   racer.game.onStop();
 });
 

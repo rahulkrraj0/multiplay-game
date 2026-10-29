@@ -1,4 +1,4 @@
-/* global S, seat, ids, amHost, hostSeat, nm, realtimeSend, registerGame */
+/* global S, seat, ids, amHost, hostSeat, nm, isLocalComputerGame, realtimeSend, registerGame */
 (() => {
   "use strict";
 
@@ -189,6 +189,18 @@
       }
     }
     if (advance < 0.35) car.progress = angle;
+  }
+
+  function computerControls(car) {
+    const theta = Math.atan2((car.y - CY) / RY, (car.x - CX) / RX) + 0.14;
+    const targetHeading = Math.atan2(RY * Math.cos(theta), -RX * Math.sin(theta));
+    const error = wrap(targetHeading - car.heading + Math.PI) - Math.PI;
+    return {
+      throttle: 1,
+      brake: Math.abs(error) > 1.1 ? 1 : 0,
+      left: error < -0.04 ? 1 : 0,
+      right: error > 0.04 ? 1 : 0,
+    };
   }
 
   function snapshot() {
@@ -398,10 +410,12 @@
     const wallNow = Date.now();
     const isHost = typeof amHost === "function" && amHost();
     const localTwoPlayer = !ids.length && seat < 0;
+    const computerOpponent = typeof isLocalComputerGame === "function" && isLocalComputerGame();
     if (!S.over && isHost) {
       const local = S.cars[localSeat];
       if (local && localSeat < 2) local.controls = readControls(0);
       if (localTwoPlayer) S.cars[1].controls = readControls(1);
+      else if (computerOpponent) S.cars[1].controls = computerControls(S.cars[1]);
       if (wallNow >= S.raceAt) {
         while (accumulator >= 1 / 60) {
           S.cars.forEach((car) => updateCar(car, 1 / 60));
@@ -469,6 +483,7 @@
     art: "art-racer",
     n: names,
     realtime: true,
+    computer: true,
     init: initialState,
     valid: () => false,
     apply: () => {},
@@ -477,7 +492,11 @@
         '<section class="race" aria-label="Realtime racing game">' +
           '<canvas class="race-canvas" role="img" aria-label="Race track with two cars. Use arrow keys or WASD to steer and accelerate.">' +
           "</canvas>" +
-          '<div class="race-help">Keyboard: arrows · Local player 2: WASD · Mobile: hold the controls below</div>' +
+          '<div class="race-help">' +
+          (typeof isLocalComputerGame === "function" && isLocalComputerGame()
+            ? "Keyboard: arrows · Computer controls Gold · Mobile: hold the controls below"
+            : "Keyboard: arrows · Local player 2: WASD · Mobile: hold the controls below") +
+          "</div>" +
           '<div class="race-controls" aria-label="Touch racing controls">' +
           '<button class="race-control race-left" type="button" data-control="left" aria-label="Steer left">◀</button>' +
           '<button class="race-control race-brake" type="button" data-control="brake" aria-label="Brake">▼</button>' +

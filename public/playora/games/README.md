@@ -27,6 +27,7 @@ implementation private, and register one game object.
     diff: "Easy",
     art: "art-newgame",     // Optional class for the game card.
     n: ["Red", "Blue"],     // Name for each player/seat.
+    computer: true,         // Optional: realtime game controls its computer opponent.
 
     init() {
       // Return a fresh, JSON-serializable state. `t` is the active seat index.
@@ -88,13 +89,16 @@ implementation private, and register one game object.
 - A `bot()` method is optional. When present, local play starts with the user
   at seat 0 and automatically requests a computer action on the other seat.
   Return an action in exactly the same shape accepted by `apply`/`valid`.
+- Realtime games may set `computer: true` when they control the opponent
+  continuously instead of returning turn-based actions.
 - A game with the shared dice control may provide `rollSides()` to return the
   number of sides currently allowed (1–6). The engine puts the chosen roll in
   the action, so `valid()` and `apply()` must accept it without changing it.
 - Set `max` to `1` for a solo-only game. Its Play button starts the game
   directly, without multiplayer choices, and it is omitted from online
   lobbies. Games with `max` greater than `1` offer local and online multiplayer;
-  the computer-play option appears only when `bot()` is implemented.
+  the computer-play option appears only when `bot()` is implemented or a
+  realtime game sets `computer: true`.
 - Keep the game self-contained and responsive. Add game-specific styles to
   `src/playora/game.css`, scoped under a unique class such as `.newgame`.
   Avoid global CSS changes, external runtime dependencies, and network calls.

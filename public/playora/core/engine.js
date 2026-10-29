@@ -22,11 +22,12 @@ function openRoom(g){if(GAMES[g]?.catalogOnly){void window.ensurePlayoraGame(g).
  pick=g;const x=GAMES[g],max=x.max||2;$('rt').textContent=x.t;
  if(max===1){begin(g,1);return}
  $('mt').textContent='Choose how to play';
- $('ml').textContent='User vs Computer';$('ml').classList.toggle('hide',typeof x.bot!=='function');
- $('ml').disabled=typeof x.bot!=='function';
+ const hasComputerOpponent=typeof x.bot==='function'||x.computer===true;
+ $('ml').textContent='User vs Computer';$('ml').classList.toggle('hide',!hasComputerOpponent);
+ $('ml').disabled=!hasComputerOpponent;
  $('localTwo').disabled=max<2;$('localTwo').classList.toggle('hide',max<2);
  $('mh').classList.toggle('hide',max<2);
- const options=[];if(typeof x.bot==='function')options.push('play against the computer');if(max>=2)options.push('take turns on this device','create an online lobby');
+ const options=[];if(hasComputerOpponent)options.push('play against the computer');if(max>=2)options.push('take turns on this device','create an online lobby');
  $('modeHint').textContent='Choose how to play: '+options.join(', or ')+'.';
  show('mode')}
 function closeRoom(){if(typeof saveLastRoom==='function')saveLastRoom();leave();$('dice').classList.add('hide');$('topMic').classList.add('hide');$('topVideo').classList.add('hide');$('topMenu').classList.add('hide');$('room').classList.remove('open','ludo-game');document.body.style.overflow='';history.replaceState(null,'',location.pathname);window.scrollTo(0,0)}
