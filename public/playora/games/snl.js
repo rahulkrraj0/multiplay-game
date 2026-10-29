@@ -1,10 +1,12 @@
+/* global S, np, isLocalComputerGame, nm, ids, canAct, amHost, act, registerGame */
 // snakes & ladders: registered with registerGame(), same host contract as tictactoe.js / ludo.js.
 // Globals used: S (state), nm(t), act(action), canAct() if the host provides it.
 //
 // Rules
 //  - 10x10 board, square 1 bottom-left, snaking up to 100 top-left.
 //  - Every token starts OFF the board (drawn on the START square) and needs a roll of 1 to enter (like a 6 in Ludo).
-//  - A 6 gives the same player another roll (SIX_ROLLS_AGAIN).
+//  - A 6 gives the same player another roll (SIX_ROLLS_AGAIN), but a third
+//    consecutive 6 is not allowed.
 //  - A 1 also gives the same player another roll (ONE_ROLLS_AGAIN).
 //  - Exact roll needed to land on 100. A token that would overshoot cannot move.
 //  - Landing on a ladder climbs it, on a snake slides down it.
@@ -41,6 +43,8 @@ const PAWN_TXT = ["#1c1f27", "#ffffff", "#ffffff", "#ffffff"];
 const BANNER = ["#f5b400", "#334155", "#e5322d", "#2160c4"], BANNER_DARK = ["#a16207", "#0f172a", "#a8161b", "#123a85"];
 const NAMES = ["Yellow", "Black", "Red", "Blue"];
 const playerCount = () => (typeof np === "number" ? Math.max(2, Math.min(4, np)) : 2);   // same host variable as ludo.js
+const computerGame = () => typeof isLocalComputerGame === "function" && isLocalComputerGame();
+const rollSides = () => S && S.sixes >= 2 ? 5 : 6;
 const DICE_MS = 520, HOP_MS = 170;
 const reduced = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
@@ -396,7 +400,7 @@ function rollNow() {
     if (rollButton) rollButton.click();
     return;
   }
-  act({ r: 1 + Math.floor(Math.random() * 6) });
+  act({ r: 1 + Math.floor(Math.random() * rollSides()) });
 }
 
 function pickCount(el) {
@@ -459,6 +463,7 @@ function distinct(p, list) {
 /* a 6 or a 1 gives the same player another roll; otherwise the turn passes on */
 function endTurn(r, log) {
   const again = (SIX_ROLLS_AGAIN && r === 6) || (ONE_ROLLS_AGAIN && r === 1);
+  S.sixes = r === 6 ? (S.sixes || 0) + 1 : 0;
   if (again) log += " \u2014 rolls again"; else S.t = (S.t + 1) % S.p.length;
   S.log = log;
 }
@@ -501,7 +506,7 @@ const core = {
   valid(a) {
     if (!a || S.over) return false;
     if (S.setup) return a.r === undefined && Number.isInteger(a.k) && a.k >= 1 && a.k <= 4;
-    if (a.r !== undefined) return Number.isInteger(a.r) && a.r >= 1 && a.r <= 6 && !S.pend;
+    if (a.r !== undefined) return Number.isInteger(a.r) && a.r >= 1 && a.r <= rollSides() && !S.pend;
     return !!S.pend && Number.isInteger(a.token) && legalTokens(S.t, S.pend).indexOf(a.token) >= 0;
   },
   apply(a) {
@@ -539,8 +544,8 @@ const core = {
     }
   },
   bot() {
-    if (S.setup) return { k: 1 };
-    if (!S.pend) return { r: 1 + Math.floor(Math.random() * 6) };
+    if (S.setup) return null;
+    if (!S.pend) return { r: 1 + Math.floor(Math.random() * rollSides()) };
     const t = S.t, r = S.pend, legal = legalTokens(t, r);
     let best = legal[0], bs = -1e9;
     legal.forEach(j => {
@@ -585,7 +590,7 @@ const core = {
     });
 
     const setupHtml = S.setup ? '<div class="snl-setup' + (can ? "" : " wait") + '"><div class="snl-setup-card"><h3>Tokens per player</h3><p>' +
-      (can ? "How many tokens does each player get?" : "Waiting for " + nm(S.t) + " to choose\u2026") + '</p><div class="snl-setup-btns">' +
+      (can ? "Choose how many tokens each player gets." : "Waiting for " + nm(S.t) + " to choose\u2026") + '</p><div class="snl-setup-btns">' +
       [1, 2, 3, 4].map(n => '<button type="button" data-i="kn" data-n="' + n + '" aria-label="' + n + (n === 1 ? " token" : " tokens") + ' each">' + n + "</button>").join("") +
       "</div></div></div>" : "";
     const where = q => q === 0 ? "start" : q === 100 ? "home" : "#" + q;
@@ -614,8 +619,8 @@ const GAME = Object.assign({}, core, {
   d: "Race to 100: roll a 1 to start (and roll again), cut rivals back to the start, climb ladders, dodge snakes. Choose 1-4 tokens each once the game starts.",
   n: NAMES, min: 2, max: 4,
   init: () => {
-    const count = playerCount(), first = nextFirst % count;
-    return { p: Array.from({ length: count }, () => [0]), k: 1, setup: 1, t: first, first, n: 0, over: 0, die: 0, pend: 0, mv: null, log: "Choose how many tokens each player gets" };
+    const count = playerCount(), first = computerGame() ? 0 : nextFirst % count;
+    return { p: Array.from({ length: count }, () => [0]), k: 1, setup: 1, t: first, first, n: 0, over: 0, die: 0, sixes: 0, pend: 0, mv: null, log: "Choose how many tokens each player gets" };
   }
 });
 const GAMES = [GAME];
