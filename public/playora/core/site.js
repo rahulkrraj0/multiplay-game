@@ -22,7 +22,7 @@ document.addEventListener('keydown',e=>{const map={ArrowUp:'up',ArrowDown:'down'
 /* game cards come from the games registered in games/*.js */
 const card=(g,pl,soon,btn)=>`<article class="game" data-game="${g.id}" data-name="${g.t.toLowerCase()}" data-category="${g.cat||'casual'}" role="button" tabindex="0" aria-label="${soon?'Preview':'Play'} ${g.t}"><div class="game-art ${g.art||'art-ludo'}"><span class="tag${g.hot?' hot':''}">${g.tag||'New'}</span><div class="game-emoji">${g.i||'🎮'}</div></div><div class="game-body"><div class="game-title"><h3>${g.t}</h3><span class="players">${pl}</span></div><p>${g.d||''}</p><div class="game-bottom"><span class="difficulty">● ${g.diff||'Easy to learn'}</span><span class="btn ${soon?'ghost':'primary'} play">${btn}</span></div></div></article>`;
 function buildCards(){const grid=$('gameGrid');
- grid.innerHTML=Object.values(GAMES).map(g=>card(g,(g.max||2)===1?'1 player':'👥 '+(g.max>2?'2–'+g.max:'2')+' players',0,'Play now ↗')).join('')+SOLO.map(g=>card(g,g.pl,g.soon,g.soon?'Preview ↗':'Play now ↗')).join('');
+ grid.innerHTML=Object.values(GAMES).map(g=>card(g,(g.max||2)===1?'1 player':'👥 '+(g.max>2?'2–'+g.max:'2')+' players',0,'Play now ↗')).join('')+SOLO.map(g=>card(g,g.pl,g.soon,g.soon?'Preview ↗':'Play now ↗')).join('');grid.setAttribute('aria-busy','false');grid.removeAttribute('aria-label');
  const activate=async tile=>{const game=tile.dataset.game;const metadata=GAMES[game];if(!metadata)return;
   const note=$('playora-boot');note.textContent='Loading '+metadata.t+'…';
   try{await window.ensurePlayoraGame(game);note.textContent='';if(game in GAMES)openRoom(game);else openGame(game)}

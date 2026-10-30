@@ -26,7 +26,15 @@
   <section id="games">
     <div class="section-head"><div><h2>Find your next favorite</h2><p>Choose a game and jump straight into the fun.</p></div><label class="search"><span>⌕</span><input id="search" type="search" placeholder="Search games..." aria-label="Search games"></label></div>
     <div class="filters" aria-label="Filter games"><button class="filter active" data-filter="all">All games</button><button class="filter" data-filter="classic">Classics</button><button class="filter" data-filter="strategy">Strategy</button><button class="filter" data-filter="casual">Casual</button></div>
-    <div class="games" id="gameGrid"></div>
+    <div class="games" id="gameGrid" aria-label="Loading game list" aria-busy="true">
+      <span class="sr-only">Loading games…</span>
+      <div class="game-skeleton" aria-hidden="true"><div class="game-skeleton-art"></div><div class="game-skeleton-body"><i></i><i></i><i></i></div></div>
+      <div class="game-skeleton" aria-hidden="true"><div class="game-skeleton-art"></div><div class="game-skeleton-body"><i></i><i></i><i></i></div></div>
+      <div class="game-skeleton" aria-hidden="true"><div class="game-skeleton-art"></div><div class="game-skeleton-body"><i></i><i></i><i></i></div></div>
+      <div class="game-skeleton" aria-hidden="true"><div class="game-skeleton-art"></div><div class="game-skeleton-body"><i></i><i></i><i></i></div></div>
+      <div class="game-skeleton" aria-hidden="true"><div class="game-skeleton-art"></div><div class="game-skeleton-body"><i></i><i></i><i></i></div></div>
+      <div class="game-skeleton" aria-hidden="true"><div class="game-skeleton-art"></div><div class="game-skeleton-body"><i></i><i></i><i></i></div></div>
+    </div>
   </section>
   <section class="game-guides" id="game-guides">
     <div class="section-head"><div><h2>Play better, together</h2><p>Explore practical guides to Playora’s games and online lobbies.</p></div></div>

@@ -85,8 +85,11 @@ function getInviteRoomCode(value: string) {
 function bootScripts() {
   if (boot) return boot;
   boot = (async () => {
-    for (const file of ENGINE_FILES) await loadScript(asset(file));
-    const response = await fetch(asset("/playora/games/catalog.json"), { cache: "force-cache" });
+    const catalogRequest = fetch(asset("/playora/games/catalog.json"), { cache: "force-cache" });
+    const engineScripts = (async () => {
+      for (const file of ENGINE_FILES) await loadScript(asset(file));
+    })();
+    const [response] = await Promise.all([catalogRequest, engineScripts]);
     if (!response.ok) throw new Error("Could not load the game list.");
     const catalog: unknown = await response.json();
     if (
@@ -149,6 +152,11 @@ function Home() {
       bootScripts().catch(() => {
         const note = document.getElementById("playora-boot");
         if (note) note.textContent = "The game table didn’t finish loading. Refresh and try again.";
+        const grid = document.getElementById("gameGrid");
+        if (grid) {
+          grid.setAttribute("aria-busy", "false");
+          grid.innerHTML = '<p class="empty" role="status">The game list couldn’t load. Refresh and try again.</p>';
+        }
       });
     }, 0);
     return () => {
