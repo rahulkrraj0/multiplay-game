@@ -1,0 +1,7 @@
+Chess sound effects to add
+
+- move.ogg - a piece moves to an empty square
+- capture.ogg - a piece captures another piece
+- check.ogg - a king is put in check
+- castle.ogg - castling move
+- promote.ogg - pawn promotion

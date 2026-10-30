@@ -113,6 +113,11 @@ implementation private, and register one game object.
 - Keep the game self-contained and responsive. Add game-specific styles to
   `src/playora/game.css`, scoped under a unique class such as `.newgame`.
   Avoid global CSS changes, external runtime dependencies, and network calls.
+- The shared sound runtime generates lightweight Web Audio cues for supported
+  games and uses a generic synthesized cue for games without a dedicated
+  profile. Turn-based games receive their cues through `act()`; realtime games
+  can call `window.playoraSound.playGame(gameId, event)` from lifecycle or
+  gameplay callbacks. Sound is controlled by the site's shared sound toggle.
 
 ## Online play notes
 

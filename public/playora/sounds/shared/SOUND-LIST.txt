@@ -1,0 +1,6 @@
+Shared sound effects to add
+
+- win.ogg - played when any game is won
+- draw.ogg - optional shared cue when a game ends in a draw
+- loss.ogg - optional shared cue when the local player loses
+- menu.ogg - optional cue for common menu and selection actions

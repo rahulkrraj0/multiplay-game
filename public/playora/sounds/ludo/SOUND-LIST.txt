@@ -1,0 +1,7 @@
+Ludo sound effects to add
+
+- roll.ogg - dice roll
+- token-move.ogg - a token moves along the board
+- token-enter.ogg - a token leaves its yard
+- capture.ogg - a rival token is sent back to its yard
+- home.ogg - a token reaches home

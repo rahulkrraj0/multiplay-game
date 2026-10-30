@@ -34,6 +34,7 @@
   let snapshotSequence = -1;
   let snapshotReceivedAt = 0;
   let localSeat = 99;
+  let raceWinSoundPlayed = false;
   let keys = new Set();
   let pressed = newControls();
   let onKeyDown;
@@ -430,6 +431,12 @@
         }
       } else accumulator = 0;
     }
+    if (S.over && !raceWinSoundPlayed) {
+      raceWinSoundPlayed = true;
+      if (window.playoraSound && typeof window.playoraSound.playGame === "function") {
+        window.playoraSound.playGame("racer", "win");
+      }
+    }
     if (isHost && now - lastSnapshot >= (S.over ? 300 : SNAPSHOT_MS)) {
         realtimeSend("state", snapshot());
         lastSnapshot = now;
@@ -460,6 +467,10 @@
     lastInput = 0;
     snapshotSequence = -1;
     snapshotReceivedAt = Date.now();
+    raceWinSoundPlayed = false;
+    if (window.playoraSound && typeof window.playoraSound.playGame === "function") {
+      window.playoraSound.playGame("racer", "start");
+    }
     frame = requestAnimationFrame(tick);
   }
 

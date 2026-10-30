@@ -20,6 +20,7 @@ export const Route = createFileRoute("/")({
 
 const ENGINE_FILES = [
   "/playora/core/config.js",
+  "/playora/core/sounds.js",
   "/playora/core/engine.js",
 ];
 

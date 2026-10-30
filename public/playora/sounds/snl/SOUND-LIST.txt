@@ -1,0 +1,6 @@
+Snakes & Ladders sound effects to add
+
+- roll.ogg - dice roll
+- step.ogg - token moves across the board
+- snake-slide.ogg - token slides down a snake
+- ladder-climb.ogg - token climbs a ladder

@@ -1,0 +1,8 @@
+Realtime Racer sound effects to add
+
+- engine.ogg - optional looping engine sound
+- accelerate.ogg - acceleration cue
+- skid.ogg - tires skid while turning
+- collision.ogg - car hits an obstacle or track edge
+- countdown.ogg - race start countdown
+- lap.ogg - a lap is completed

@@ -1,0 +1,6 @@
+Carrom sound effects to add
+
+- flick.ogg - striker hit when a shot is taken
+- collision.ogg - coins or striker collide
+- pocket.ogg - a coin drops into a pocket
+- queen-cover.ogg - the queen is covered
