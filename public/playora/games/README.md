@@ -80,6 +80,17 @@ implementation private, and register one game object.
   and offering wait-for-reconnect or finish-game choices; do not turn a network
   disconnect into a game win or add game-specific reconnect UI. When the same
   player rejoins, the runtime restores their seat and resumes the saved state.
+- For games with more than two active players, record finished-player
+  placements and skip finished players' turns. The game may continue until
+  third place is decided, with remaining players shown as not placed.
+- Carrom supports 2–4 active players. For 3–4 players, the host selects Point
+  Game (8 boards; white 20, black 10, covered queen 50) or Clear-the-board.
+  Three-player rooms use individual play. Four-player rooms can use individual
+  play or teams; the host selects a partner, and that pairing persists across
+  point-game boards.
+- A game may set `hostSetup: true` when its synchronized setup actions must be
+  chosen by the online host before turns begin. Keep those actions constrained
+  by `valid()` to the setup phase.
 - The engine delegates clicks on `[data-i]` and `[data-m]` inside `#bd` to
   `game.click(element)`. A game may use its own delegated document listener for
   more specialized controls, as Chess does.

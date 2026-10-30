@@ -1,11 +1,12 @@
-// carrom: rules + physics + UI, registered with registerGame(). 2 players (seat 0 = White, bottom; seat 1 = Black, top).
-// Same conventions as chess/connect-four: globals S, nm(), canAct(), act(), registerGame().
+/* global S, np, seat, ids, amHost, nm, canAct, act, registerGame */
+// carrom: rules + physics + UI, registered with registerGame(). Supports 2-4 players.
+// Same conventions as chess/connect-four: globals S, np, nm(), canAct(), act(), registerGame().
 // Online-safe: a shot is the action {x, dx, dy, p} (all integers). The physics uses only + - * / and sqrt
 // (no sin/cos), so every peer computes the identical outcome. The animation re-plays the shot from S.last.pre.
 // Rules: pocket your own coins to keep shooting; pocket the queen and cover it with one of your coins on the same
 // or next shot (otherwise it returns to the centre); pocketing the striker is a foul (a coin of yours comes back and
-// the turn passes); clear all 9 of your coins after the queen is covered to win.
-// View: every player sees their own side at the bottom. The board is simply drawn rotated 180 degrees for seat 1
+// the turn passes). Three- and four-player matches also support point and clear-the-board formats.
+// View: every player sees their shooting side at the bottom. The board is simply drawn rotated 180 degrees for alternate seats
 // (purely local, never part of S), and pointer input and the sliders are mapped back, so the physics is untouched.
 (() => {
 "use strict";
@@ -20,8 +21,11 @@ const PK = [[18, 18], [982, 18], [18, 982], [982, 982]];
 const BY = [855, 145];                 // baseline y per seat
 const XMIN = 170, XMAX = 830;          // striker travel along the baseline
 const MS = 1.7, FR = 0.9885, WE = 0.8, HE = 0.94, MIN2 = 0.0025, MAXT = 3200, MAXTURNS = 300;
-const NMS = ["White", "Black"];
-const owner = i => i === 0 ? -1 : i <= 9 ? 0 : 1;
+const NMS = ["White", "Black", "Yellow", "Blue"];
+const playerCount = () => typeof np === "number" ? Math.max(2, Math.min(4, np)) : 2;
+const sideFor = seat => seat % 2;
+const owner = (st, i) => i === 0 ? -1 : Array.isArray(st.owners) && st.owners[i] !== undefined ? st.owners[i] : i <= 9 ? 0 : 1;
+const groupOf = (st, player) => st.teamMode ? st.teams[player] : player;
 const who = s => (typeof nm === "function" ? nm(s) : NMS[s]);
 const esc = s => String(s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[ch]));
 const r2 = v => Math.round(v * 100) / 100;
@@ -43,13 +47,14 @@ function startCoins() {
 /* physics (deterministic)                                             */
 /* ------------------------------------------------------------------ */
 function makeWorld(coins, seat, a) {
+  const side = sideFor(seat);
   const w = { x: [], y: [], vx: [], vy: [], r: [], m: [], live: [], out: [], ev: [], t: 0, done: false, vm: 0 };
   for (let i = 0; i < NP; i++) {
     const c = coins[i];
     w.x.push(c[0]); w.y.push(c[1]); w.vx.push(0); w.vy.push(0); w.r.push(RC); w.m.push(1); w.live.push(c[2] ? 0 : 1);
   }
   const len = Math.sqrt(a.dx * a.dx + a.dy * a.dy), v = 2 + 0.26 * a.p;
-  w.x.push(a.x); w.y.push(BY[seat]); w.vx.push(a.dx / len * v); w.vy.push(a.dy / len * v);
+  w.x.push(a.x); w.y.push(BY[side]); w.vx.push(a.dx / len * v); w.vy.push(a.dy / len * v);
   w.r.push(RS); w.m.push(MS); w.live.push(1);
   return w;
 }
@@ -112,8 +117,54 @@ const runWorld = w => { while (!w.done) stepWorld(w); };
 /* rules                                                               */
 /* ------------------------------------------------------------------ */
 const isIn = (st, i) => !!st.c[i][2];
-const coinsOf = (st, s) => { const o = []; for (let i = 1; i < NP; i++) if (owner(i) === s) o.push(i); return o; };
+const coinsOf = (st, s) => { const o = []; for (let i = 1; i < NP; i++) if (owner(st, i) === s) o.push(i); return o; };
 const leftOf = (st, s) => coinsOf(st, s).filter(i => !isIn(st, i)).length;
+
+function assignOwners(count, teams, teamMode) {
+  const owners = new Array(NP).fill(-1);
+  for (let i = 1; i < NP; i++) {
+    if (teamMode) owners[i] = i <= 9 ? 0 : 1;
+    else owners[i] = (i - 1) % count;
+  }
+  return owners.map((owner, i) => i > 0 && teamMode ? teams[owner === 0 ? 0 : 1] : owner);
+}
+
+function finishSetup(st) {
+  const count = playerCount();
+  st.teamMode = st.style === "team" ? 1 : 0;
+  st.teams = Array.from({ length: count }, (_, player) =>
+    st.teamMode ? (player === 0 || player === st.partner ? 0 : 1) : player
+  );
+  st.owners = assignOwners(count, st.teams, st.teamMode);
+  st.scores = new Array(st.teamMode ? 2 : count).fill(0);
+  st.setup = "";
+  st.t = 0;
+  st.msg = "";
+  st.ev = st.mode === "points"
+    ? "Point Game · 8 boards. White 20 · Black 10 · Queen 50."
+    : "Clear-the-board game. " + who(0) + " starts.";
+}
+
+function setupAction(st, action) {
+  if (st.setup === "mode") {
+    st.mode = action.gameMode;
+    if (playerCount() === 3) {
+      st.style = "individual";
+      finishSetup(st);
+    } else st.setup = "style";
+    return;
+  }
+  if (st.setup === "style") {
+    st.style = action.playStyle;
+    if (st.style === "team") st.setup = "partner";
+    else finishSetup(st);
+    return;
+  }
+  if (st.setup === "partner") {
+    st.partner = action.partner;
+    finishSetup(st);
+  }
+}
 
 function freeAt(st, x, y, skip) {
   const lim = (2 * RC + 1) * (2 * RC + 1);
@@ -137,7 +188,7 @@ function place(st, id) {
 }
 
 function baseFree(st, seat, x) {
-  const lim = (RS + RC) * (RS + RC), y = BY[seat];
+  const lim = (RS + RC) * (RS + RC), y = BY[sideFor(seat)];
   for (let j = 0; j < NP; j++) {
     if (isIn(st, j)) continue;
     const dx = st.c[j][0] - x, dy = st.c[j][1] - y;
@@ -152,59 +203,188 @@ function anyBaseFree(st, seat) {
 
 function validOn(st, a) {
   if (!a || typeof a !== "object" || st.over) return false;
+  if (st.setup) {
+    if (st.t !== 0) return false;
+    if (st.setup === "mode") return a.gameMode === "points" || a.gameMode === "clear";
+    if (st.setup === "style") return a.playStyle === "individual" || (playerCount() === 4 && a.playStyle === "team");
+    if (st.setup === "partner") return Number.isInteger(a.partner) && a.partner > 0 && a.partner < playerCount();
+    return false;
+  }
   if (!Number.isInteger(a.x) || !Number.isInteger(a.dx) || !Number.isInteger(a.dy) || !Number.isInteger(a.p)) return false;
   if (a.x < XMIN || a.x > XMAX || a.p < 1 || a.p > 100) return false;
   if (Math.abs(a.dx) > 1000 || Math.abs(a.dy) > 1000) return false;
-  if (st.t === 0 ? a.dy >= 0 : a.dy <= 0) return false;       // shoot towards the opponent's side
-  if (!baseFree(st, st.t, a.x) && anyBaseFree(st, st.t)) return false;
+  if (sideFor(st.t) === 0 ? a.dy >= 0 : a.dy <= 0) return false; // shoot towards the opponent's side
+  if (!baseFree(st, sideFor(st.t), a.x) && anyBaseFree(st, sideFor(st.t))) return false;
+  return true;
+}
+
+function pointValue(id) {
+  return id === 0 ? 50 : id <= 9 ? 20 : 10;
+}
+
+function scoreIndex(st, player) {
+  return st.teamMode ? st.teams[player] : player;
+}
+
+function competitors(st) {
+  return st.teamMode ? [0, 1] : Array.from({ length: st.teams.length || 2 }, (_, player) => player);
+}
+
+function competitorName(st, competitor) {
+  if (!st.teamMode) return who(competitor);
+  return st.teams.map((team, player) => team === competitor ? who(player) : "").filter(Boolean).join(" & ");
+}
+
+function placementOrder(st) {
+  return competitors(st).slice().sort((a, b) => st.scores[b] - st.scores[a]);
+}
+
+function finishPointGame(st) {
+  st.placements = placementOrder(st);
+  const top = st.placements[0], tied = st.placements.length > 1 && st.scores[st.placements[1]] === st.scores[top];
+  st.win = tied ? -1 : st.teamMode ? st.teams.indexOf(top) : top;
+  const standings = st.placements.map((competitor, index) =>
+    (index + 1) + (index === 0 ? "st" : index === 1 ? "nd" : index === 2 ? "rd" : "th") +
+    ": " + competitorName(st, competitor) + " (" + st.scores[competitor] + ")"
+  );
+  st.over = 1;
+  st.msg = (tied ? "Point Game draw" : competitorName(st, top) + " wins the Point Game!") + " " + standings.join(" · ");
+}
+
+function finishClearGame(st, player) {
+  if (st.mode === "classic") {
+    st.over = 1; st.win = player; st.msg = `${who(player)} clears the board and wins! \uD83C\uDF89`;
+    return;
+  }
+  if (st.teamMode) {
+    const team = player, winner = st.teams.indexOf(team);
+    st.over = 1;
+    st.win = winner;
+    st.msg = competitorName(st, team) + " wins the Clear-the-board game!";
+    return;
+  }
+  st.placements = (st.placements || []).concat(player);
+  st.log = who(player) + " finished " + st.placements.length + ".";
+  if (st.placements.length >= st.teams.length - 1) {
+    st.loser = st.teams.findIndex((_, index) => !st.placements.includes(index));
+    st.win = st.placements[0];
+    st.over = 1;
+    st.msg = who(st.win) + " wins! " + st.placements.map((seat, index) =>
+      (index + 1) + (index === 0 ? "st" : index === 1 ? "nd" : "rd") + ": " + who(seat)
+    ).join(" · ") + " · Lost: " + who(st.loser);
+  }
+}
+
+function advanceTurn(st, player) {
+  const count = st.teams.length;
+  for (let offset = 1; offset <= count; offset++) {
+    const next = (player + offset) % count;
+    if (st.mode !== "clear" || st.teamMode || !(st.placements || []).includes(next)) {
+      st.t = next;
+      return;
+    }
+  }
+}
+
+function resetPointBoard(st) {
+  st.boards++;
+  if (st.boards >= 8) {
+    finishPointGame(st);
+    return true;
+  }
+  st.c = startCoins();
+  st.q = 0;
+  st.qw = -1;
+  st.po = [];
+  st.t = st.boards % st.teams.length;
+  st.ev = "Board " + st.boards + " complete. Board " + (st.boards + 1) + " of 8.";
   return true;
 }
 
 // plays shot `a` on state `st` (mutates st). Pure function of (st, a).
 function resolve(st, a) {
+  if (st.setup) {
+    setupAction(st, a);
+    return;
+  }
   const seat = st.t, pre = st.c.map(p => p.slice());
   const w = makeWorld(st.c, seat, a);
   runWorld(w);
   for (let i = 0; i < NP; i++) st.c[i] = w.live[i] ? [r2(w.x[i]), r2(w.y[i]), 0] : [0, 0, 1];
   const got = w.out.filter(i => i < NP), foul = w.out.indexOf(SI) >= 0;
-  const own = got.filter(i => owner(i) === seat), opp = got.filter(i => owner(i) === 1 - seat), qGot = got.indexOf(0) >= 0;
+  const group = groupOf(st, seat);
+  const own = got.filter(i => owner(st, i) === group), opp = got.filter(i => owner(st, i) !== group && i !== 0), qGot = got.indexOf(0) >= 0;
   got.forEach(i => { if (i > 0) st.po.push(i); });
-  let keep = false, back = 0;
+  if (st.mode === "points" && !foul) {
+    st.scores[scoreIndex(st, seat)] += got.filter(i => i > 0).reduce((total, id) => total + pointValue(id), 0);
+  }
+  let keep = false, back = 0, boardCompleted = false;
   const parts = [];
   if (foul) {
     parts.push("foul \u2013 striker pocketed");
     if (qGot || st.q === 1) { place(st, 0); st.q = 0; parts.push("queen back to centre"); }
-    const mine = st.po.filter(i => owner(i) === seat);
+    const mine = st.po.filter(i => owner(st, i) === group);
     if (mine.length) { place(st, mine[mine.length - 1]); back = 1; parts.push("a coin returns"); }
   } else {
     if (st.q === 1) {
-      if (own.length) { st.q = 2; keep = true; parts.push("queen covered"); }
-      else { place(st, 0); st.q = 0; parts.push("queen not covered \u2013 back to centre"); }
+      if (st.qw === group && (st.mode === "points" ? got.some(i => i > 0) : own.length)) {
+        st.q = 2; keep = true; parts.push("queen covered");
+        if (st.mode === "points") st.scores[scoreIndex(st, seat)] += 50;
+      } else {
+        place(st, 0); st.q = 0; parts.push("queen not covered \u2013 back to centre");
+      }
     } else if (qGot) {
-      st.qw = seat; keep = true;
-      if (own.length) { st.q = 2; parts.push("queen pocketed and covered"); }
+      st.qw = group; keep = true;
+      if (st.mode === "points" ? got.some(i => i > 0) : own.length) {
+        st.q = 2; parts.push("queen pocketed and covered");
+        if (st.mode === "points") st.scores[scoreIndex(st, seat)] += 50;
+      }
       else { st.q = 1; parts.push("queen pocketed \u2013 cover it"); }
     }
-    if (own.length) { keep = true; if (!qGot && parts.indexOf("queen covered") < 0) parts.push(`${own.length} coin${own.length > 1 ? "s" : ""} in`); }
-    if (opp.length) parts.push(`${opp.length} of ${who(1 - seat)}'s coin${opp.length > 1 ? "s" : ""} in`);
-  }
-  // clearing rules
-  [seat, 1 - seat].forEach(s => {
-    if (st.over || leftOf(st, s) > 0) return;
-    if (st.q === 2) { st.over = 1; st.win = s; st.msg = `${who(s)} clears the board and wins! \uD83C\uDF89`; }
-    else {
-      const last = st.po.filter(i => owner(i) === s).pop();
-      if (last !== undefined) { place(st, last); parts.push("last coin returns \u2013 queen first"); if (s === seat) keep = false; }
+    if (own.length || (st.mode === "points" && got.some(i => i > 0))) {
+      keep = true;
+      const coinCount = got.filter(i => i > 0).length;
+      if (!qGot && parts.indexOf("queen covered") < 0) parts.push(`${coinCount} coin${coinCount > 1 ? "s" : ""} in`);
     }
-  });
-  st.n++;
-  if (!st.over && st.n >= MAXTURNS) {
-    const a0 = leftOf(st, 0), a1 = leftOf(st, 1);
-    st.over = 1; st.win = a0 === a1 ? -1 : a0 < a1 ? 0 : 1;
-    st.msg = st.win < 0 ? "Draw \u2013 turn limit reached" : `${who(st.win)} wins on coins pocketed! \uD83C\uDF89`;
+    if (opp.length) parts.push(`${opp.length} opponent coin${opp.length > 1 ? "s" : ""} in`);
   }
-  if (!st.over && !keep) st.t = 1 - seat;
-  st.ev = `${who(seat)}: ${parts.length ? parts.join(", ") : "no coin pocketed"}`;
+  if (st.mode === "points") {
+    if (st.q === 2 && st.c.slice(1).every(coin => coin[2])) boardCompleted = resetPointBoard(st);
+  } else {
+    competitors(st).forEach(s => {
+      if (st.over || (st.placements || []).includes(s) || leftOf(st, s) > 0) return;
+      if (st.q === 2) {
+        finishClearGame(st, s);
+        if (!st.teamMode && st.mode !== "classic" && s === seat) keep = false;
+      }
+      else {
+        const last = st.po.filter(i => owner(st, i) === s).pop();
+        if (last !== undefined) { place(st, last); parts.push("last coin returns \u2013 queen first"); if (s === group) keep = false; }
+      }
+    });
+  }
+  st.n++;
+  const turnLimit = st.mode === "points" ? MAXTURNS * 8 : MAXTURNS;
+  if (!st.over && st.n >= turnLimit) {
+    if (st.mode === "points") {
+      finishPointGame(st);
+    } else if (!st.teamMode) {
+      const ranked = competitors(st).sort((a, b) => leftOf(st, a) - leftOf(st, b));
+      st.placements = ranked.slice(0, -1);
+      st.loser = ranked[ranked.length - 1];
+      st.win = st.placements[0];
+      st.over = 1;
+      st.msg = who(st.win) + " wins on coins pocketed. " + st.placements.map((player, index) =>
+        (index + 1) + (index === 0 ? "st" : index === 1 ? "nd" : "rd") + ": " + who(player)
+      ).join(" · ") + " · Lost: " + who(st.loser);
+    } else {
+      const a0 = leftOf(st, 0), a1 = leftOf(st, 1);
+      st.over = 1; st.win = a0 === a1 ? -1 : st.teams.indexOf(a0 < a1 ? 0 : 1);
+      st.msg = st.win < 0 ? "Draw – turn limit reached" : competitorName(st, st.teams[st.win]) + " wins on coins pocketed!";
+    }
+  }
+  if (!st.over && !keep && !boardCompleted) advanceTurn(st, seat);
+  if (!boardCompleted) st.ev = `${who(seat)}: ${parts.length ? parts.join(", ") : "no coin pocketed"}`;
   st.last = { pre, a: { x: a.x, dx: a.dx, dy: a.dy, p: a.p }, seat, out: w.out.slice(), foul: foul ? 1 : 0 };
   void back;
 }
@@ -213,7 +393,7 @@ function resolve(st, a) {
 /* bot (local play only — returns a normal action)                     */
 /* ------------------------------------------------------------------ */
 function botShot(st) {
-  const seat = st.t, by = BY[seat], dirY = seat ? 1 : -1;
+  const seat = st.t, by = BY[sideFor(seat)], dirY = sideFor(seat) ? 1 : -1;
   const ownIn = s => coinsOf(st, s).filter(i => st.c[i][2]).length;
   const base = { own: ownIn(seat), opp: ownIn(1 - seat) };
   const evalShot = a => {
@@ -228,7 +408,7 @@ function botShot(st) {
     return s + Math.random() * 0.5;
   };
   let targets = [];
-  for (let i = 1; i < NP; i++) if (owner(i) === seat && !st.c[i][2]) targets.push(i);
+  for (let i = 1; i < NP; i++) if (owner(st, i) === seat && !st.c[i][2]) targets.push(i);
   if (st.q === 0) targets.push(0);
   if (!targets.length) for (let i = 0; i < NP; i++) if (!st.c[i][2]) targets.push(i);
   const xs = [];
@@ -285,14 +465,16 @@ function botShot(st) {
 // animation there replays (fades in from opacity 0) after every shot, which shows up as a blink.
 const CSS = `
 .cr-wrap{--bw:min(94vw,640px);width:var(--bw);margin:0 auto;box-sizing:border-box;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.cr-board{position:relative;width:100%;aspect-ratio:1/1}
 .cr{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:14px;
   box-shadow:0 18px 44px rgba(40,25,10,.4);cursor:crosshair}
 .cr.nomv{cursor:default}
 .cr-logo{display:inline-block;vertical-align:middle}
 .cr-guide{stroke:#fff;stroke-linecap:round;pointer-events:none}
 .cr-fl{fill:none;stroke:#fff;stroke-width:5;animation:cr-fl .55s ease-out both;pointer-events:none}
-.cr-hud{display:flex;gap:10px;margin:10px 0 0}
-.cr-side{flex:1;min-width:0;padding:8px 10px;border-radius:12px;background:rgba(120,100,70,.14);border:2px solid transparent;
+.cr-hud{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 0}
+.cr-places{flex-basis:100%;padding:8px 10px;border-radius:10px;background:rgba(120,100,70,.1);font-size:13px;font-weight:700}
+.cr-side{flex:1 1 40%;min-width:0;padding:8px 10px;border-radius:12px;background:rgba(120,100,70,.14);border:2px solid transparent;
   display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;line-height:1.2}
 .cr-side.on{border-color:#c98a2b;background:rgba(201,138,43,.16)}
 .cr-dots{display:inline-flex;gap:3px;flex-wrap:wrap}
@@ -310,6 +492,11 @@ const CSS = `
 .cr-shoot:focus-visible,.cr-ctl input:focus-visible{outline:3px solid #111827;outline-offset:2px}
 .cr-shoot:disabled,.cr-ctl input:disabled{opacity:.45;cursor:default}
 .cr-hint{margin:6px 2px 0;font-size:12.5px;opacity:.7;text-align:center}
+.cr-setup{margin:12px 0;padding:14px;border-radius:16px;background:rgba(120,100,70,.14);text-align:center}
+.cr-setup h3{margin:0 0 5px;font-size:19px}.cr-setup p{margin:0 0 12px;font-size:14px;opacity:.75}
+.cr-setup-btns{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}
+.cr-setup-btn{min-height:44px;padding:10px 16px;border:2px solid #c98a2b;border-radius:999px;background:#fff;color:#3b2511;font:700 14px/1.2 system-ui,sans-serif;cursor:pointer}
+.cr-setup-btn:hover:not(:disabled){background:#f9e8c8}.cr-setup-btn:disabled{opacity:.5;cursor:default}
 .cr-x{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .cr-xbg{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,rgba(15,23,42,.3),rgba(15,23,42,.75));animation:cr-fade .4s ease both}
 .cr-xcv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
@@ -345,6 +532,19 @@ const ROT = "rotate(180 500 500)";          // the board is symmetric, so a 180 
 const GROT = "rotate(180 .5 .5)";           // keeps the coin highlights in the top-left once the board is turned
 
 // rot: true when the board is drawn from seat 1's side
+function playerNameOverlay(st) {
+  if (!st || st.setup) return "";
+  const seats = Array.from({ length: st.teams.length }, (_, player) => player);
+  const labels = [seats.filter(player => sideFor(player) === 1), seats.filter(player => sideFor(player) === 0)];
+  return labels.map((players, index) => {
+    if (!players.length) return "";
+    const name = players.map(player => who(player)).join(" · ");
+    const side = index === 0 ? 'top:7%' : 'bottom:7%';
+    const background = index === 0 ? "#272727" : "#7a5128";
+    return `<span class="cr-player-name" role="note" aria-label="${esc(name)}" style="position:absolute;${side};left:12%;width:76%;z-index:5;box-sizing:border-box;overflow:hidden;padding:5px 10px;border:2px solid #fff4;border-radius:999px;background:${background};color:#fff;font:800 clamp(11px,2.4vw,16px)/1.2 system-ui,sans-serif;text-align:center;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 2px 6px #0009;pointer-events:none">${esc(name)}</span>`;
+  }).join("");
+}
+
 function boardSVG(rot) {
   const gt = rot ? ` gradientTransform="${GROT}"` : "";
   const rg = (id, stops) => `<radialGradient class="cr-rg" id="${id}" cx="35%" cy="30%"${gt}>${stops}</radialGradient>`;
@@ -389,9 +589,13 @@ function piecesSVG(list, striker) {
 let aim = { x: 500, ang: 0, p: 60, n: -1 }, busy = false, animN = null, shown = null, winEl = null, stopFx = null, winTimer = 0;
 let drag = null, refocus = false, animRaf = 0;
 let view = 0, pendingView = 0;              // whose side is drawn at the bottom (0 = White, 1 = Black)
-let actSeen = [false, false], waitSeen = [false, false], seenN = 0;   // what this client has been allowed to do, per seat on turn
 
-const canMove = () => !!S && !S.over && (typeof canAct !== "function" || canAct());
+const canMove = () => !!S && !S.over && !S.setup && (typeof canAct !== "function" || canAct());
+const canSetup = () => {
+  if (!S || !S.setup) return false;
+  if (typeof ids !== "undefined" && ids.length) return typeof amHost === "function" && amHost();
+  return typeof canAct !== "function" || canAct();
+};
 const willAnim = () => animN !== null && S.n > animN && !!S.last && !reduced();
 
 /* ---- per-player view ------------------------------------------------ */
@@ -409,16 +613,10 @@ const sliderAng = () => flipped() ? -aim.ang : aim.ang;
 // mode or the local seat directly, return that here instead.
 function wantView() {
   if (!S || S.over) return view;
-  if (typeof canAct !== "function") return 0;
-  if (typeof S.n === "number") {                       // new game: forget what we learned about this client
-    if (S.n < seenN) { actSeen = [false, false]; waitSeen = [false, false]; }
-    seenN = S.n;
-  }
-  const can = canAct();
-  (can ? actSeen : waitSeen)[S.t] = true;
-  if (actSeen[0] && actSeen[1]) return 0;              // this client moves for BOTH seats = user vs user: never rotate
-  if (!can) return 1 - S.t;                            // someone else is on turn: I am the other seat
-  return S.t === 1 && !waitSeen[0] ? 0 : S.t;          // my turn as Black counts only if I have seen White move (online)
+  if (typeof ids !== "undefined" && !ids.length) return 0;
+  if (typeof seat === "number" && seat >= 0 && seat < playerCount()) return sideFor(seat);
+  if (typeof canAct === "function" && canAct()) return sideFor(S.t);
+  return 0;
 }
 
 // turns the board after a shot replay finishes (the replay itself is shown from the shooter's side)
@@ -432,13 +630,14 @@ function syncView(wrap) {
 
 function aimAction() {
   const rad = aim.ang * Math.PI / 180;       // UI only: quantised to integers, so the physics stays deterministic
-  const dx = Math.round(Math.sin(rad) * 1000), dy = Math.round(Math.cos(rad) * 1000) * (S.t === 0 ? -1 : 1);
+  const side = sideFor(S.t);
+  const dx = Math.round(Math.sin(rad) * 1000), dy = Math.round(Math.cos(rad) * 1000) * (side === 0 ? -1 : 1);
   return { x: aim.x, dx, dy, p: aim.p };
 }
 
 function aimSVG() {
   if (!canMove() || busy) return "";
-  const a = aimAction(), by = BY[S.t], len = Math.sqrt(a.dx * a.dx + a.dy * a.dy), ux = a.dx / len, uy = a.dy / len;
+  const a = aimAction(), by = BY[sideFor(S.t)], len = Math.sqrt(a.dx * a.dx + a.dy * a.dy), ux = a.dx / len, uy = a.dy / len;
   const bad = !validOn(S, a);
   const L = 70 + aim.p * 3.2;
   return `<g clip-path="url(#cr-clip)" opacity="${bad ? 0.5 : 1}">` +
@@ -448,19 +647,58 @@ function aimSVG() {
 }
 
 function hud() {
+  if (S.setup) return "";
   let h = '<div class="cr-hud">';
-  [0, 1].forEach(s => {
-    const left = leftOf(S, s), gone = 9 - left;
-    let dots = "";
-    for (let k = 0; k < 9; k++) dots += `<i class="${k < gone ? "x" : s === 0 ? "w" : "b"}"></i>`;
-    const q = S.q === 2 && S.qw === s ? '<span class="cr-q" title="Queen covered">\u265B</span>' : S.q === 1 && S.qw === s ? '<span class="cr-q pend" title="Cover the queen">\u265B?</span>' : "";
-    h += `<div class="cr-side${S.t === s && !S.over ? " on" : ""}" role="group" aria-label="${esc(who(s))}: ${gone} of 9 coins pocketed${S.q === 2 && S.qw === s ? ", queen covered" : ""}">` +
-      `<b>${esc(who(s))}</b><span class="cr-dots" aria-hidden="true">${dots}</span>${q}</div>`;
+  if (S.placements && S.placements.length) {
+    const standings = S.placements.map((player, index) =>
+      (index + 1) + (index === 0 ? "st" : index === 1 ? "nd" : index === 2 ? "rd" : "th") +
+      ": " + competitorName(S, player)
+    );
+    if (Number.isInteger(S.loser)) standings.push("Lost: " + competitorName(S, S.loser));
+    h += `<div class="cr-places" role="status">${standings.map(esc).join(" · ")}</div>`;
+  }
+  competitors(S).forEach(group => {
+    const active = S.teamMode ? groupOf(S, S.t) === group : S.t === group;
+    const q = S.q === 2 && S.qw === group ? '<span class="cr-q" title="Queen covered">\u265B</span>' :
+      S.q === 1 && S.qw === group ? '<span class="cr-q pend" title="Cover the queen">\u265B?</span>' : "";
+    const detail = S.mode === "points"
+      ? `<span>${S.scores[group]} points</span><small>Board ${Math.min(S.boards + 1, 8)} of 8</small>`
+      : `<span>${leftOf(S, group)} coins left</span>`;
+    const accessibleDetail = S.mode === "points"
+      ? `${S.scores[group]} points, board ${Math.min(S.boards + 1, 8)} of 8`
+      : `${leftOf(S, group)} coins left`;
+    h += `<div class="cr-side${active && !S.over ? " on" : ""}" role="group" aria-label="${esc(competitorName(S, group))}: ${accessibleDetail}${S.q === 2 && S.qw === group ? ", queen covered" : ""}">` +
+      `<b>${esc(competitorName(S, group))}</b>${detail}${q}</div>`;
   });
   return h + "</div>";
 }
 
 function fmtOut(id, text) { return `<output id="${id}">${text}</output>`; }
+
+function setupButton(action, label, disabled) {
+  return `<button type="button" class="cr-setup-btn" data-cr-setup="${esc(JSON.stringify(action))}"${disabled ? " disabled" : ""}>${esc(label)}</button>`;
+}
+
+function setupHtml() {
+  const can = canSetup(), waiting = "<p>Waiting for the host to choose\u2026</p>";
+  let title = "", buttons = "";
+  if (S.setup === "mode") {
+    title = "Choose a Carrom game";
+    buttons = setupButton({ gameMode: "points" }, "Point Game · 8 boards", !can) +
+      setupButton({ gameMode: "clear" }, "Clear-the-board Game", !can);
+  } else if (S.setup === "style") {
+    title = "Choose how to play";
+    buttons = setupButton({ playStyle: "individual" }, "Individual", !can) +
+      setupButton({ playStyle: "team" }, "Teams · 2 vs 2", !can);
+  } else if (S.setup === "partner") {
+    title = "Choose your team partner";
+    for (let player = 1; player < playerCount(); player++) {
+      buttons += setupButton({ partner: player }, who(player), !can);
+    }
+  }
+  return `<div class="cr-setup" role="group" aria-label="Carrom game setup"><h3>${title}</h3>` +
+    (can ? "" : waiting) + `<div class="cr-setup-btns">${buttons}</div></div>`;
+}
 
 function updateAim(wrap) {
   if (!wrap) return;
@@ -506,6 +744,14 @@ const live = () => typeof S !== "undefined" && S && S.c && S.last !== undefined;
 
 document.addEventListener("click", e => {
   if (!live() || !e.target.closest) return;
+  const setup = e.target.closest(".cr-setup-btn");
+  if (setup && canSetup()) {
+    let action;
+    try { action = JSON.parse(setup.dataset.crSetup); }
+    catch (error) { console.error("[carrom] Invalid setup choice.", error); return; }
+    if (validOn(S, action)) act(action);
+    return;
+  }
   const b = e.target.closest(".cr-shoot");
   if (!b) return;
   refocus = e.detail === 0;
@@ -529,7 +775,7 @@ function boardPt(e, svg) {
 }
 
 function aimFromPointer(px, py) {
-  const sx = aim.x, sy = BY[S.t], vx = sx - px, vy = sy - py, fwd = S.t === 0 ? -vy : vy;
+  const side = sideFor(S.t), sx = aim.x, sy = BY[side], vx = sx - px, vy = sy - py, fwd = side === 0 ? -vy : vy;
   const len = Math.sqrt(vx * vx + vy * vy);
   if (len < 8) return { len, fwd };
   let ang = Math.atan2(vx, fwd) * 180 / Math.PI;
@@ -544,7 +790,7 @@ document.addEventListener("pointerdown", e => {
   const svg = e.target.closest(".cr");
   if (!svg || !canMove() || busy) return;
   e.preventDefault();
-  const [px, py] = boardPt(e, svg), dx = px - aim.x, dy = py - BY[S.t];
+  const [px, py] = boardPt(e, svg), dx = px - aim.x, dy = py - BY[sideFor(S.t)];
   drag = { svg, mode: dx * dx + dy * dy < 60 * 60 ? "move" : "aim", len: 0, fwd: 0 };
   try { svg.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
   if (drag.mode === "aim") { const r = aimFromPointer(px, py); drag.len = r.len; drag.fwd = r.fwd; updateAim(svg.closest(".cr-wrap")); }
@@ -708,7 +954,8 @@ function maybeBanner() {
   shown = key;
   const w = S.win, sub = String(S.msg || "").replace(/[^\x20-\u024F\u2014\u2013]/g, "").trim();
   clearTimeout(winTimer);
-  winTimer = setTimeout(() => { if (S.over && shown === key) celebrate(w, w < 0 ? "Draw" : `${who(w)} wins!`, sub); }, reduced() ? 0 : 500);
+  const winner = w < 0 ? "Draw" : S.teamMode ? competitorName(S, groupOf(S, w)) + " wins!" : `${who(w)} wins!`;
+  winTimer = setTimeout(() => { if (S.over && shown === key) celebrate(w, winner, sub); }, reduced() ? 0 : 500);
 }
 
 /* ------------------------------------------------------------------ */
@@ -816,11 +1063,20 @@ if (typeof document !== "undefined") {
 /* game definition                                                     */
 /* ------------------------------------------------------------------ */
 const game = {
-  id: "carrom", i: LOGO_MARK, t: "Carrom", max: 2, cat: "classic strategy", tag: "Flick & pocket", diff: "Easy to learn", art: "art-carrom",
-  d: "Flick the striker, pocket your coins, cover the queen and clear the board first. Drag back to aim and release to shoot.",
-  get n() { return NMS; },
+  id: "carrom", i: LOGO_MARK, t: "Carrom", min: 2, max: 4, hostSetup: true, cat: "classic strategy", tag: "Flick & pocket", diff: "Easy to learn", art: "art-carrom",
+  d: "Choose Point Game or Clear-the-board for 3–4 players. In Point Game, pocket coins to score across eight boards.",
+  get n() { return Array.from({ length: playerCount() }, (_, player) => who(player)); },
   valid: a => validOn(S, a),
-  init: () => ({ c: startCoins(), t: 0, n: 0, q: 0, qw: -1, po: [], last: null, ev: "", over: 0, win: -1, msg: "" }),
+  init() {
+    const count = playerCount();
+    return {
+      c: startCoins(), t: 0, n: 0, q: 0, qw: -1, po: [], last: null, ev: "",
+      over: 0, win: -1, msg: "", setup: count > 2 ? "mode" : "",
+      mode: count > 2 ? "" : "classic", style: "individual", teamMode: 0,
+      teams: Array.from({ length: count }, (_, player) => player), owners: null,
+      scores: [], boards: 0, placements: []
+    };
+  },
   apply(a) {
     if (!validOn(S, a)) return;
     resolve(S, a);
@@ -834,25 +1090,31 @@ const game = {
     if (anim) pendingView = want; else view = pendingView = want;
     const rot = flipped();
     const list = anim ? S.last.pre : S.c;
-    const striker = anim ? { x: S.last.a.x, y: BY[S.last.seat] } : null;
-    let h = '<div class="cr-wrap">' +
+    const striker = anim ? { x: S.last.a.x, y: BY[sideFor(S.last.seat)] } : null;
+    let h = '<div class="cr-wrap"><div class="cr-board">' +
       '<svg class="cr' + (can ? "" : " nomv") + '" viewBox="-60 -60 1120 1120" role="img" aria-label="Carrom board. Drag back from the board to aim and release to shoot, or use the sliders below.">' +
       '<g id="cr-view"' + (rot ? ` transform="${ROT}"` : "") + '>' +
-      boardSVG(rot) + '<g id="cr-pieces">' + piecesSVG(list, striker) + '</g><g id="cr-aim"></g><g id="cr-fx"></g></g></svg>' + hud();
+      boardSVG(rot) + '<g id="cr-pieces">' + piecesSVG(list, striker) + '</g><g id="cr-aim"></g><g id="cr-fx"></g></g></svg>' +
+      playerNameOverlay(S) + '</div>' + hud();
     const dis = can ? "" : " disabled";
-    h += '<div class="cr-ctl" role="group" aria-label="Shot controls">' +
-      `<label>Striker<input type="range" data-k="x" min="${XMIN}" max="${XMAX}" step="1" value="${sliderX()}"${dis}>${fmtOut("cr-o-x", sliderX())}</label>` +
-      `<label>Angle<input type="range" data-k="ang" min="-80" max="80" step="1" value="${sliderAng()}"${dis}>${fmtOut("cr-o-ang", sliderAng() + "\u00B0")}</label>` +
-      `<label>Power<input type="range" data-k="p" min="1" max="100" step="1" value="${aim.p}"${dis}>${fmtOut("cr-o-p", aim.p)}</label>` +
-      `<button type="button" class="cr-shoot"${dis}>Shoot</button></div>` +
-      '<p class="cr-hint">Drag near the striker to slide it \u00B7 drag back anywhere to aim, release to shoot</p></div>';
-    const status = S.over ? S.msg
-      : `${who(S.t)} to shoot${S.q === 1 && S.qw === S.t ? " \u2013 cover the queen!" : ""}${S.ev ? " \u2014 " + S.ev : ""}`;
+    if (S.setup) h += setupHtml();
+    else {
+      h += '<div class="cr-ctl" role="group" aria-label="Shot controls">' +
+        `<label>Striker<input type="range" data-k="x" min="${XMIN}" max="${XMAX}" step="1" value="${sliderX()}"${dis}>${fmtOut("cr-o-x", sliderX())}</label>` +
+        `<label>Angle<input type="range" data-k="ang" min="-80" max="80" step="1" value="${sliderAng()}"${dis}>${fmtOut("cr-o-ang", sliderAng() + "\u00B0")}</label>` +
+        `<label>Power<input type="range" data-k="p" min="1" max="100" step="1" value="${aim.p}"${dis}>${fmtOut("cr-o-p", aim.p)}</label>` +
+        `<button type="button" class="cr-shoot"${dis}>Shoot</button></div>` +
+        '<p class="cr-hint">Drag near the striker to slide it \u00B7 drag back anywhere to aim, release to shoot</p>';
+    }
+    h += "</div>";
+    const status = S.over ? S.msg : S.setup
+      ? (canSetup() ? "Choose the Carrom match settings." : "Waiting for the host to choose the Carrom match settings.")
+      : `${who(S.t)} to shoot${S.q === 1 && S.qw === groupOf(S, S.t) ? " \u2013 cover the queen!" : ""}${S.ev ? " \u2014 " + S.ev : ""}`;
     return [h, status];
   },
   click() { /* input is handled by the delegated listeners above (board is SVG; controls are native inputs) */ }
 };
 
 if (typeof registerGame === "function") registerGame(game);
-if (typeof __CARROM_TEST !== "undefined") globalThis.__carromCore = { resolve, makeWorld, stepWorld, runWorld, validOn, startCoins, game, botShot };
+if (typeof __CARROM_TEST !== "undefined") globalThis.__carromCore = { resolve, makeWorld, stepWorld, runWorld, validOn, startCoins, game, botShot, owner, assignOwners, finishPointGame };
 })();

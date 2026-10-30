@@ -55,15 +55,53 @@ function mediaTile(C){
  return tile
 }
 function makeMediaTileInteractive(tile,bar,resize){
+ const pointers=new Map();
  let gesture=null;
- const begin=(event,mode)=>{if(event.button!==undefined&&event.button!==0)return;event.preventDefault();event.stopPropagation();const rect=tile.getBoundingClientRect();gesture={mode,x:event.clientX,y:event.clientY,left:rect.left,top:rect.top,width:rect.width,height:rect.height};window.addEventListener('pointermove',move);window.addEventListener('pointerup',end,{once:true});window.addEventListener('pointercancel',end,{once:true})};
- bar.addEventListener('pointerdown',event=>{if(event.target.closest('button'))return;begin(event,'drag')});
- resize.addEventListener('pointerdown',event=>begin(event,'resize'));
- const move=event=>{if(!gesture)return;const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
-  if(gesture.mode==='drag'){const x=Math.max(0,Math.min(window.innerWidth-tile.offsetWidth,gesture.left+dx)),y=Math.max(0,Math.min(window.innerHeight-tile.offsetHeight,gesture.top+dy));tile.style.left=x+'px';tile.style.top=y+'px'}
-  else{tile.style.width=Math.max(160,Math.min(window.innerWidth-16,gesture.width+dx))+'px';tile.style.height=Math.max(120,Math.min(window.innerHeight-16,gesture.height+dy))+'px'}
+ const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+ const edgeAt=(event,rect)=>{const edge=16;return{
+  left:event.clientX-rect.left<=edge,right:rect.right-event.clientX<=edge,
+  top:event.clientY-rect.top<=edge,bottom:rect.bottom-event.clientY<=edge
+ }};
+ const beginPinch=()=>{const entries=[...pointers.values()];if(entries.length<2)return;const rect=tile.getBoundingClientRect(),a=entries[0],b=entries[1];
+  gesture={mode:'pinch',distance:Math.max(1,Math.hypot(b.x-a.x,b.y-a.y)),width:rect.width,height:rect.height,left:rect.left,top:rect.top,
+   centerX:(a.x+b.x)/2,centerY:(a.y+b.y)/2}};
+ const move=event=>{if(!pointers.has(event.pointerId))return;pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
+  if(pointers.size>=2){if(!gesture||gesture.mode!=='pinch')beginPinch();const entries=[...pointers.values()],a=entries[0],b=entries[1],distance=Math.max(1,Math.hypot(b.x-a.x,b.y-a.y)),scale=distance/gesture.distance;
+   const width=clamp(gesture.width*scale,Math.min(160,window.innerWidth-16),window.innerWidth-16),height=clamp(gesture.height*scale,Math.min(120,window.innerHeight-16),window.innerHeight-16);
+   const centerX=(a.x+b.x)/2,centerY=(a.y+b.y)/2;
+   tile.style.width=width+'px';tile.style.height=height+'px';
+   tile.style.left=clamp(gesture.left+gesture.centerX-centerX,0,window.innerWidth-width)+'px';
+   tile.style.top=clamp(gesture.top+gesture.centerY-centerY,0,window.innerHeight-height)+'px';
+   return
+  }
+  if(!gesture)return;const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
+  if(gesture.mode==='drag'){tile.style.left=clamp(gesture.left+dx,0,window.innerWidth-tile.offsetWidth)+'px';tile.style.top=clamp(gesture.top+dy,0,window.innerHeight-tile.offsetHeight)+'px';return}
+  let left=gesture.left,top=gesture.top,width=gesture.width,height=gesture.height;
+  if(gesture.edges.left){width-=dx;left+=dx}else if(gesture.edges.right)width+=dx;
+  if(gesture.edges.top){height-=dy;top+=dy}else if(gesture.edges.bottom)height+=dy;
+  width=clamp(width,Math.min(160,window.innerWidth-16),window.innerWidth-16);height=clamp(height,Math.min(120,window.innerHeight-16),window.innerHeight-16);
+  if(gesture.edges.left)left=gesture.left+gesture.width-width;
+  if(gesture.edges.top)top=gesture.top+gesture.height-height;
+  left=clamp(left,0,window.innerWidth-width);top=clamp(top,0,window.innerHeight-height);
+  tile.style.left=left+'px';tile.style.top=top+'px';tile.style.width=width+'px';tile.style.height=height+'px';
  };
- const end=()=>{gesture=null;window.removeEventListener('pointermove',move);window.removeEventListener('pointercancel',end)};
+ const end=event=>{pointers.delete(event.pointerId);if(!pointers.size){gesture=null;window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',end);window.removeEventListener('pointercancel',end)}
+  else if(pointers.size===1){const remaining=[...pointers.values()][0],rect=tile.getBoundingClientRect();gesture={mode:'drag',x:remaining.x,y:remaining.y,left:rect.left,top:rect.top}}
+ };
+ tile.addEventListener('pointerdown',event=>{
+  if(event.button!==undefined&&event.button!==0||event.target.closest('button'))return;
+  event.preventDefault();event.stopPropagation();const rect=tile.getBoundingClientRect();pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
+  if(pointers.size>=2)beginPinch();
+  else{const edges=edgeAt(event,rect),resizing=edges.left||edges.right||edges.top||edges.bottom;
+   gesture=resizing?{mode:'resize',edges,x:event.clientX,y:event.clientY,left:rect.left,top:rect.top,width:rect.width,height:rect.height}:
+    {mode:'drag',x:event.clientX,y:event.clientY,left:rect.left,top:rect.top}}
+  try{tile.setPointerCapture(event.pointerId)}catch(error){void error}
+  window.addEventListener('pointermove',move);window.addEventListener('pointerup',end);window.addEventListener('pointercancel',end);
+ });
+ tile.addEventListener('pointermove',event=>{if(pointers.size)return;const edges=edgeAt(event,tile.getBoundingClientRect()),horizontal=edges.left||edges.right,vertical=edges.top||edges.bottom;
+  tile.style.cursor=horizontal&&vertical?(edges.left===edges.top?'nwse-resize':'nesw-resize'):horizontal?'ew-resize':vertical?'ns-resize':'move'});
+ if(bar)bar.style.cursor='move';
+ if(resize){resize.setAttribute('aria-label','Resize video tile from any edge or pinch with two fingers');resize.setAttribute('aria-orientation','both');resize.style.pointerEvents='none'}
 }
 function updateMediaTileHostState(C){if(!C.tile)return;const host=C.seat===hostSeat();C.tile.classList.toggle('media-host',host);C.mediaTitle.firstChild.textContent=host?peerName(C)+' · Host':peerName(C);C.tile.setAttribute('aria-label',host?peerName(C)+' host media':peerName(C)+' media')}
 function updateMediaTilePermissions(){peers().forEach(updateMediaTileHostState)}
@@ -181,7 +219,7 @@ function lobbyUp(){ensureAttendance();const attendees=currentAttendees(),m=atten
  $('guestChoice').textContent=game?'Host selected '+game.t+' · '+activeLimit+' players will play; others can spectate.':'Waiting for the host to choose a game.';
  $('stt').disabled=!readyToStart||!allAssigned;$('stt').textContent=!allAssigned?'Assign exactly '+activeLimit+' players to start':readyToStart?'Start game · '+activeLimit+' players':total<activeLimit?'Waiting for '+activeLimit+' players…':'Connecting players…';
  $('cp').classList.toggle('hide',!peers().length);updateGameControls()}
-async function startNet(){const everyone=currentAttendees(),total=everyone.length;
+async function startNet(){if(!amHost())return;const everyone=currentAttendees(),total=everyone.length;
  if(total<activeLimit)return alert('Wait until at least '+activeLimit+' attendees have joined.');
  const players=everyone.filter(A=>(roomAttendance.roles[A.key]||'viewer')==='player').sort((a,b)=>a.seat-b.seat);
  if(players.length!==activeLimit)return alert('Assign exactly '+activeLimit+' attendees as players before starting.');
@@ -195,7 +233,7 @@ function updateGameControls(){const gameActive=!$('gm').classList.contains('hide
  const saved=online&&typeof readLastRoom==='function'?readLastRoom():null,disconnected=online&&!hasPeers;
  $('reconnect').classList.toggle('hide',!(disconnected&&saved&&!saved.host&&saved.code===room.code));
  $('chg').classList.toggle('hide',!online||!amHost());$('topMenu').classList.toggle('hide',!callAvailable);
- $('panelLeave').classList.toggle('hide',!callAvailable);$('panelRestart').classList.toggle('hide',!online);
+ $('panelLeave').classList.toggle('hide',!callAvailable);$('panelRestart').classList.toggle('hide',!online||!amHost());
  $('lb').classList.toggle('hide',inLobby);$('rx').classList.toggle('hide',gameActive&&!online);$('bk').classList.toggle('hide',!gameActive||online);$('rs').classList.toggle('hide',!gameActive||online);
  $('topMic').classList.toggle('hide',!callAvailable);$('topVideo').classList.toggle('hide',!callAvailable);
  $('cp').classList.toggle('hide',!hasPeers);
@@ -218,7 +256,7 @@ $('stt').onclick=startNet;$('lb').onclick=$('nb').onclick=closeRoom;
 $('createLobbyFromJoin').onclick=createLobby;
 $('gameChoice').onchange=()=>{if(!amHost())return;pick=$('gameChoice').value;setLobbyPlayerLimit(Math.min(activeLimit,GAMES[pick]?.max||2));bcast({k:'config',g:pick,limit:activeLimit})};
 $('playerCount').onchange=()=>{if(!amHost())return;setLobbyPlayerLimit(+$('playerCount').value||2);bcast({k:'config',g:pick,limit:activeLimit})};
-$('chg').onclick=()=>{if(!amHost())return;const g=pick,limit=activeLimit;bcast({k:'lobby',g,limit});resetToLobby(g,limit)};
+$('chg').onclick=()=>{if(!amHost())return;void startNet()};
 $('gameChoice').addEventListener('focus',updateLobbyControls);
 $('playerCount').addEventListener('focus',updateLobbyControls);
 $('hc').onclick=async()=>{try{await inv.pc.setRemoteDescription(dec($('ar').value))}catch{alert('That code is not valid')}};

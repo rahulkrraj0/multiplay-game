@@ -45,6 +45,9 @@ const NAMES = ["Yellow", "Black", "Red", "Blue"];
 const playerCount = () => (typeof np === "number" ? Math.max(2, Math.min(4, np)) : 2);   // same host variable as ludo.js
 const computerGame = () => typeof isLocalComputerGame === "function" && isLocalComputerGame();
 const rollSides = () => S && S.sixes >= 2 ? 5 : 6;
+const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+})[character]);
 const DICE_MS = 520, HOP_MS = 170;
 const reduced = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
@@ -184,6 +187,7 @@ const CSS = `
 .snl-die i{width:78%;height:78%;place-self:center;border-radius:50%;background:#1f2937;opacity:0}
 ${pipCss}
 .snl-die[data-v="0"]::after{content:"?";position:absolute;inset:0;display:grid;place-items:center;font:900 30px/1 system-ui,sans-serif;color:#9ca3af}
+.snl-rankings{align-self:stretch;width:min(100%,var(--bs));margin:0;padding:12px 20px 12px 42px;border:1px solid rgba(255,255,255,.25);border-radius:14px;background:rgba(15,23,42,.78);color:#fff;font:700 14px/1.7 system-ui,sans-serif}
 .snl .snl-roll{all:unset;display:inline-block;box-sizing:border-box;cursor:pointer;padding:15px 28px;border-radius:999px;
   background:linear-gradient(180deg,#ff7a45,#e5481a);color:#fff;font:800 17px/1 system-ui,sans-serif;text-align:center;
   box-shadow:0 8px 18px rgba(200,60,20,.45),inset 0 -3px 0 rgba(0,0,0,.2);transition:transform .15s,box-shadow .15s}
@@ -198,6 +202,7 @@ ${pipCss}
   .snl-frame{grid-column:1;grid-row:1}
   .snl-bar{grid-column:2;grid-row:1;width:auto;max-width:100%;align-items:stretch}
   .snl-act{flex-direction:column}
+  .snl-rankings{grid-column:1/-1;justify-self:center}
 }
 /* small phones */
 @media (max-width:480px){
@@ -266,7 +271,10 @@ function banner(w) {
   el.innerHTML = '<div class="snlx-bg"></div><div class="snlx-cf"></div><div class="snlx-card"><div class="snlx-ic" aria-hidden="true">\uD83C\uDFC6</div>' +
     '<h2 class="snlx-t"></h2><p class="snlx-s"></p><button type="button" class="snlx-b">Close</button></div>';
   el.querySelector(".snlx-t").textContent = nm(w) + " wins!";
-  el.querySelector(".snlx-s").textContent = (S.k || 1) > 1 ? "Got every token to square 100 first." : "Reached square 100 first.";
+  el.querySelector(".snlx-s").textContent = (S.placements || []).map((player, index) =>
+    (index + 1) + ordinalSuffix(index + 1) + ": " + nm(player)
+  ).concat(S.loser === undefined ? [] : ["Lost: " + nm(S.loser)]).join(" · ") ||
+    ((S.k || 1) > 1 ? "Got every token to square 100 first." : "Reached square 100 first.");
   el.querySelector(".snlx-b").addEventListener("click", () => closeBanner());
   el.querySelector(".snlx-bg").addEventListener("click", () => closeBanner());
   if (!reduced()) {
@@ -460,11 +468,34 @@ function distinct(p, list) {
   return out;
 }
 
+function ordinalSuffix(position) {
+  if (position % 100 >= 11 && position % 100 <= 13) return "th";
+  return position % 10 === 1 ? "st" : position % 10 === 2 ? "nd" : position % 10 === 3 ? "rd" : "th";
+}
+
+function advanceActiveTurn(player) {
+  for (let offset = 1; offset <= S.p.length; offset += 1) {
+    const next = (player + offset) % S.p.length;
+    if (!(S.placements || []).includes(next)) {
+      S.t = next;
+      return;
+    }
+  }
+}
+
+function finishPlacements() {
+  const places = (S.placements || []).map((player, index) =>
+    (index + 1) + ordinalSuffix(index + 1) + ": " + nm(player)
+  );
+  if (S.loser !== undefined) places.push("Lost: " + nm(S.loser));
+  return places.join(" · ");
+}
+
 /* a 6 or a 1 gives the same player another roll; otherwise the turn passes on */
 function endTurn(r, log) {
   const again = (SIX_ROLLS_AGAIN && r === 6) || (ONE_ROLLS_AGAIN && r === 1);
   S.sixes = r === 6 ? (S.sixes || 0) + 1 : 0;
-  if (again) log += " \u2014 rolls again"; else S.t = (S.t + 1) % S.p.length;
+  if (again) log += " \u2014 rolls again"; else advanceActiveTurn(S.t);
   S.log = log;
 }
 
@@ -492,9 +523,25 @@ function doMove(t, j, r, pick) {
   if (cap.length) log += " \u2014 cut " + Array.from(new Set(cap.map(c => nm(c.p)))).join(" & ") + "'s token" + (cap.length > 1 ? "s" : "") + " back to start";
 
   if (S.p[t].every(q => q === 100)) {
-    S.over = 1; S.win = t; S.log = log;
-    S.msg = nm(t) + (k > 1 ? " gets every token to 100 and wins! " : " reaches 100 and wins! ") + "\uD83C\uDF89";
-    nextFirst = ((S.first || 0) + 1) % S.p.length;
+    if (S.p.length < 3) {
+      S.over = 1; S.win = t; S.log = log;
+      S.msg = nm(t) + (k > 1 ? " gets every token to 100 and wins! " : " reaches 100 and wins! ") + "\uD83C\uDF89";
+      nextFirst = ((S.first || 0) + 1) % S.p.length;
+      return;
+    }
+    S.placements = (S.placements || []).concat(t);
+    S.log = nm(t) + " finished " + S.placements.length + ordinalSuffix(S.placements.length) + ".";
+    if (S.placements.length >= S.p.length - 1) {
+      S.loser = S.p.findIndex((_, player) => !S.placements.includes(player));
+      S.over = 1;
+      S.win = S.placements[0];
+      S.msg = finishPlacements();
+      nextFirst = ((S.first || 0) + 1) % S.p.length;
+    } else {
+      S.log += " The game continues.";
+      S.sixes = 0;
+      advanceActiveTurn(t);
+    }
     return;
   }
   endTurn(r, log);
@@ -505,6 +552,7 @@ let nextFirst = 0;       // who rolls first in the next game; flips after every 
 const core = {
   valid(a) {
     if (!a || S.over) return false;
+    if ((S.placements || []).includes(S.t)) return false;
     if (S.setup) return a.r === undefined && Number.isInteger(a.k) && a.k >= 1 && a.k <= 4;
     if (a.r !== undefined) return Number.isInteger(a.r) && a.r >= 1 && a.r <= rollSides() && !S.pend;
     return !!S.pend && Number.isInteger(a.token) && legalTokens(S.t, S.pend).indexOf(a.token) >= 0;
@@ -596,10 +644,13 @@ const core = {
     const where = q => q === 0 ? "start" : q === 100 ? "home" : "#" + q;
     const die = '<div class="snl-die" data-v="' + (S.die || 0) + '" role="img" aria-label="' + (S.die ? "Dice shows " + S.die : "Dice") + '">' + "<i></i>".repeat(9) + "</div>";
     const label = S.over ? "Game over" : S.setup ? "Choose tokens" : !can ? "Waiting for " + nm(S.t) + "\u2026" : S.pend ? "Choose a token" : "Roll the dice";
-    const h = '<div class="snl"><div class="snl-frame"><div class="snl-in" role="img" aria-label="Snakes and ladders board. ' + S.p.map((toks, i) => nm(i) + " has " + toks.map(where).join(", ")).join("; ") + '.">' +
+    const h = '<div class="snl"><div class="snl-frame"><div class="snl-in" role="img" aria-label="Snakes and ladders board. ' + escapeHtml(S.p.map((toks, i) => nm(i) + " has " + toks.map(where).join(", ")).join("; ")) + '.">' +
       '<div class="snl-grid">' + CELLS + '</div><svg class="snl-art" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + ART + '</svg><div class="snl-nums" aria-hidden="true">' + NUMS + "</div>" + tokens + setupHtml + "</div></div>" +
       '<div class="snl-bar"><div class="snl-act">' + die +
-      '<button type="button" class="snl-roll" data-i="roll"' + (can && !S.pend && !S.setup ? "" : " disabled") + ">" + label + "</button></div></div></div>";
+      '<button type="button" class="snl-roll" data-i="roll"' + (can && !S.pend && !S.setup ? "" : " disabled") + ">" + label + "</button></div></div>" +
+      ((S.placements || []).length ? '<ol class="snl-rankings" aria-label="Player placements">' +
+        S.placements.map((player, index) => "<li>" + (index + 1) + ordinalSuffix(index + 1) + " — " + escapeHtml(nm(player)) + "</li>").join("") +
+        (S.loser === undefined ? "" : "<li>Lost — " + escapeHtml(nm(S.loser)) + "</li>") + "</ol>" : "") + "</div>";
     if (S.setup) return [h, "Choose how many tokens each player gets"];
     return [h, S.over ? S.msg : (S.log ? S.log + " \u00B7 " : "") + nm(S.t) + (S.pend ? " to choose a token" : " to roll")];
   },
@@ -620,7 +671,7 @@ const GAME = Object.assign({}, core, {
   n: NAMES, min: 2, max: 4,
   init: () => {
     const count = playerCount(), first = computerGame() ? 0 : nextFirst % count;
-    return { p: Array.from({ length: count }, () => [0]), k: 1, setup: 1, t: first, first, n: 0, over: 0, die: 0, sixes: 0, pend: 0, mv: null, log: "Choose how many tokens each player gets" };
+    return { p: Array.from({ length: count }, () => [0]), k: 1, setup: 1, t: first, first, n: 0, over: 0, die: 0, sixes: 0, placements: [], pend: 0, mv: null, log: "Choose how many tokens each player gets" };
   }
 });
 const GAMES = [GAME];

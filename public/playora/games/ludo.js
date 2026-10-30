@@ -1,3 +1,4 @@
+/* global S, np, isLocalComputerGame, nm, ids, canAct, act, registerGame */
 /*
  * Ludo UI v2 + corrected rules  (ONE merged game, set up inside the game)
  *
@@ -140,6 +141,9 @@
 
       /* decoration layer: yards + centre */
       ".lui-deco{position:absolute;inset:0;z-index:1;pointer-events:none}",
+      ".lui-player-name{position:absolute;z-index:2;max-width:38%;overflow:hidden;padding:3px 7px;border:1px solid rgba(255,255,255,.85);",
+      "  border-radius:999px;background:rgba(15,23,42,.78);color:#fff;font-size:clamp(8px,calc(var(--lui-cell)*.38),13px);",
+      "  font-weight:800;line-height:1.15;text-align:center;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 1px 4px #0005}",
       ".lui-yard{position:absolute;width:40%;height:40%}",
       ".lui-yard-in{position:absolute;inset:15.5%;background:#fff;border-radius:9%;",
       "  box-shadow:0 0 0 calc(var(--lui-cell)*.12) var(--l),inset 0 2px 8px rgba(0,0,0,.12)}",
@@ -323,6 +327,32 @@
       '<polygon points="3,0 3,3 1.5,1.5"/><polygon points="0,3 3,3 1.5,1.5"/></g></svg></div>';
     d.innerHTML = h;
     return d;
+  }
+
+  function playerNamesHtml() {
+    if (!S || !S.p || !S.cols || S.setup) return "";
+    var positions = [
+      { left: "2%", top: "2%", color: PAL.red.base },
+      { left: "60%", top: "2%", color: PAL.green.base },
+      { left: "60%", top: "92%", color: PAL.yellow.dark },
+      { left: "2%", top: "92%", color: PAL.blue.base }
+    ];
+    var labels = "";
+    S.p.forEach(function (_, player) {
+      var seen = {};
+      (S.cols[player] || []).forEach(function (color) {
+        if (seen[color]) return;
+        seen[color] = true;
+        var pos = positions[color];
+        labels += '<span class="lui-player-name" style="position:absolute;left:' + pos.left + ";top:" + pos.top +
+          ";z-index:20;display:block;max-width:38%;overflow:hidden;padding:4px 8px;border:2px solid #fff;border-radius:999px;" +
+          "background:" + pos.color + ";color:#fff;font:800 clamp(10px,2.4vw,16px)/1.2 system-ui,sans-serif;" +
+          "text-align:center;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 2px 6px #0009;pointer-events:none\">" +
+          escapeHtml(playerName(player)) + "</span>";
+      });
+    });
+    return labels ? '<div class="lui-player-names" style="position:absolute;inset:0;z-index:20;pointer-events:none">' +
+      labels + "</div>" : "";
   }
 
   /* ------------------------------------------------------------------ */
@@ -1120,6 +1150,27 @@
     return typeof np === "number" ? Math.max(2, Math.min(4, np)) : 2;
   }
 
+  function ordinal(position) {
+    var remainder = position % 100;
+    var suffix = remainder >= 11 && remainder <= 13 ? "th" :
+      position % 10 === 1 ? "st" : position % 10 === 2 ? "nd" : position % 10 === 3 ? "rd" : "th";
+    return position + suffix;
+  }
+
+  function placementSummary() {
+    var places = (S.placements || []).map(function (player, index) {
+      return ordinal(index + 1) + ": " + playerName(player);
+    });
+    if (Number.isInteger(S.loser)) places.push("Lost: " + playerName(S.loser));
+    return places;
+  }
+
+  function finishGame() {
+    S.over = 1;
+    S.win = S.placements[0];
+    S.msg = playerName(S.win) + " wins! " + placementSummary().join(" · ");
+  }
+
   /* true only for a 2-player game where each player owns 2 houses */
   function twoHouseMode() {
     return typeof S === "object" && !!S && !!S.p && S.p.length === 2 && S.h === 2;
@@ -1158,6 +1209,12 @@
     return typeof nm === "function" ? nm(player) : TOKEN_NAMES[player];
   }
 
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function (character) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character];
+    });
+  }
+
   function tokenCoords(player, position, token) {
     var color = colorOf(player, token);
     if (position < 0) {
@@ -1185,7 +1242,7 @@
 
   function legalTokens(player, roll) {
     var moves = [];
-    if (!roll) return moves;
+    if (!roll || (S.placements || []).indexOf(player) >= 0) return moves;
     S.p[player].forEach(function (position, token) {
       var to = position < 0 ? 0 : position + roll;
       if (position < 0 ? roll !== 6 : to > HOME) return;
@@ -1196,7 +1253,13 @@
   }
 
   function advanceTurn() {
-    S.t = (S.t + 1) % S.p.length;
+    for (var offset = 1; offset <= S.p.length; offset++) {
+      var next = (S.t + offset) % S.p.length;
+      if ((S.placements || []).indexOf(next) < 0) {
+        S.t = next;
+        break;
+      }
+    }
     S.sixes = 0;
   }
 
@@ -1231,7 +1294,8 @@
   }
 
   function applyRoll(roll) {
-    if (!Number.isInteger(roll) || roll < 1 || roll > rollSides() || S.over || S.die) return;
+    if (!Number.isInteger(roll) || roll < 1 || roll > rollSides() || S.over || S.die ||
+        (S.placements || []).indexOf(S.t) >= 0) return;
     S.sixes = roll === 6 ? (S.sixes || 0) + 1 : 0;
     S.die = roll;
     S.lastDie = roll;
@@ -1261,10 +1325,23 @@
     if (captured.length) log += " Captured " + captured.join(" and ") + ".";
     if (to === HOME) log = playerName(player) + " brought a token home.";
     if (S.p[player].every(function (position) { return position === HOME; })) {
-      S.over = 1;
-      S.win = player;
-      S.msg = playerName(player) + " wins!";
-      S.log = log;
+      if (S.p.length < 3) {
+        S.over = 1;
+        S.win = player;
+        S.msg = playerName(player) + " wins!";
+        S.log = log;
+        return;
+      }
+      S.placements = (S.placements || []).concat(player);
+      S.log = playerName(player) + " finished " + ordinal(S.placements.length) + ".";
+      if (S.placements.length >= S.p.length - 1) {
+        S.loser = S.p.findIndex(function (_, index) { return S.placements.indexOf(index) < 0; });
+        finishGame();
+        S.log += " " + placementSummary().join(" · ");
+      } else {
+        S.log += " The game continues.";
+        advanceTurn();
+      }
       return;
     }
 
@@ -1396,6 +1473,7 @@
       sixes: 0,
       moves: 0,
       over: 0,
+      placements: [],
       log: "Choose your houses to start."
     };
   }
@@ -1414,6 +1492,7 @@
 
   function validAction(action) {
     if (!action || S.over) return false;
+    if (!S.setup && (S.placements || []).indexOf(S.t) >= 0) return false;
     if (S.setup === 1) return action.houses === 1 || action.houses === 2;
     if (S.setup === 2) {
       return Number.isInteger(action.color) && action.color >= 0 && action.color <= (S.h === 2 ? 1 : 3);
@@ -1551,11 +1630,16 @@
         html += '<div class="lc" role="gridcell" aria-label="Board square ' + (i + 1) + '">' +
           cells[i].join("") + "</div>";
       }
+      html += playerNamesHtml();
       if (S.setup) html += setupHtml();
       html += "</div>";
       var status = S.setup ? nm(0) + " \u00b7 " + (S.setup === 1 ? "choose houses per player" : "choose your house colour") :
         S.over ? S.msg : playerName(player) + " to play" +
         (S.die ? " · rolled " + S.die + (moves.size ? " · choose a highlighted token" : "") : " · roll the dice");
+      var places = placementSummary();
+      if (places.length && !S.over) status += " · " + places.join(" · ");
+      if (places.length) html += '<ol class="ludo-placements" aria-label="Player placements">' +
+        places.map(function (place) { return "<li>" + escapeHtml(place) + "</li>"; }).join("") + "</ol>";
       return [html, status];
     },
     click: function (element) {
