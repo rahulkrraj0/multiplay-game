@@ -189,9 +189,72 @@
     menu: [{ frequency: 260, duration: 0.06, type: "square", volume: 0.025, slide: 25 }],
   };
 
+  const soundFiles = {
+    shared: {
+      win: "shared/win.ogg",
+      draw: "shared/draw.ogg",
+      loss: "shared/loss.ogg",
+      menu: "shared/menu.ogg",
+    },
+    carrom: { move: "carrom/flick.ogg" },
+    chess: { move: "chess/move.ogg" },
+    "connect-four": { move: "connect-four/drop.ogg" },
+    ludo: { move: "ludo/token-move.ogg", roll: "ludo/roll.ogg" },
+    racer: { start: "racer/countdown.ogg" },
+    snl: { move: "snl/step.ogg", roll: "snl/roll.ogg" },
+    ttt: { move: "ttt/mark.ogg" },
+    watersort: { move: "watersort/pour.ogg", pour: "watersort/pour.ogg", undo: "watersort/undo.ogg" },
+  };
+  const fileAvailability = new Map();
+
+  function playSoundFile(file, fallback) {
+    if (typeof window.Audio !== "function" || fileAvailability.get(file) === false) {
+      fallback();
+      return;
+    }
+
+    const audio = new window.Audio(soundFileUrl(file));
+    audio.preload = "auto";
+    let fallbackPlayed = false;
+    const playFallback = () => {
+      if (fallbackPlayed) return;
+      fallbackPlayed = true;
+      fallback();
+    };
+
+    audio.addEventListener("playing", () => fileAvailability.set(file, true), { once: true });
+    audio.addEventListener("error", () => {
+      fileAvailability.set(file, false);
+      playFallback();
+    }, { once: true });
+
+    const result = audio.play();
+    if (result && typeof result.catch === "function") {
+      result.catch(() => {
+        if (audio.error) fileAvailability.set(file, false);
+        playFallback();
+      });
+    }
+  }
+
+  function soundFileUrl(file) {
+    const prefix = window.location.pathname.match(/^\/hds-[a-z0-9]+-\d+-[a-z0-9]+/i);
+    return (prefix ? prefix[0] : "") + "/playora/sounds/" + file;
+  }
+
+  function playGeneratedGameSound(gameId, event, kind) {
+    const profile = gameProfiles[gameId] || genericProfile;
+    const notes = event === "win"
+      ? genericProfile.win
+      : profile[event] || profile[kind] || genericProfile[event] || genericProfile[kind] || genericProfile.move;
+    notes.forEach((note, index) => {
+      window.setTimeout(() => playTone(note), index * 60);
+    });
+  }
+
   function playGame(gameId, kind, action) {
     if (!state.enabled) return;
-    const profile = gameProfiles[gameId] || genericProfile;
+    ensureAudioContext();
     const actionSounds = {
       add: "menu",
       goto: "menu",
@@ -201,12 +264,12 @@
       undo: "undo",
     };
     const event = kind === "win" ? kind : action && typeof action.k === "string" ? actionSounds[action.k] || kind : kind;
-    const notes = event === "win"
-      ? genericProfile.win
-      : profile[event] || profile[kind] || genericProfile[event] || genericProfile[kind] || genericProfile.move;
-    notes.forEach((note, index) => {
-      window.setTimeout(() => playTone(note), index * 60);
-    });
+    const file = event === "win"
+      ? soundFiles.shared.win
+      : soundFiles[gameId]?.[event] || soundFiles.shared[event];
+    const fallback = () => playGeneratedGameSound(gameId, event, kind);
+    if (file) playSoundFile(file, fallback);
+    else fallback();
   }
 
   function bindToggle(button) {

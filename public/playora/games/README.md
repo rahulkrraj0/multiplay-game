@@ -115,9 +115,11 @@ implementation private, and register one game object.
   Avoid global CSS changes, external runtime dependencies, and network calls.
 - The shared sound runtime generates lightweight Web Audio cues for supported
   games and uses a generic synthesized cue for games without a dedicated
-  profile. Turn-based games receive their cues through `act()`; realtime games
-  can call `window.playoraSound.playGame(gameId, event)` from lifecycle or
-  gameplay callbacks. Sound is controlled by the site's shared sound toggle.
+  profile. It tries a matching file under `public/playora/sounds/` first and
+  falls back to synthesized audio when the file is missing or cannot play.
+  Turn-based games receive their cues through `act()`; realtime games can call
+  `window.playoraSound.playGame(gameId, event)` from lifecycle or gameplay
+  callbacks. Sound is controlled by the site's shared sound toggle.
 
 ## Online play notes
 
