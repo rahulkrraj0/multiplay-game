@@ -118,11 +118,10 @@
 #room .call-panel-backdrop[hidden],#room .call-panel[hidden]{display:none!important}
 #room .call-panel-backdrop{position:fixed;inset:0;z-index:17;width:100%;height:100%;margin:0;padding:0;border:0;border-radius:0;background:#05081488}
 #room .call-panel{position:fixed;inset:0 0 0 auto;z-index:18;display:flex;flex-direction:column;width:min(370px,92vw);height:100dvh;padding:calc(12px + env(safe-area-inset-top,0px)) 14px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(160deg,#17213a,#0d1425);border-left:1px solid var(--bd);box-shadow:-18px 0 50px #0007;animation:call-panel-in .2s ease-out}
-#room .call-panel-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-#room .call-panel-header h3{flex:1;min-width:0;margin:0}
+#room .call-panel-header{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:12px}
 #room .call-panel-header button{flex:0 0 40px;width:40px;height:40px;margin:0;padding:0}
 #room .call-panel-header .call-panel-actions{display:flex;flex:0 0 auto;align-items:center;gap:6px}
-#room .call-panel-header .call-panel-actions button{flex:0 0 auto;width:auto;height:40px;padding:0 9px;font-size:13px;white-space:nowrap}
+#room .call-panel-header .call-panel-actions button{flex:0 0 auto;width:auto;height:40px;padding:0 7px;font-size:12px;white-space:nowrap}
 #room .call-panel #cp:not(.hide){flex:1}
 #room .call-panel #du{margin-top:-5px}
 @media(min-width:900px){#room .call-panel-backdrop{display:none!important}#room .call-panel{width:min(370px,30vw)}#room.call-panel-open .rin{margin-left:auto;margin-right:min(370px,30vw)}}

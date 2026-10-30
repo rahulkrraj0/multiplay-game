@@ -233,8 +233,8 @@ function updateGameControls(){const gameActive=!$('gm').classList.contains('hide
  const saved=online&&typeof readLastRoom==='function'?readLastRoom():null,disconnected=online&&!hasPeers;
  $('reconnect').classList.toggle('hide',!(disconnected&&saved&&!saved.host&&saved.code===room.code));
  $('chg').classList.toggle('hide',!online||!amHost());$('topMenu').classList.toggle('hide',!callAvailable);
- $('panelLeave').classList.toggle('hide',!callAvailable);$('panelRestart').classList.toggle('hide',!online||!amHost());
- $('lb').classList.toggle('hide',inLobby);$('rx').classList.toggle('hide',gameActive&&!online);$('bk').classList.toggle('hide',!gameActive||online);$('rs').classList.toggle('hide',!gameActive||online);
+ $('panelLeave').classList.toggle('hide',!callAvailable);$('panelChangeGame').classList.toggle('hide',!online||!amHost());$('panelRestart').classList.toggle('hide',!online||!amHost());
+ $('lb').classList.toggle('hide',inLobby);$('rx').classList.toggle('hide',gameActive);$('bk').classList.toggle('hide',!gameActive||online);$('rs').classList.toggle('hide',!gameActive||online);
  $('topMic').classList.toggle('hide',!callAvailable);$('topVideo').classList.toggle('hide',!callAvailable);
  $('cp').classList.toggle('hide',!hasPeers);
  if(!callAvailable)closeCallPanel();syncMediaButtons();updateParticipantList()}
@@ -243,6 +243,7 @@ function openCallPanel(){const panel=$('callPanel'),backdrop=$('callPanelBackdro
 $('topMenu').onclick=()=>{if($('callPanel').hidden)openCallPanel();else closeCallPanel()};
 $('closeCallPanel').onclick=$('callPanelBackdrop').onclick=closeCallPanel;
 $('panelLeave').onclick=()=>{if(!$('gm').classList.contains('hide'))$('bk').click();else $('lb').click()};
+$('panelChangeGame').onclick=()=>{if(!amHost()||!G||!S||!ids.length)return;const game=G.id,limit=activeLimit;bcast({k:'lobby',g:game,limit});resetToLobby(game,limit)};
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('callPanel').hidden){event.stopImmediatePropagation();closeCallPanel();$('topMenu').focus()}},true);
 /* invite: create a code for one new player (any connected player can do this) */
 async function invite(){await iceReady;if(inv&&!inv.open&&inv.pc.signalingState==='have-local-offer')return; /* a fresh code is already waiting */
