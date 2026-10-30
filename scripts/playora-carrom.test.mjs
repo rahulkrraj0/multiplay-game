@@ -140,24 +140,25 @@ test("four-player Carrom host can choose a fixed team partner", () => {
   assert.equal(carrom.state.boards, 2);
 });
 
-test("Carrom shows player names inside their side of the board", () => {
+test("Carrom shows player names below the controls without a badge background", () => {
   const carrom = createCarrom(4);
   completeSetup(carrom, "clear");
 
-  const board = carrom.game.draw()[0];
-  assert.match(board, /class="cr-board"[\s\S]*class="cr-player-name"[^>]*aria-label="Blair · Drew"/);
-  assert.match(board, /class="cr-player-name"[^>]*aria-label="Alex · Casey"/);
-  assert.match(board, /class="cr-player-name"[^>]*style="position:absolute;top:7%/);
-  assert.match(board, /class="cr-player-name"[^>]*style="position:absolute;bottom:7%/);
+  const markup = carrom.game.draw()[0];
+  assert.match(markup, /class="cr-player-name"[^>]*aria-label="Blair · Drew"/);
+  assert.match(markup, /class="cr-player-name"[^>]*aria-label="Alex · Casey"/);
+  assert.ok(markup.indexOf('class="cr-ctl"') < markup.indexOf('class="cr-player-names"'));
+  assert.ok(markup.indexOf('class="cr-player-names"') < markup.indexOf('class="cr-hint"'));
+  assert.doesNotMatch(markup, /class="cr-player-name"[^>]*style=/);
 });
 
-test("Carrom escapes player names rendered in the board overlay", () => {
+test("Carrom escapes player names rendered below the controls", () => {
   const carrom = createCarrom(3, ['<img src=x onerror="alert(1)">', "Blair", "Casey"]);
   completeSetup(carrom, "clear");
-  const board = carrom.game.draw()[0];
+  const markup = carrom.game.draw()[0];
 
-  assert.match(board, /class="cr-player-name"[^>]*aria-label="&lt;img src=x onerror=&quot;alert\(1\)&quot;&gt; · Casey"/);
-  assert.doesNotMatch(board, /<img src=x/);
+  assert.match(markup, /class="cr-player-name"[^>]*aria-label="&lt;img src=x onerror=&quot;alert\(1\)&quot;&gt; · Casey"/);
+  assert.doesNotMatch(markup, /<img src=x/);
 });
 
 test("Point Game awards coin values to the shooter and queen points to its coverer", () => {

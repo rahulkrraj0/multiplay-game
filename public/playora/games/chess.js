@@ -219,6 +219,11 @@ const CSS = `
 .cb3-ctl button{border:0;border-radius:999px;padding:7px 14px;background:#e6d3ae;color:#3b2a1e;font:600 13px/1 system-ui,sans-serif;
   cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .15s,background .15s}
 .cb3-ctl button:hover,.cb3-ctl button:focus-visible{background:#f3c969;transform:translateY(-2px)}
+.chess-turns{display:flex;justify-content:space-between;gap:12px;width:min(94vw,640px);margin:8px auto 0;font:14px/1.3 system-ui,sans-serif}
+.chess-player{display:flex;align-items:baseline;gap:6px;min-width:0}
+.chess-player>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.8}
+.chess-player small{font-size:12px;opacity:.7}
+.chess-player.active{font-weight:700;text-decoration:underline;text-decoration-color:#c98a2b;text-decoration-thickness:2px;text-underline-offset:4px}
 .cbx-win{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .cbx-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,rgba(15,23,42,.3),rgba(15,23,42,.75));animation:cb-fade .4s ease both}
@@ -672,7 +677,11 @@ const game = {
       '<button type="button" data-tilt="-8" aria-label="Look more from above">\u2B06 Higher</button>' +
       '<button type="button" data-tilt="flat" aria-label="Toggle flat view">2D / 3D</button>' +
       '<button type="button" data-tilt="8" aria-label="Look more from the side">\u2B07 Lower</button></div>';
-    return [h + "</div></div>" + ctl + "</div>", status];
+    const players = '<div class="chess-turns" role="group" aria-label="Players and turns">' +
+      [0, 1].map(player => `<span class="chess-player${S.t === player && !S.over ? " active" : ""}"${S.t === player && !S.over ? ' aria-current="step"' : ""}>` +
+        `<b>${player === 0 ? "White" : "Black"}</b><span>${nm(player)}</span>${S.t === player && !S.over ? "<small>to move</small>" : ""}</span>`).join("") +
+      "</div>";
+    return [h + "</div></div>" + ctl + players + "</div>", status];
   },
   click() { /* input is handled by the delegated listener above (squares carry data-sq, not data-m) */ }
 };
