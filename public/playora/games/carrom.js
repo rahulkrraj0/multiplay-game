@@ -473,8 +473,10 @@ const CSS = `
 .cr-guide{stroke:#fff;stroke-linecap:round;pointer-events:none}
 .cr-fl{fill:none;stroke:#fff;stroke-width:5;animation:cr-fl .55s ease-out both;pointer-events:none}
 .cr-hud{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 0}
-.cr-player-names{display:flex;justify-content:space-between;gap:12px;margin:8px 2px 0;font-size:13px;font-weight:700}
-.cr-player-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-player-name{position:absolute;left:12%;width:76%;z-index:5;box-sizing:border-box;overflow:hidden;color:#21170f;
+  font:800 clamp(11px,2.4vw,16px)/1.2 system-ui,sans-serif;text-align:center;text-overflow:ellipsis;white-space:nowrap;
+  text-shadow:0 1px 2px rgba(255,255,255,.9);pointer-events:none}
+.cr-player-name.top{top:3%}.cr-player-name.bottom{bottom:3%}
 .cr-places{flex-basis:100%;padding:8px 10px;border-radius:10px;background:rgba(120,100,70,.1);font-size:13px;font-weight:700}
 .cr-side{flex:1 1 40%;min-width:0;padding:8px 10px;border-radius:12px;background:rgba(120,100,70,.14);border:2px solid transparent;
   display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;line-height:1.2}
@@ -538,12 +540,13 @@ function playerNameOverlay(st) {
   if (!st || st.setup) return "";
   const seats = Array.from({ length: st.teams.length }, (_, player) => player);
   const labels = [seats.filter(player => sideFor(player) === 1), seats.filter(player => sideFor(player) === 0)];
-  const names = labels.map(players => {
+  const names = labels.map((players, index) => {
     if (!players.length) return "";
     const name = players.map(player => who(player)).join(" · ");
-    return `<span class="cr-player-name" role="note" aria-label="${esc(name)}">${esc(name)}</span>`;
+    const side = index === 0 ? "top" : "bottom";
+    return `<span class="cr-player-name ${side}" role="note" aria-label="${esc(name)}">${esc(name)}</span>`;
   }).join("");
-  return `<div class="cr-player-names" aria-label="Players">${names}</div>`;
+  return names;
 }
 
 function boardSVG(rot) {
@@ -1096,7 +1099,7 @@ const game = {
       '<svg class="cr' + (can ? "" : " nomv") + '" viewBox="-60 -60 1120 1120" role="img" aria-label="Carrom board. Drag back from the board to aim and release to shoot, or use the sliders below.">' +
       '<g id="cr-view"' + (rot ? ` transform="${ROT}"` : "") + '>' +
       boardSVG(rot) + '<g id="cr-pieces">' + piecesSVG(list, striker) + '</g><g id="cr-aim"></g><g id="cr-fx"></g></g></svg>' +
-      '</div>' + hud();
+      playerNameOverlay(S) + '</div>' + hud();
     const dis = can ? "" : " disabled";
     if (S.setup) h += setupHtml();
     else {
@@ -1105,7 +1108,6 @@ const game = {
         `<label>Angle<input type="range" data-k="ang" min="-80" max="80" step="1" value="${sliderAng()}"${dis}>${fmtOut("cr-o-ang", sliderAng() + "\u00B0")}</label>` +
         `<label>Power<input type="range" data-k="p" min="1" max="100" step="1" value="${aim.p}"${dis}>${fmtOut("cr-o-p", aim.p)}</label>` +
         `<button type="button" class="cr-shoot"${dis}>Shoot</button></div>` +
-        playerNameOverlay(S) +
         '<p class="cr-hint">Drag near the striker to slide it \u00B7 drag back anywhere to aim, release to shoot</p>';
     }
     h += "</div>";
