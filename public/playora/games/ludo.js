@@ -34,13 +34,13 @@
  * (narrow screens keep the normal size: min(94vw, 82vh, 680px)).
  *
  * Rotate board (THIS SCREEN ONLY):
- *   - A round button at the right edge of the screen turns the board 90 degrees
- *     clockwise on every tap (4 positions), so every player can put their own
+ *   - A round button at the centre of the board turns it 90 degrees clockwise
+ *     on every tap (4 positions), so every player can put their own
  *     house at the bottom. It is purely a local view setting: nothing is sent to
  *     the game or to the other players, and the rules/state are untouched.
  *   - The choice is remembered in this browser (localStorage, when available).
- *   - Stars and the setup card stay upright, and the token lighting follows the
- *     turn, so the board still looks natural from every side.
+ *   - Stars, player names, and the setup card stay upright, and token lighting
+ *     follows the turn, so the board still looks natural from every side.
  *   - window.ludoRotateBoard(n) turns by n quarter turns (default 1, negative =
  *     anticlockwise). For example, call ludoRotateBoard(2) to flip the board.
  *
@@ -103,6 +103,7 @@
   var rotQ = 0;       // quarter turns clockwise, 0..3
   var rotAcc = 0;     // total degrees turned so far, so the board always spins the same way
   var rotBtn = null;
+  var rotGrid = null;
 
   function reduced() {
     return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -220,13 +221,13 @@
       ".lui-timer-fill{height:100%;width:100%;border-radius:99px;background:#4ade80}",
       ".lui-timer.lui-low .lui-timer-fill{background:#f87171}",
 
-      /* rotate-board button (this screen only); sits above the countdown pill so they never overlap */
-      ".lui-rot{position:fixed;right:calc(12px + env(safe-area-inset-right,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));",
+      /* rotate-board button (this screen only); positioned over the board centre */
+      ".lui-rot{position:fixed;left:var(--lui-center-x,50vw);top:var(--lui-center-y,50vh);",
       "  z-index:9000;display:none;align-items:center;justify-content:center;width:46px;height:46px;padding:0;border:0;border-radius:50%;",
       "  background:rgba(15,23,42,.92);color:#fff;cursor:pointer;touch-action:manipulation;",
-      "  box-shadow:0 8px 24px rgba(0,0,0,.3);transition:transform .15s ease}",
+      "  box-shadow:0 8px 24px rgba(0,0,0,.3);transform:translate(-50%,-50%);transition:transform .15s ease}",
       ".lui-rot.on{display:flex}",
-      ".lui-rot:hover{transform:translateY(-2px)}",
+      ".lui-rot:hover{transform:translate(-50%,-50%) scale(1.06)}",
       ".lui-rot:focus-visible{outline:3px solid #111827;outline-offset:3px}",
       ".lui-rot svg{display:block;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;",
       "  stroke-linecap:round;stroke-linejoin:round;transition:transform .35s ease}",
@@ -333,9 +334,9 @@
     if (!S || !S.p || !S.cols || S.setup) return "";
     var positions = [
       { left: "2%", top: "2%", color: PAL.red.base },
-      { left: "60%", top: "2%", color: PAL.green.base },
-      { left: "60%", top: "92%", color: PAL.yellow.dark },
-      { left: "2%", top: "92%", color: PAL.blue.base }
+      { right: "2%", top: "2%", color: PAL.green.base },
+      { right: "2%", bottom: "2%", color: PAL.yellow.dark },
+      { left: "2%", bottom: "2%", color: PAL.blue.base }
     ];
     var labels = "";
     S.p.forEach(function (_, player) {
@@ -344,10 +345,13 @@
         if (seen[color]) return;
         seen[color] = true;
         var pos = positions[color];
-        labels += '<span class="lui-player-name" style="position:absolute;left:' + pos.left + ";top:" + pos.top +
-          ";z-index:20;display:block;max-width:38%;overflow:hidden;padding:4px 8px;border:2px solid #fff;border-radius:999px;" +
-          "background:" + pos.color + ";color:#fff;font:800 clamp(10px,2.4vw,16px)/1.2 system-ui,sans-serif;" +
-          "text-align:center;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 2px 6px #0009;pointer-events:none\">" +
+        labels += '<span class="lui-player-name" style="position:absolute;' + (pos.left ? "left:" + pos.left + ";" : "") +
+          (pos.right ? "right:" + pos.right + ";" : "") + (pos.top ? "top:" + pos.top + ";" : "") +
+          (pos.bottom ? "bottom:" + pos.bottom + ";" : "") +
+          "z-index:20;display:block;box-sizing:border-box;max-width:46%;overflow:hidden;padding:4px 8px;border:2px solid #fff;border-radius:999px;" +
+          "background:" + pos.color + ";color:#fff;font:800 clamp(10px,2.2vw,15px)/1.2 system-ui,sans-serif;" +
+          "text-align:center;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 2px 6px #0009;pointer-events:none;" +
+          "rotate:var(--lui-unrot,0deg);transform-origin:center;transition:rotate .35s ease\">" +
           escapeHtml(playerName(player)) + "</span>";
       });
     });
@@ -434,7 +438,7 @@
     return [x * COS[rotQ] + y * SIN[rotQ], -x * SIN[rotQ] + y * COS[rotQ]];
   }
 
-  /* sets the rotation and the matching light/shadow directions on one board */
+  /* sets the rotation and matching light/shadow directions on one board */
   function applyRotation(grid) {
     var st = grid.style;
     st.setProperty("--lui-rot", rotAcc + "deg");
@@ -466,8 +470,21 @@
     return b;
   }
 
+  function positionRotBtn(grid) {
+    if (!grid) return;
+    rotGrid = grid;
+    if (!rotBtn || !rotBtn.isConnected) return;
+    var rect = grid.getBoundingClientRect();
+    rotBtn.style.setProperty("--lui-center-x", (rect.left + rect.width / 2) + "px");
+    rotBtn.style.setProperty("--lui-center-y", (rect.top + rect.height / 2) + "px");
+  }
+
   function showRotBtn(on) {
-    if (on) ensureRotBtn().classList.add("on");
+    if (on) {
+      var button = ensureRotBtn();
+      positionRotBtn(document.querySelector(".g.c15.lui"));
+      button.classList.add("on");
+    }
     else if (rotBtn) rotBtn.classList.remove("on");
   }
 
@@ -481,6 +498,7 @@
     var grids = document.querySelectorAll(".g.c15");
     for (var i = 0; i < grids.length; i++) applyRotation(grids[i]);
     if (rotBtn && rotBtn.firstChild) rotBtn.firstChild.style.transform = "rotate(" + rotAcc + "deg)";
+    positionRotBtn(rotGrid);
   }
 
   /* ------------------------------------------------------------------ */
@@ -1093,6 +1111,7 @@
 
   function start() {
     addStyles();
+    window.addEventListener("resize", function () { positionRotBtn(rotGrid); }, { passive: true });
     obs = new MutationObserver(pass);
     obs.observe(document.body, { childList: true, subtree: true });
     pass();

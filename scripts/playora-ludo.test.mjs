@@ -134,6 +134,11 @@ test("Ludo shows each player name inside their colored board area", () => {
   for (const name of ["Red Player", "Green Player", "Yellow Player", "Blue Player"]) {
     assert.match(html, new RegExp('<span class="lui-player-name"[^>]*>' + name + "</span>"));
   }
+  assert.match(html, /left:2%;top:2%/);
+  assert.match(html, /right:2%;top:2%/);
+  assert.match(html, /right:2%;bottom:2%/);
+  assert.match(html, /left:2%;bottom:2%/);
+  assert.equal((html.match(/rotate:var\(--lui-unrot,0deg\)/g) || []).length, 4);
 });
 
 test("Ludo escapes player names displayed on the board", () => {
