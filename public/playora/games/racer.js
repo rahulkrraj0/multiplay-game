@@ -35,6 +35,7 @@
   let snapshotReceivedAt = 0;
   let localSeat = 99;
   let raceWinSoundPlayed = false;
+  let lastEngineSoundAt = -Infinity;
   let keys = new Set();
   let pressed = newControls();
   let onKeyDown;
@@ -74,7 +75,19 @@
   }
 
   function setControl(name, value) {
-    if (name in pressed) pressed[name] = value ? 1 : 0;
+    if (!(name in pressed)) return;
+    const active = value ? 1 : 0;
+    if (name === "throttle" && active && !pressed[name]) playEngineSound();
+    pressed[name] = active;
+  }
+
+  function playEngineSound() {
+    const now = Date.now();
+    if (now - lastEngineSoundAt < 500) return;
+    lastEngineSoundAt = now;
+    if (window.playoraSound && typeof window.playoraSound.playGame === "function") {
+      window.playoraSound.playGame("racer", "move");
+    }
   }
 
   function readControls(player = 0) {
@@ -95,6 +108,7 @@
       const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
       if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d"].includes(key)) return;
       event.preventDefault();
+      if (!keys.has(key) && (key === (localSeat === 0 ? "ArrowUp" : "w"))) playEngineSound();
       keys.add(key);
     };
     onKeyUp = (event) => {
@@ -144,6 +158,7 @@
     resizeObserver = null;
     keys.clear();
     pressed = newControls();
+    lastEngineSoundAt = -Infinity;
   }
 
   function resizeCanvas() {

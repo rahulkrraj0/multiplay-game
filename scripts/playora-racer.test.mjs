@@ -13,6 +13,7 @@ function createRacer({ localSeat = 0, host = true, computer = false } = {}) {
   let game;
   const documentEvents = new Map();
   const sent = [];
+  const soundEvents = [];
   const status = { textContent: "" };
   const context = new Proxy({}, { get: (_, key) => (..._args) => key });
   const canvas = {
@@ -29,7 +30,12 @@ function createRacer({ localSeat = 0, host = true, computer = false } = {}) {
     addEventListener: (type, callback) => documentEvents.set(type, callback),
     removeEventListener: (type) => documentEvents.delete(type),
   };
-  const fakeWindow = { devicePixelRatio: 1, addEventListener() {}, removeEventListener() {} };
+  const fakeWindow = {
+    devicePixelRatio: 1,
+    addEventListener() {},
+    removeEventListener() {},
+    playoraSound: { playGame: (gameId, event) => soundEvents.push([gameId, event]) },
+  };
   class FakeDate extends Date {
     static now() {
       return now;
@@ -76,6 +82,7 @@ function createRacer({ localSeat = 0, host = true, computer = false } = {}) {
   return {
     game,
     sent,
+    soundEvents,
     status,
     advanceFrame,
     press,
@@ -91,6 +98,7 @@ test("realtime racer simulates locally and publishes authoritative snapshots", (
   racer.setState(state);
   racer.game.onStart();
   racer.press("ArrowUp");
+  assert.deepEqual(racer.soundEvents, [["racer", "move"]], "accelerating plays the racer sound");
   for (let frame = 0; frame < 260; frame += 1) racer.advanceFrame();
 
   assert.ok(state.cars[0].speed > 0);

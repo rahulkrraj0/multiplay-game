@@ -205,7 +205,50 @@
       { frequency: 180, duration: 0.11, type: "sawtooth", volume: 0.045, slide: 140 },
       { frequency: 340, duration: 0.12, type: "sawtooth", volume: 0.04, slide: 180 },
     ],
+    start: [
+      { frequency: 330, duration: 0.08, type: "triangle", volume: 0.04, slide: 90 },
+      { frequency: 494, duration: 0.1, type: "triangle", volume: 0.04, slide: 120 },
+    ],
     win: [440, 660, 880].map((frequency) => ({ frequency, duration: 0.13, type: "triangle", volume: 0.05 })),
+    loss: [
+      { frequency: 330, duration: 0.12, type: "triangle", volume: 0.04, slide: -70 },
+      { frequency: 220, duration: 0.16, type: "triangle", volume: 0.04, slide: -50 },
+    ],
+    draw: [
+      { frequency: 392, duration: 0.1, type: "sine", volume: 0.04 },
+      { frequency: 349, duration: 0.12, type: "sine", volume: 0.04 },
+    ],
+    capture: [
+      { frequency: 190, duration: 0.06, type: "square", volume: 0.04, slide: -80 },
+      { frequency: 130, duration: 0.08, type: "triangle", volume: 0.04, slide: -40 },
+    ],
+    "token-enter": [{ frequency: 300, duration: 0.08, type: "triangle", volume: 0.04, slide: 180 }],
+    home: [
+      { frequency: 523, duration: 0.08, type: "triangle", volume: 0.04, slide: 50 },
+      { frequency: 784, duration: 0.12, type: "triangle", volume: 0.045, slide: 60 },
+    ],
+    snake: [
+      { frequency: 420, duration: 0.12, type: "sawtooth", volume: 0.035, slide: -220 },
+      { frequency: 180, duration: 0.1, type: "triangle", volume: 0.04, slide: -70 },
+    ],
+    ladder: [
+      { frequency: 330, duration: 0.07, type: "triangle", volume: 0.04, slide: 100 },
+      { frequency: 494, duration: 0.07, type: "triangle", volume: 0.04, slide: 130 },
+      { frequency: 659, duration: 0.1, type: "triangle", volume: 0.045, slide: 80 },
+    ],
+    check: [{ frequency: 740, duration: 0.12, type: "square", volume: 0.04, slide: -120 }],
+    promotion: [
+      { frequency: 523, duration: 0.07, type: "triangle", volume: 0.04 },
+      { frequency: 659, duration: 0.07, type: "triangle", volume: 0.04 },
+      { frequency: 880, duration: 0.12, type: "triangle", volume: 0.045 },
+    ],
+    castle: [
+      { frequency: 294, duration: 0.07, type: "triangle", volume: 0.04, slide: 70 },
+      { frequency: 392, duration: 0.09, type: "triangle", volume: 0.04, slide: 80 },
+    ],
+    foul: [{ frequency: 150, duration: 0.14, type: "square", volume: 0.04, slide: -45 }],
+    next: [{ frequency: 494, duration: 0.1, type: "sine", volume: 0.04, slide: 80 }],
+    undo: [{ frequency: 440, duration: 0.09, type: "sine", volume: 0.04, slide: -90 }],
     error: [{ frequency: 140, duration: 0.08, type: "square", volume: 0.03, slide: -30 }],
     menu: [{ frequency: 260, duration: 0.06, type: "square", volume: 0.025, slide: 25 }],
   };
@@ -220,6 +263,8 @@
     home: ["home", "finish", "level-complete"],
     snake: ["snake", "snake-slide"],
     ladder: ["ladder", "ladder-climb"],
+    promotion: ["promotion", "promote"],
+    castle: ["castle", "castling"],
     next: ["next", "level-complete"],
     menu: ["menu", "select", "selection"],
     undo: ["undo"],
@@ -304,9 +349,7 @@
 
   function playGeneratedGameSound(gameId, event, kind) {
     const profile = gameProfiles[gameId] || genericProfile;
-    const notes = event === "win"
-      ? genericProfile.win
-      : profile[event] || profile[kind] || genericProfile[event] || genericProfile[kind] || genericProfile.move;
+    const notes = profile[event] || genericProfile[event] || profile[kind] || genericProfile[kind] || genericProfile.move;
     normalizeCue(notes).forEach((note, index) => {
       window.setTimeout(() => playTone(note), index * 60);
     });

@@ -28,9 +28,11 @@ test("game events use the matching shared and Ludo sound files", () => {
     Audio: MockAudio,
     PLAYORA_SOUND_ASSETS: [
       "chess/capture.ogg",
+      "chess/castle.ogg",
       "chess/check.ogg",
       "chess/loss.ogg",
       "chess/move.ogg",
+      "chess/promote.ogg",
       "shared/start.ogg",
       "shared/draw.ogg",
       "shared/loss.ogg",
@@ -60,8 +62,10 @@ test("game events use the matching shared and Ludo sound files", () => {
     ["chess", "draw", "/playora/sounds/shared/draw.ogg"],
     ["chess", "move", "/playora/sounds/chess/move.ogg"],
     ["chess", "capture", "/playora/sounds/chess/capture.ogg"],
+    ["chess", "castle", "/playora/sounds/chess/castle.ogg"],
     ["chess", "check", "/playora/sounds/chess/check.ogg"],
     ["chess", "loss", "/playora/sounds/chess/loss.ogg"],
+    ["chess", "promotion", "/playora/sounds/chess/promote.ogg"],
     ["ludo", "capture", "/playora/sounds/ludo/capture.ogg"],
     ["ludo", "roll", "/playora/sounds/ludo/roll.ogg"],
     ["ludo", "move", "/playora/sounds/ludo/token-move.ogg"],
@@ -217,6 +221,59 @@ test("generated cues across games use the same peak loudness", () => {
   });
 
   assert.ok(peaks.every((peak) => Math.abs(peak - 0.06) < 0.0001), `cue peaks: ${peaks.join(", ")}`);
+});
+
+test("every game and supported action gets a synthesized cue when no file exists", () => {
+  const frequencies = [];
+
+  class MockAudioContext {
+    state = "running";
+    currentTime = 0;
+    destination = {};
+    resume() { return Promise.resolve(); }
+    createOscillator() {
+      return {
+        frequency: { setValueAtTime(value) { frequencies.push(value); }, exponentialRampToValueAtTime() {} },
+        connect() {},
+        start() {},
+        stop() {},
+      };
+    }
+    createGain() {
+      return {
+        gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} },
+        connect() {},
+      };
+    }
+  }
+
+  const window = {
+    AudioContext: MockAudioContext,
+    location: { pathname: "/" },
+    setTimeout: (callback) => callback(),
+  };
+  const document = { readyState: "complete", getElementById: () => null };
+  const context = {
+    window,
+    document,
+    localStorage: { getItem: () => null, setItem() {} },
+    console,
+    setTimeout: (callback) => callback(),
+  };
+  const games = ["carrom", "chess", "connect-four", "ludo", "racer", "snl", "ttt", "watersort"];
+  const events = [
+    "start", "move", "roll", "capture", "token-enter", "home", "snake", "ladder",
+    "check", "castle", "promotion", "foul", "win", "draw", "loss", "next", "undo", "menu",
+  ];
+
+  vm.runInNewContext(readFileSync(soundsScript, "utf8"), context);
+  for (const game of games) {
+    for (const event of events) {
+      const before = frequencies.length;
+      window.playoraSound.playGame(game, event);
+      assert.ok(frequencies.length > before, `${game} ${event} should generate audio`);
+    }
+  }
 });
 
 test("touch devices play generated Chess sound immediately while checking for an asset", () => {

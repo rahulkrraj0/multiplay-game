@@ -1,4 +1,8 @@
-Snakes & Ladders sound effects to add
+Optional Snakes & Ladders sound files
+
+No audio files are currently included in this folder. The game uses synthesized
+sound effects until matching files are added; these filenames are discovered
+automatically and replace the synthesized cue when available.
 
 - roll.ogg - dice roll
 - step.ogg - token moves across the board
