@@ -39,6 +39,16 @@ function createLudo({ players = 2, names } = {}) {
   };
 }
 
+test("Ludo identifies roll, token entry, capture and home sound events", () => {
+  const { game } = createLudo();
+  assert.equal(game.soundEvent({ r: 6 }), "roll");
+  assert.equal(game.soundEvent({ houses: 1 }), "menu");
+  assert.equal(game.soundEvent({ token: 0 }, { p: [[-1], [0]] }, { lastMove: { player: 0, to: 0 }, p: [[0], [0]] }), "token-enter");
+  assert.equal(game.soundEvent({ token: 0 }, { p: [[1], [2]] }, { lastMove: { player: 0, to: 56 }, p: [[56], [2]] }), "home");
+  assert.equal(game.soundEvent({ token: 0 }, { p: [[1], [2]] }, { lastMove: { player: 0, to: 3 }, p: [[3], [-1]] }), "capture");
+  assert.equal(game.soundEvent({ token: 0 }, { p: [[1], [2]] }, { lastMove: { player: 0, to: 3 }, p: [[3], [2]] }), "move");
+});
+
 test("Ludo limits its third consecutive six and applies the shown roll unchanged", () => {
   const ludo = createLudo();
   ludo.state = ludo.game.init();

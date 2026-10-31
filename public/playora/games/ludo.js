@@ -1569,6 +1569,23 @@
       return makeState(playerCount());
     },
     valid: validAction,
+    soundEvent: function (action, previousState, currentState) {
+      if (action.r !== undefined) return "roll";
+      if (!Number.isInteger(action.token)) return "menu";
+      if (!previousState) return "move";
+      var player = currentState.lastMove && currentState.lastMove.player;
+      var token = action.token;
+      if (player == null || !previousState.p[player]) return "move";
+      if (previousState.p[player][token] < 0) return "token-enter";
+      if (currentState.lastMove && currentState.lastMove.to === HOME) return "home";
+      for (var other = 0; other < currentState.p.length; other++) {
+        if (other === player || !previousState.p[other]) continue;
+        for (var index = 0; index < currentState.p[other].length; index++) {
+          if (previousState.p[other][index] >= 0 && currentState.p[other][index] < 0) return "capture";
+        }
+      }
+      return "move";
+    },
     apply: function (action) {
       if (!action) return;
       if (S.setup === 1) {

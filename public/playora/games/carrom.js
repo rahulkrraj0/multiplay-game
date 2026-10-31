@@ -1071,6 +1071,13 @@ const game = {
   d: "Choose Point Game or Clear-the-board for 3–4 players. In Point Game, pocket coins to score across eight boards.",
   get n() { return Array.from({ length: playerCount() }, (_, player) => who(player)); },
   valid: a => validOn(S, a),
+  soundEvents(action, previousState, currentState) {
+    if (!Number.isInteger(action.x) || (previousState && previousState.setup)) return [];
+    const last = currentState.last;
+    if (last && last.foul) return ["foul"];
+    if (last && last.out.length) return ["capture"];
+    return ["move"];
+  },
   init() {
     const count = playerCount();
     return {

@@ -550,6 +550,23 @@ function doMove(t, j, r, pick) {
 let nextFirst = 0;       // who rolls first in the next game; flips after every finished game, like tictactoe.js
 
 const core = {
+  soundEvents(action) {
+    if (action.k !== undefined) return [];
+    const move = S.mv;
+    if (action.r !== undefined) {
+      if (!move || move.k < 0 || move.stay) return ["roll"];
+      const event = move.cap.length ? "capture"
+        : move.kind === "snake" ? "snake"
+          : move.kind === "ladder" ? "ladder"
+            : move.from === 0 ? "token-enter" : "move";
+      return ["roll", event];
+    }
+    if (!move || move.k < 0) return [];
+    return [move.cap.length ? "capture"
+      : move.kind === "snake" ? "snake"
+        : move.kind === "ladder" ? "ladder"
+          : move.from === 0 ? "token-enter" : "move"];
+  },
   valid(a) {
     if (!a || S.over) return false;
     if ((S.placements || []).includes(S.t)) return false;

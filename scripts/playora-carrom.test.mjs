@@ -54,6 +54,16 @@ function makeLastCoinShot(carrom, player, coinId) {
   carrom.game.apply(shot);
 }
 
+test("Carrom identifies setup, shot, pocket and foul sound events", () => {
+  const carrom = createCarrom(2);
+  carrom.state = carrom.game.init();
+
+  assert.deepEqual(Array.from(carrom.game.soundEvents({ gameMode: "clear" }, null, carrom.state)), []);
+  assert.deepEqual(Array.from(carrom.game.soundEvents({ x: 500 }, null, { last: { foul: 0, out: [] } })), ["move"]);
+  assert.deepEqual(Array.from(carrom.game.soundEvents({ x: 500 }, null, { last: { foul: 0, out: [1] } })), ["capture"]);
+  assert.deepEqual(Array.from(carrom.game.soundEvents({ x: 500 }, null, { last: { foul: 1, out: [19] } })), ["foul"]);
+});
+
 test("Carrom keeps two-player rules and offers four-player match setup", () => {
   const two = createCarrom(2);
   two.state = two.game.init();

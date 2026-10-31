@@ -468,9 +468,6 @@
     snapshotSequence = -1;
     snapshotReceivedAt = Date.now();
     raceWinSoundPlayed = false;
-    if (window.playoraSound && typeof window.playoraSound.playGame === "function") {
-      window.playoraSound.playGame("racer", "start");
-    }
     frame = requestAnimationFrame(tick);
   }
 

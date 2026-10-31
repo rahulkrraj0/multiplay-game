@@ -14,6 +14,8 @@ import { isMigrationFile } from "./scripts/migration-plan.mjs";
 // @ts-expect-error JS helper alongside the TS Vite config
 import { discoverPlayoraGames } from "./scripts/playora-games-manifest.mjs";
 // @ts-expect-error JS helper alongside the TS Vite config
+import { createPlayoraSoundsManifest } from "./scripts/playora-sounds-manifest.mjs";
+// @ts-expect-error JS helper alongside the TS Vite config
 import {
   createPlayoraSeoArtifacts,
   resolvePublicSiteOrigin,
@@ -102,6 +104,53 @@ function playoraGamesManifestPlugin(): Plugin {
         type: "asset",
         fileName: "playora/games/manifest.json",
         source: JSON.stringify(games),
+      });
+    },
+  };
+}
+
+function playoraSoundsManifestPlugin(): Plugin {
+  const manifestPath = "/playora/sounds/manifest.js";
+  let projectRoot = process.cwd();
+  return {
+    name: "app-builder:playora-sounds-manifest",
+    configResolved(config) {
+      projectRoot = config.root;
+    },
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const pathname = new URL(req.url ?? "/", "http://localhost").pathname;
+        if (
+          pathname !== manifestPath &&
+          !/^\/hds-[a-z0-9]+-\d+-[a-z0-9]+\/playora\/sounds\/manifest\.js$/i.test(pathname)
+        ) {
+          next();
+          return;
+        }
+        if ((req.method ?? "GET").toUpperCase() !== "GET") {
+          res.statusCode = 405;
+          res.setHeader("content-type", "text/plain; charset=utf-8");
+          res.end("Method Not Allowed");
+          return;
+        }
+        try {
+          res.statusCode = 200;
+          res.setHeader("content-type", "text/javascript; charset=utf-8");
+          res.setHeader("cache-control", "no-store");
+          res.end(createPlayoraSoundsManifest(server.config.root));
+        } catch (err) {
+          console.error("[playora] Could not discover sound assets:", err);
+          res.statusCode = 500;
+          res.setHeader("content-type", "text/plain; charset=utf-8");
+          res.end("Could not discover sound assets.");
+        }
+      });
+    },
+    generateBundle() {
+      this.emitFile({
+        type: "asset",
+        fileName: "playora/sounds/manifest.js",
+        source: createPlayoraSoundsManifest(projectRoot),
       });
     },
   };
@@ -241,6 +290,7 @@ export default defineConfig(({ command, isPreview, mode }) => {
       // Dev-only /__app-env, read by scripts/check-auth-invariant.mjs.
       appEnvPlugin(),
       playoraGamesManifestPlugin(),
+      playoraSoundsManifestPlugin(),
       playoraSeoArtifactsPlugin(siteOrigin),
       // PWA head + ?install=1 tutorial page; runs before Start/Nitro.
       grokPwaPlugin(),

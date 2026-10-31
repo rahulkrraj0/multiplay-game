@@ -121,8 +121,16 @@ implementation private, and register one game object.
   `window.playoraSound.playGame(gameId, event)` from lifecycle or gameplay
   callbacks. Generated cues share a normalized peak level, and audio files use
   the same playback volume; normalize custom audio files to a consistent
-  loudness before adding them. Sound is controlled by the site's shared sound
-  toggle.
+  loudness before adding them. Audio files placed directly in a game folder
+  under `public/playora/sounds/` are discovered automatically at dev-server
+  startup and production build. Use event filenames such as `move.ogg`,
+  `capture.ogg`, or `win.ogg`; common alternatives such as `token-move.ogg`,
+  `step.ogg`, `mark.ogg`, `drop.ogg`, and `flick.ogg` are also recognized as
+  move cues. The `shared` folder is checked for common start, win, draw, loss,
+  and menu cues. Sound is controlled by the site's shared sound toggle.
+  Games may define `soundEvent(action, previousState, currentState)` for one
+  action cue or `soundEvents(action, previousState, currentState)` for multiple
+  cues, such as a dice roll followed by a ladder climb.
 
 ## Online play notes
 

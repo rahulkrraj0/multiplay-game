@@ -210,23 +210,38 @@
     menu: [{ frequency: 260, duration: 0.06, type: "square", volume: 0.025, slide: 25 }],
   };
 
-  const soundFiles = {
-    shared: {
-      win: "shared/win.ogg",
-      draw: "shared/draw.ogg",
-      loss: "shared/loss.ogg",
-      menu: "shared/menu.ogg",
-    },
-    carrom: { move: "carrom/flick.ogg" },
-    chess: { move: "chess/move.ogg" },
-    "connect-four": { move: "connect-four/drop.ogg" },
-    ludo: { move: "ludo/token-move.ogg", roll: "ludo/roll.ogg" },
-    racer: { start: "racer/countdown.ogg" },
-    snl: { move: "snl/step.ogg", roll: "snl/roll.ogg" },
-    ttt: { move: "ttt/mark.ogg" },
-    watersort: { move: "watersort/pour.ogg", pour: "watersort/pour.ogg", undo: "watersort/undo.ogg" },
+  const soundAssets = Array.isArray(window.PLAYORA_SOUND_ASSETS) ? window.PLAYORA_SOUND_ASSETS : [];
+  const soundEventAliases = {
+    start: ["start", "countdown"],
+    roll: ["roll", "dice-roll"],
+    move: ["move", "token-move", "piece-move", "step", "mark", "drop", "flick", "pour"],
+    capture: ["capture", "collision", "pocket"],
+    "token-enter": ["token-enter", "token-entry", "enter", "yard-exit"],
+    home: ["home", "finish", "level-complete"],
+    snake: ["snake", "snake-slide"],
+    ladder: ["ladder", "ladder-climb"],
+    next: ["next", "level-complete"],
+    menu: ["menu", "select", "selection"],
+    undo: ["undo"],
   };
   const fileAvailability = new Map();
+
+  function findSoundFile(folder, event) {
+    const names = soundEventAliases[event] || [event];
+    for (const name of names) {
+      const match = soundAssets.find((asset) => {
+        const slash = asset.lastIndexOf("/");
+        return asset.slice(0, slash) === folder &&
+          asset.slice(slash + 1).replace(/\.[^.]+$/, "").toLowerCase() === name;
+      });
+      if (match) return match;
+    }
+    return null;
+  }
+
+  function resolveSoundFile(gameId, event) {
+    return findSoundFile(gameId, event) || findSoundFile("shared", event);
+  }
 
   function playSoundFile(file, fallback) {
     if (typeof window.Audio !== "function" || fileAvailability.get(file) === false) {
@@ -309,9 +324,7 @@
       undo: "undo",
     };
     const event = kind === "win" ? kind : action && typeof action.k === "string" ? actionSounds[action.k] || kind : kind;
-    const file = event === "win"
-      ? soundFiles.shared.win
-      : soundFiles[gameId]?.[event] || soundFiles.shared[event];
+    const file = resolveSoundFile(gameId, event);
     const fallback = () => playGeneratedGameSound(gameId, event, kind);
     if (file && isCoarsePointer() && fileAvailability.get(file) !== true) {
       probeSoundFile(file);

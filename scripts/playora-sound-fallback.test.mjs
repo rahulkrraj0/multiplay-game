@@ -6,6 +6,76 @@ import vm from "node:vm";
 
 const soundsScript = fileURLToPath(new URL("../public/playora/core/sounds.js", import.meta.url));
 
+test("game events use the matching shared and Ludo sound files", () => {
+  const playedFiles = [];
+  class MockAudio {
+    constructor(src) {
+      this.src = src;
+      this.listeners = {};
+      playedFiles.push(src);
+    }
+    addEventListener(type, callback) {
+      this.listeners[type] = callback;
+    }
+    play() {
+      this.listeners.playing?.();
+      return Promise.resolve();
+    }
+    pause() {}
+  }
+
+  const window = {
+    Audio: MockAudio,
+    PLAYORA_SOUND_ASSETS: [
+      "chess/capture.ogg",
+      "chess/check.ogg",
+      "chess/loss.ogg",
+      "chess/move.ogg",
+      "shared/start.ogg",
+      "shared/draw.ogg",
+      "shared/loss.ogg",
+      "ludo/capture.ogg",
+      "ludo/roll.ogg",
+      "ludo/token-move.ogg",
+      "carrom/flick.ogg",
+      "connect-four/drop.ogg",
+      "snl/step.ogg",
+      "ttt/mark.ogg",
+      "watersort/pour.ogg",
+    ],
+    location: { pathname: "/" },
+  };
+  const document = { readyState: "complete", getElementById: () => null };
+  const context = {
+    window,
+    document,
+    localStorage: { getItem: () => null, setItem() {} },
+    console,
+    setTimeout: (callback) => callback(),
+  };
+  vm.runInNewContext(readFileSync(soundsScript, "utf8"), context);
+
+  [
+    ["chess", "start", "/playora/sounds/shared/start.ogg"],
+    ["chess", "draw", "/playora/sounds/shared/draw.ogg"],
+    ["chess", "move", "/playora/sounds/chess/move.ogg"],
+    ["chess", "capture", "/playora/sounds/chess/capture.ogg"],
+    ["chess", "check", "/playora/sounds/chess/check.ogg"],
+    ["chess", "loss", "/playora/sounds/chess/loss.ogg"],
+    ["ludo", "capture", "/playora/sounds/ludo/capture.ogg"],
+    ["ludo", "roll", "/playora/sounds/ludo/roll.ogg"],
+    ["ludo", "move", "/playora/sounds/ludo/token-move.ogg"],
+    ["carrom", "move", "/playora/sounds/carrom/flick.ogg"],
+    ["connect-four", "move", "/playora/sounds/connect-four/drop.ogg"],
+    ["snl", "move", "/playora/sounds/snl/step.ogg"],
+    ["ttt", "move", "/playora/sounds/ttt/mark.ogg"],
+    ["watersort", "move", "/playora/sounds/watersort/pour.ogg"],
+  ].forEach(([game, event, file]) => {
+    window.playoraSound.playGame(game, event);
+    assert.equal(playedFiles.at(-1), file, `${game} ${event} should use ${file}`);
+  });
+});
+
 test("missing game audio files fall back to synthesized sound", async () => {
   const audioInstances = [];
   let oscillatorCount = 0;
@@ -66,6 +136,7 @@ test("missing game audio files fall back to synthesized sound", async () => {
   const window = {
     Audio: MockAudio,
     AudioContext: MockAudioContext,
+    PLAYORA_SOUND_ASSETS: ["chess/move.ogg"],
     location: { pathname: "/" },
     setTimeout: (callback) => callback(),
   };
@@ -188,6 +259,7 @@ test("touch devices play generated Chess sound immediately while checking for an
   const window = {
     Audio: MockAudio,
     AudioContext: MockAudioContext,
+    PLAYORA_SOUND_ASSETS: ["chess/move.ogg"],
     location: { pathname: "/" },
     matchMedia: () => ({ matches: true }),
     fetch: () => {
@@ -259,6 +331,7 @@ test("the in-game mute button disables sounds and stops active audio files", () 
   const roomButton = createButton("soundToggleRoom");
   const window = {
     Audio: MockAudio,
+    PLAYORA_SOUND_ASSETS: ["chess/move.ogg"],
     location: { pathname: "/" },
   };
   const document = {

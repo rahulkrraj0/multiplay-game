@@ -601,7 +601,7 @@ const game = {
     if (!m) return;
     const w = S.t === 0, pc = S.b[m.f];
     const nx = next(S, m);
-    const last = { f: m.f, t: m.t, pc, cap: nx.cap, cq: nx.cq, p: m.p || "" };
+    const last = { f: m.f, t: m.t, pc, cap: nx.cap, cq: nx.cq, p: m.p || "", cs: m.cs || "" };
     if (m.cs) { const h = (m.f >> 3) * 8; last.rk = m.cs === "K" ? [h + 7, h + 5] : [h, h + 3]; }
     S.b = nx.b; S.t = nx.t; S.cs = nx.cs; S.ep = nx.ep; S.hm = nx.hm; S.n++; S.last = last;
     const key = S.b.join(",") + "|" + S.t + "|" + S.cs + "|" + S.ep;
@@ -615,6 +615,13 @@ const game = {
     } else if (S.hm >= 100) { S.over = 1; S.win = -1; S.msg = "Draw \u2013 fifty-move rule"; }
     else if (S.rep[key] >= 3) { S.over = 1; S.win = -1; S.msg = "Draw \u2013 threefold repetition"; }
     else if (insufficient(S.b)) { S.over = 1; S.win = -1; S.msg = "Draw \u2013 insufficient material"; }
+  },
+  soundEvent() {
+    if (S.chk) return "check";
+    if (S.last && S.last.cap) return "capture";
+    if (S.last && S.last.p) return "promotion";
+    if (S.last && S.last.cs) return "castle";
+    return "move";
   },
   bot() {
     const values = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };

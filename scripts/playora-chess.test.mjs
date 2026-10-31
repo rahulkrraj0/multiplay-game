@@ -57,3 +57,23 @@ test("Chess shows White to move first and updates the player marker after each m
     /class="chess-player active" aria-current="step"><b>Black<\/b><span>Blair<\/span><small>to move<\/small>/,
   );
 });
+
+test("Chess reports move, capture, and check sound events", () => {
+  const chess = createChess();
+  chess.state = chess.game.init();
+
+  chess.game.apply({ f: 52, t: 36 });
+  assert.equal(chess.game.soundEvent(), "move");
+  chess.game.apply({ f: 11, t: 27 });
+  chess.game.apply({ f: 36, t: 27 });
+  assert.equal(chess.game.soundEvent(), "capture");
+
+  chess.state = chess.game.init();
+  chess.state.b = Array(64).fill(null);
+  chess.state.b[4] = "k";
+  chess.state.b[60] = "K";
+  chess.state.b[52] = "R";
+  chess.state.cs = "";
+  chess.game.apply({ f: 52, t: 12 });
+  assert.equal(chess.game.soundEvent(), "check");
+});
