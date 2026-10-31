@@ -285,7 +285,10 @@
   }
 
   function resolveSoundFile(gameId, event) {
-    return findSoundFile(gameId, event) || findSoundFile("shared", event);
+    const sharedFirst = ["start", "win", "draw", "loss", "menu"].includes(event);
+    return sharedFirst
+      ? findSoundFile("shared", event) || findSoundFile(gameId, event)
+      : findSoundFile(gameId, event) || findSoundFile("shared", event);
   }
 
   function playSoundFile(file, fallback) {

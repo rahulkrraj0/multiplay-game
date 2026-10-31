@@ -30,12 +30,12 @@ test("game events use the matching shared and Ludo sound files", () => {
       "chess/capture.ogg",
       "chess/castle.ogg",
       "chess/check.ogg",
-      "chess/loss.ogg",
       "chess/move.ogg",
       "chess/promote.ogg",
       "shared/start.ogg",
       "shared/draw.ogg",
       "shared/loss.ogg",
+      "shared/win.ogg",
       "ludo/capture.ogg",
       "ludo/roll.ogg",
       "ludo/token-move.ogg",
@@ -64,7 +64,8 @@ test("game events use the matching shared and Ludo sound files", () => {
     ["chess", "capture", "/playora/sounds/chess/capture.ogg"],
     ["chess", "castle", "/playora/sounds/chess/castle.ogg"],
     ["chess", "check", "/playora/sounds/chess/check.ogg"],
-    ["chess", "loss", "/playora/sounds/chess/loss.ogg"],
+    ["chess", "loss", "/playora/sounds/shared/loss.ogg"],
+    ["chess", "win", "/playora/sounds/shared/win.ogg"],
     ["chess", "promotion", "/playora/sounds/chess/promote.ogg"],
     ["ludo", "capture", "/playora/sounds/ludo/capture.ogg"],
     ["ludo", "roll", "/playora/sounds/ludo/roll.ogg"],
@@ -78,6 +79,52 @@ test("game events use the matching shared and Ludo sound files", () => {
     window.playoraSound.playGame(game, event);
     assert.equal(playedFiles.at(-1), file, `${game} ${event} should use ${file}`);
   });
+});
+
+test("shared result and menu sounds take priority, with game audio as fallback", () => {
+  const playedFiles = [];
+  class MockAudio {
+    constructor(src) { this.src = src; playedFiles.push(src); }
+    addEventListener() {}
+    play() { return Promise.resolve(); }
+  }
+
+  const window = {
+    Audio: MockAudio,
+    PLAYORA_SOUND_ASSETS: [
+      "chess/capture.ogg",
+      "chess/loss.ogg",
+      "chess/win.ogg",
+      "shared/draw.ogg",
+      "shared/loss.ogg",
+      "shared/menu.ogg",
+      "shared/start.ogg",
+      "shared/win.ogg",
+    ],
+    location: { pathname: "/" },
+  };
+  const context = {
+    window,
+    document: { readyState: "complete", getElementById: () => null },
+    localStorage: { getItem: () => null, setItem() {} },
+    console,
+    setTimeout: (callback) => callback(),
+  };
+  vm.runInNewContext(readFileSync(soundsScript, "utf8"), context);
+
+  for (const [event, expected] of [
+    ["start", "shared/start.ogg"],
+    ["win", "shared/win.ogg"],
+    ["draw", "shared/draw.ogg"],
+    ["loss", "shared/loss.ogg"],
+    ["menu", "shared/menu.ogg"],
+  ]) {
+    window.playoraSound.playGame("chess", event);
+    assert.equal(playedFiles.at(-1), `/playora/sounds/${expected}`);
+  }
+
+  window.playoraSound.playGame("chess", "capture");
+  assert.equal(playedFiles.at(-1), "/playora/sounds/chess/capture.ogg", "game-specific cues remain available when shared cue is absent");
 });
 
 test("missing game audio files fall back to synthesized sound", async () => {
