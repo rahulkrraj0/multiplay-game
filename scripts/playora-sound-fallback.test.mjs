@@ -127,6 +127,55 @@ test("shared result and menu sounds take priority, with game audio as fallback",
   assert.equal(playedFiles.at(-1), "/playora/sounds/chess/capture.ogg", "game-specific cues remain available when shared cue is absent");
 });
 
+test("loading a game preloads its sounds and shared cues for immediate playback", async () => {
+  const requests = [];
+  const audioSources = [];
+  let objectUrlIndex = 0;
+  class MockAudio {
+    constructor(src) {
+      this.src = src;
+      audioSources.push(src);
+    }
+    addEventListener() {}
+    play() { return Promise.resolve(); }
+  }
+
+  const window = {
+    Audio: MockAudio,
+    PLAYORA_SOUND_ASSETS: [
+      "chess/move.ogg",
+      "ludo/roll.ogg",
+      "shared/start.ogg",
+      "shared/win.ogg",
+    ],
+    URL: { createObjectURL: () => `blob:playora-${++objectUrlIndex}` },
+    fetch: async (url, options) => {
+      requests.push({ url, options });
+      return { ok: true, blob: async () => ({ size: 12 }) };
+    },
+    location: { pathname: "/hds-preview-1-test/" },
+  };
+  const context = {
+    window,
+    document: { readyState: "complete", getElementById: () => null },
+    localStorage: { getItem: () => null, setItem() {} },
+    console,
+    setTimeout: (callback) => callback(),
+  };
+  vm.runInNewContext(readFileSync(soundsScript, "utf8"), context);
+
+  await window.playoraSound.preloadGame("chess");
+  assert.deepEqual(requests.map(({ url }) => url).sort(), [
+    "/hds-preview-1-test/playora/sounds/chess/move.ogg",
+    "/hds-preview-1-test/playora/sounds/shared/start.ogg",
+    "/hds-preview-1-test/playora/sounds/shared/win.ogg",
+  ]);
+  assert.ok(requests.every(({ options }) => options.cache === "force-cache"));
+
+  window.playoraSound.playGame("chess", "move");
+  assert.equal(audioSources.at(-1), "blob:playora-1", "play the prefetched audio instead of refetching on first move");
+});
+
 test("missing game audio files fall back to synthesized sound", async () => {
   const audioInstances = [];
   let oscillatorCount = 0;

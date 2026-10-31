@@ -19,7 +19,11 @@
 
     let loading = pending.get(id);
     if (!loading) {
-      loading = window.PLAYORA_LOAD_SCRIPT(game.file).then(() => {
+      const scriptLoading = window.PLAYORA_LOAD_SCRIPT(game.file);
+      const soundLoading = window.playoraSound && typeof window.playoraSound.preloadGame === "function"
+        ? window.playoraSound.preloadGame(id)
+        : Promise.resolve();
+      loading = Promise.all([scriptLoading, soundLoading]).then(() => {
         const registered = GAMES[id];
         if (!registered || registered.catalogOnly) {
           throw new Error("The game script did not register: " + game.file);
