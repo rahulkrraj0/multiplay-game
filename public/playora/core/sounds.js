@@ -40,13 +40,17 @@
   function setEnabled(value) {
     state.enabled = Boolean(value);
     persistSoundSetting(state.enabled);
-    const button = document.getElementById("soundToggle");
-    if (button) {
-      const label = state.enabled ? "🔊 Sound on" : "🔇 Sound off";
+    [document.getElementById("soundToggle"), document.getElementById("soundToggleRoom")].forEach((button) => {
+      if (!button) return;
+      const compact = button.id === "soundToggleRoom";
+      const label = state.enabled
+        ? compact ? "🔊" : "🔊 Sound on"
+        : compact ? "🔇" : "🔇 Sound off";
       button.textContent = label;
       button.setAttribute("aria-pressed", String(state.enabled));
       button.setAttribute("title", state.enabled ? "Mute game sounds" : "Enable game sounds");
-    }
+      if (compact) button.setAttribute("aria-label", state.enabled ? "Turn game sounds off" : "Turn game sounds on");
+    });
     if (!state.enabled && state.context && state.context.state !== "closed") {
       void state.context.suspend();
     }
@@ -114,8 +118,11 @@
 
   const gameProfiles = {
     chess: {
-      move: [{ frequency: 190, duration: 0.045, type: "triangle", volume: 0.045, slide: -25 }],
-      roll: [{ frequency: 190, duration: 0.045, type: "triangle", volume: 0.045, slide: -25 }],
+      move: [
+        { frequency: 260, duration: 0.075, type: "triangle", volume: 0.16, slide: -55 },
+        { frequency: 195, duration: 0.055, type: "sine", volume: 0.1, slide: -20 },
+      ],
+      roll: [{ frequency: 190, duration: 0.045, type: "triangle", volume: 0.12, slide: -25 }],
       win: [392, 523, 659].map((frequency) => ({ frequency, duration: 0.13, type: "triangle", volume: 0.045 })),
     },
     "connect-four": {
@@ -275,9 +282,13 @@
   function bindToggle(button) {
     if (!button) return;
     const update = () => {
-      button.textContent = state.enabled ? "🔊 Sound on" : "🔇 Sound off";
+      const compact = button.id === "soundToggleRoom";
+      button.textContent = compact
+        ? state.enabled ? "🔊" : "🔇"
+        : state.enabled ? "🔊 Sound on" : "🔇 Sound off";
       button.setAttribute("aria-pressed", String(state.enabled));
       button.setAttribute("title", state.enabled ? "Mute game sounds" : "Enable game sounds");
+      if (compact) button.setAttribute("aria-label", state.enabled ? "Turn game sounds off" : "Turn game sounds on");
     };
 
     button.addEventListener("click", () => {
@@ -301,10 +312,11 @@
   };
 
   function attachToggleButton() {
-    const button = document.getElementById("soundToggle");
-    if (!button || button.dataset.playoraBound === "true") return;
-    bindToggle(button);
-    button.dataset.playoraBound = "true";
+    [document.getElementById("soundToggle"), document.getElementById("soundToggleRoom")].forEach((button) => {
+      if (!button || button.dataset.playoraBound === "true") return;
+      bindToggle(button);
+      button.dataset.playoraBound = "true";
+    });
   }
 
   if (document.readyState === "loading") {

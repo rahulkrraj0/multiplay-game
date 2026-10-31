@@ -10,6 +10,7 @@ test("missing game audio files fall back to synthesized sound", async () => {
   const audioInstances = [];
   let oscillatorCount = 0;
   let resumeCount = 0;
+  const gainPeaks = [];
 
   class MockAudio {
     constructor(src) {
@@ -53,7 +54,10 @@ test("missing game audio files fall back to synthesized sound", async () => {
 
     createGain() {
       return {
-        gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} },
+        gain: {
+          setValueAtTime() {},
+          exponentialRampToValueAtTime(value) { gainPeaks.push(value); },
+        },
         connect() {},
       };
     }
@@ -81,4 +85,5 @@ test("missing game audio files fall back to synthesized sound", async () => {
   assert.equal(audioInstances[0].src, "/playora/sounds/chess/move.ogg");
   assert.equal(resumeCount, 1, "resume audio during the game sound request");
   assert.ok(oscillatorCount > 0, "play synthesized sound after the file fails");
+  assert.ok(gainPeaks.some((gain) => gain >= 0.15), "Chess fallback should use an audible gain level");
 });
