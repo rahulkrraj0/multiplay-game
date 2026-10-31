@@ -221,6 +221,12 @@
     }
 
     const audio = new window.Audio(soundFileUrl(file));
+    const mimeType = file.toLowerCase().endsWith(".ogg") ? 'audio/ogg; codecs="vorbis"' : "";
+    if (mimeType && typeof audio.canPlayType === "function" && !audio.canPlayType(mimeType)) {
+      fileAvailability.set(file, false);
+      fallback();
+      return;
+    }
     audio.preload = "auto";
     let fallbackPlayed = false;
     const playFallback = () => {
@@ -242,6 +248,18 @@
         playFallback();
       });
     }
+  }
+
+  function isCoarsePointer() {
+    return typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
+  }
+
+  function probeSoundFile(file) {
+    if (fileAvailability.has(file) || typeof window.fetch !== "function") return;
+    fileAvailability.set(file, "checking");
+    window.fetch(soundFileUrl(file), { method: "HEAD", cache: "force-cache" })
+      .then((response) => fileAvailability.set(file, response.ok))
+      .catch(() => fileAvailability.set(file, false));
   }
 
   function soundFileUrl(file) {
@@ -275,6 +293,11 @@
       ? soundFiles.shared.win
       : soundFiles[gameId]?.[event] || soundFiles.shared[event];
     const fallback = () => playGeneratedGameSound(gameId, event, kind);
+    if (file && isCoarsePointer() && fileAvailability.get(file) !== true) {
+      probeSoundFile(file);
+      fallback();
+      return;
+    }
     if (file) playSoundFile(file, fallback);
     else fallback();
   }

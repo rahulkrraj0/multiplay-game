@@ -87,3 +87,66 @@ test("missing game audio files fall back to synthesized sound", async () => {
   assert.ok(oscillatorCount > 0, "play synthesized sound after the file fails");
   assert.ok(gainPeaks.some((gain) => gain >= 0.15), "Chess fallback should use an audible gain level");
 });
+
+test("touch devices play generated Chess sound immediately while checking for an asset", () => {
+  let oscillatorCount = 0;
+  let audioPlayCount = 0;
+  let fetchCount = 0;
+
+  class MockAudioContext {
+    state = "running";
+    currentTime = 0;
+    destination = {};
+    resume() { return Promise.resolve(); }
+    createOscillator() {
+      oscillatorCount += 1;
+      return {
+        frequency: { setValueAtTime() {}, exponentialRampToValueAtTime() {} },
+        connect() {},
+        start() {},
+        stop() {},
+      };
+    }
+    createGain() {
+      return {
+        gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} },
+        connect() {},
+      };
+    }
+  }
+
+  class MockAudio {
+    constructor() {}
+    play() {
+      audioPlayCount += 1;
+      return Promise.resolve();
+    }
+  }
+
+  const window = {
+    Audio: MockAudio,
+    AudioContext: MockAudioContext,
+    location: { pathname: "/" },
+    matchMedia: () => ({ matches: true }),
+    fetch: () => {
+      fetchCount += 1;
+      return new Promise(() => {});
+    },
+    setTimeout: (callback) => callback(),
+  };
+  const document = { readyState: "complete", getElementById: () => null };
+  const context = {
+    window,
+    document,
+    localStorage: { getItem: () => null, setItem() {} },
+    console,
+    setTimeout: (callback) => callback(),
+  };
+
+  vm.runInNewContext(readFileSync(soundsScript, "utf8"), context);
+  window.playoraSound.playGame("chess", "move");
+
+  assert.equal(fetchCount, 1, "check whether the Chess audio file exists");
+  assert.equal(audioPlayCount, 0, "do not wait on or attempt unconfirmed file playback");
+  assert.equal(oscillatorCount, 2, "start the generated Chess cue immediately");
+});
