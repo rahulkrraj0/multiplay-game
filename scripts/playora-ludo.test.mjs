@@ -39,6 +39,13 @@ function createLudo({ players = 2, names } = {}) {
   };
 }
 
+test("Ludo rotation control tracks the board center", () => {
+  assert.match(source, /\.lui-rot\{position:fixed;left:var\(--lui-center-x,50vw\);top:var\(--lui-center-y,50vh\)/);
+  assert.match(source, /rect\.left \+ rect\.width \/ 2/);
+  assert.match(source, /rect\.top \+ rect\.height \/ 2/);
+  assert.match(source, /room\.addEventListener\("scroll", syncRotBtnPosition/);
+});
+
 test("Ludo identifies roll, token entry, capture and home sound events", () => {
   const { game } = createLudo();
   assert.equal(game.soundEvent({ r: 6 }), "roll");
@@ -132,13 +139,16 @@ test("Ludo shows each player name inside their colored board area", () => {
 
   const html = ludo.game.draw()[0];
   for (const name of ["Red Player", "Green Player", "Yellow Player", "Blue Player"]) {
-    assert.match(html, new RegExp('<span class="lui-player-name"[^>]*>' + name + "</span>"));
+    assert.match(html, new RegExp('<span class="lui-player-name-badge"[^>]*>' + name + "</span>"));
   }
   assert.match(html, /left:2%;top:2%/);
   assert.match(html, /right:2%;top:2%/);
   assert.match(html, /right:2%;bottom:2%/);
   assert.match(html, /left:2%;bottom:2%/);
-  assert.equal((html.match(/rotate:var\(--lui-unrot,0deg\)/g) || []).length, 4);
+  assert.equal((html.match(/class="lui-player-name-anchor"/g) || []).length, 4,
+    "each player's name is anchored to its house corner on the rotating board");
+  assert.equal((source.match(/rotate:var\(--lui-unrot,0deg\)/g) || []).length, 3,
+    "the name badges and other board labels counter-rotate so their text stays upright");
 });
 
 test("Ludo escapes player names displayed on the board", () => {
@@ -147,6 +157,6 @@ test("Ludo escapes player names displayed on the board", () => {
   ludo.game.apply({ color: 0 });
 
   const html = ludo.game.draw()[0];
-  assert.match(html, /class="lui-player-name"[^>]*>&lt;img src=x onerror=&quot;alert\(1\)&quot;&gt;/);
+  assert.match(html, /class="lui-player-name-badge"[^>]*title="&lt;img src=x onerror=&quot;alert\(1\)&quot;&gt;" aria-label="&lt;img src=x onerror=&quot;alert\(1\)&quot;&gt;">&lt;img src=x onerror=&quot;alert\(1\)&quot;&gt;/);
   assert.doesNotMatch(html, /<img src=x/);
 });
