@@ -6,6 +6,11 @@ import vm from "node:vm";
 
 const engineSource = readFileSync(fileURLToPath(new URL("../public/playora/core/engine.js", import.meta.url)), "utf8");
 const networkSource = readFileSync(fileURLToPath(new URL("../public/playora/core/net.js", import.meta.url)), "utf8");
+const gameStyles = readFileSync(fileURLToPath(new URL("../src/playora/game.css", import.meta.url)), "utf8");
+
+test("the game board stays hidden until the room enters active-game mode", () => {
+  assert.match(gameStyles, /#room:not\(\.game-active\) #gm\{display:none!important\}/);
+});
 
 test("restored Ludo and Snakes and Ladders states apply their own dice layout", () => {
   const helper = engineSource.match(/function syncGameLayout\(game\)\{[^\n]+\}/)?.[0];

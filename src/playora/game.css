@@ -172,6 +172,7 @@
 @media(max-width:520px){#room .media-tile{width:min(200px,calc(100vw - 16px));height:150px;min-width:145px;min-height:110px}#room .media-controls button{font-size:10px;padding:6px 2px}#room .call-panel{inset:auto 0 0;width:100%;height:min(76dvh,680px);padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px));border:1px solid var(--bd);border-bottom:0;border-radius:20px 20px 0 0;box-shadow:0 -18px 50px #0008;animation-name:call-panel-up}#room .call-panel-header{margin-bottom:8px}#room .call-panel #cl{min-height:80px}@keyframes call-panel-up{from{transform:translateY(18px);opacity:.6}to{transform:translateY(0);opacity:1}}}
 #room.game-active .rin{max-width:none;margin:0;padding:5px 0 env(safe-area-inset-bottom,0px)}
 #room.game-active #gm{text-align:center}
+#room:not(.game-active) #gm{display:none!important}
 .display-name-backdrop[hidden]{display:none}
 .display-name-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:rgba(5,9,20,.82);backdrop-filter:blur(8px)}
 .display-name-card{width:min(100%,440px);padding:clamp(22px,6vw,34px);border:1px solid rgba(196,181,253,.28);border-radius:22px;background:linear-gradient(150deg,#252a4d,#11192e);box-shadow:0 24px 80px #0009;color:#f6f7fb}

@@ -142,9 +142,11 @@
 
       /* decoration layer: yards + centre */
       ".lui-deco{position:absolute;inset:0;z-index:1;pointer-events:none}",
-      ".lui-player-name{position:absolute;z-index:2;max-width:38%;overflow:hidden;padding:3px 7px;border:1px solid rgba(255,255,255,.85);",
-      "  border-radius:999px;background:rgba(15,23,42,.78);color:#fff;font-size:clamp(8px,calc(var(--lui-cell)*.38),13px);",
-      "  font-weight:800;line-height:1.15;text-align:center;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 1px 4px #0005}",
+      ".lui-player-name-anchor{position:absolute;z-index:20;display:block;max-width:46%;pointer-events:none}",
+      ".lui-player-name-badge{display:block;box-sizing:border-box;max-width:100%;overflow:hidden;padding:4px 8px;",
+      "  border:2px solid #fff;border-radius:999px;color:#fff;font:800 clamp(10px,2.2vw,15px)/1.2 system-ui,sans-serif;",
+      "  text-align:center;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 2px 6px #0009;",
+      "  rotate:var(--lui-unrot,0deg);transform-origin:center;transition:rotate .35s ease}",
       ".lui-yard{position:absolute;width:40%;height:40%}",
       ".lui-yard-in{position:absolute;inset:15.5%;background:#fff;border-radius:9%;",
       "  box-shadow:0 0 0 calc(var(--lui-cell)*.12) var(--l),inset 0 2px 8px rgba(0,0,0,.12)}",
@@ -345,14 +347,12 @@
         if (seen[color]) return;
         seen[color] = true;
         var pos = positions[color];
-        labels += '<span class="lui-player-name" style="position:absolute;' + (pos.left ? "left:" + pos.left + ";" : "") +
+        labels += '<span class="lui-player-name-anchor" style="' + (pos.left ? "left:" + pos.left + ";" : "") +
           (pos.right ? "right:" + pos.right + ";" : "") + (pos.top ? "top:" + pos.top + ";" : "") +
-          (pos.bottom ? "bottom:" + pos.bottom + ";" : "") +
-          "z-index:20;display:block;box-sizing:border-box;max-width:46%;overflow:hidden;padding:4px 8px;border:2px solid #fff;border-radius:999px;" +
-          "background:" + pos.color + ";color:#fff;font:800 clamp(10px,2.2vw,15px)/1.2 system-ui,sans-serif;" +
-          "text-align:center;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 2px 6px #0009;pointer-events:none;" +
-          "rotate:var(--lui-unrot,0deg);transform-origin:center;transition:rotate .35s ease\">" +
-          escapeHtml(playerName(player)) + "</span>";
+          (pos.bottom ? "bottom:" + pos.bottom + ";" : "") + '">' +
+          '<span class="lui-player-name-badge" style="background:' + pos.color + '" title="' +
+          escapeHtml(playerName(player)) + '" aria-label="' + escapeHtml(playerName(player)) + '">' +
+          escapeHtml(playerName(player)) + "</span></span>";
       });
     });
     return labels ? '<div class="lui-player-names" style="position:absolute;inset:0;z-index:20;pointer-events:none">' +
@@ -1111,7 +1111,10 @@
 
   function start() {
     addStyles();
-    window.addEventListener("resize", function () { positionRotBtn(rotGrid); }, { passive: true });
+    var syncRotBtnPosition = function () { positionRotBtn(rotGrid); };
+    window.addEventListener("resize", syncRotBtnPosition, { passive: true });
+    var room = document.getElementById("room");
+    if (room) room.addEventListener("scroll", syncRotBtnPosition, { passive: true });
     obs = new MutationObserver(pass);
     obs.observe(document.body, { childList: true, subtree: true });
     pass();
