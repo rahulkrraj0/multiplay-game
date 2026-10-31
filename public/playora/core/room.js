@@ -515,6 +515,7 @@ window.addEventListener("online", () => {
 
 $("jgo").onclick = () => joinRoom($("jid").value);
 $("inviteJoin").onclick = () => {
+  clearAutoRejoin();
   const code = $("inviteCode").textContent;
   document.body.classList.remove("invite-mode");
   $("playora-root").removeAttribute("data-invite");

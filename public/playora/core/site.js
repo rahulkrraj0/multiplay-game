@@ -40,3 +40,4 @@ $('year').textContent=new Date().getFullYear();
 buildCards();filterGames();updateRejoinButton();
 const requestedGame=new URLSearchParams(location.search).get('play');
 if(requestedGame&&Object.hasOwn(GAMES,requestedGame)){history.replaceState(null,'',location.pathname+location.hash);void window.ensurePlayoraGame(requestedGame).then(()=>openRoom(requestedGame)).catch(error=>{console.error('[playora] Could not load requested game:',error);$('playora-boot').textContent='Could not load this game. Check your connection and try again.'})}
+else if(!document.body.classList.contains('invite-mode')&&window.shouldAutoRejoin()){const saved=readLastRoom();if(saved&&!saved.host)void rejoinLastRoom()}
