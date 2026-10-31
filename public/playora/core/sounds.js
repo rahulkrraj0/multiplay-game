@@ -254,6 +254,8 @@
   };
 
   const soundAssets = Array.isArray(window.PLAYORA_SOUND_ASSETS) ? window.PLAYORA_SOUND_ASSETS : [];
+  const soundPreloads = new Map();
+  const preloadedSoundUrls = new Map();
   const soundEventAliases = {
     start: ["start", "countdown"],
     roll: ["roll", "dice-roll"],
@@ -297,7 +299,7 @@
       return;
     }
 
-    const audio = new window.Audio(soundFileUrl(file));
+    const audio = new window.Audio(preloadedSoundUrls.get(file) || soundFileUrl(file));
     const mimeType = file.toLowerCase().endsWith(".ogg") ? 'audio/ogg; codecs="vorbis"' : "";
     if (mimeType && typeof audio.canPlayType === "function" && !audio.canPlayType(mimeType)) {
       fileAvailability.set(file, false);
@@ -348,6 +350,42 @@
   function soundFileUrl(file) {
     const prefix = window.location.pathname.match(/^\/hds-[a-z0-9]+-\d+-[a-z0-9]+/i);
     return (prefix ? prefix[0] : "") + "/playora/sounds/" + file;
+  }
+
+  function preloadSoundFile(file) {
+    if (preloadedSoundUrls.has(file) || fileAvailability.get(file) === false) return Promise.resolve();
+    if (soundPreloads.has(file)) return soundPreloads.get(file);
+    if (typeof window.fetch !== "function" || typeof window.URL?.createObjectURL !== "function") {
+      return Promise.resolve();
+    }
+
+    const loading = window.fetch(soundFileUrl(file), { cache: "force-cache" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.blob();
+      })
+      .then((blob) => {
+        if (!blob.size) throw new Error("The audio file is empty.");
+        preloadedSoundUrls.set(file, window.URL.createObjectURL(blob));
+        fileAvailability.set(file, true);
+      })
+      .catch((error) => {
+        fileAvailability.set(file, false);
+        console.warn("[playora] Could not preload sound; generated audio will be used.", file, error);
+      })
+      .finally(() => soundPreloads.delete(file));
+
+    soundPreloads.set(file, loading);
+    return loading;
+  }
+
+  function preloadGame(gameId) {
+    const relatedAssets = soundAssets.filter((file) => {
+      const slash = file.indexOf("/");
+      const folder = slash < 0 ? "" : file.slice(0, slash);
+      return folder === gameId || folder === "shared";
+    });
+    return Promise.all(relatedAssets.map(preloadSoundFile));
   }
 
   function playGeneratedGameSound(gameId, event, kind) {
@@ -410,6 +448,7 @@
     playTone,
     playPattern,
     playGame,
+    preloadGame,
     bindToggle,
   };
 

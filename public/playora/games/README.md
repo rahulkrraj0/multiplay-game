@@ -123,7 +123,9 @@ implementation private, and register one game object.
   the same playback volume; normalize custom audio files to a consistent
   loudness before adding them. Audio files placed directly in a game folder
   under `public/playora/sounds/` are discovered automatically at dev-server
-  startup and production build. Use event filenames such as `move.ogg`,
+  startup and production build. When a game is selected, its script and matching
+  game/shared audio files load in parallel; the audio is ready for its first cue
+  when the game opens. Use event filenames such as `move.ogg`,
   `capture.ogg`, or `win.ogg`; common alternatives such as `token-move.ogg`,
   `step.ogg`, `mark.ogg`, `drop.ogg`, and `flick.ogg` are also recognized as
   move cues. The `shared` folder is checked for common start, win, draw, loss,
