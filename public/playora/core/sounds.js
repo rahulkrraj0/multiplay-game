@@ -3,6 +3,7 @@
 
   const STORAGE_KEY = "playora.sound-enabled.v1";
   const state = { enabled: true, context: null };
+  const activeAudio = new Set();
 
   function readSoundSetting() {
     try {
@@ -53,6 +54,10 @@
     });
     if (!state.enabled && state.context && state.context.state !== "closed") {
       void state.context.suspend();
+    }
+    if (!state.enabled) {
+      activeAudio.forEach((audio) => audio.pause());
+      activeAudio.clear();
     }
     return state.enabled;
   }
@@ -228,6 +233,8 @@
       return;
     }
     audio.preload = "auto";
+    activeAudio.add(audio);
+    const releaseAudio = () => activeAudio.delete(audio);
     let fallbackPlayed = false;
     const playFallback = () => {
       if (fallbackPlayed) return;
@@ -236,7 +243,9 @@
     };
 
     audio.addEventListener("playing", () => fileAvailability.set(file, true), { once: true });
+    audio.addEventListener("ended", releaseAudio, { once: true });
     audio.addEventListener("error", () => {
+      releaseAudio();
       fileAvailability.set(file, false);
       playFallback();
     }, { once: true });
@@ -244,6 +253,7 @@
     const result = audio.play();
     if (result && typeof result.catch === "function") {
       result.catch(() => {
+        releaseAudio();
         if (audio.error) fileAvailability.set(file, false);
         playFallback();
       });
