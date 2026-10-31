@@ -119,7 +119,10 @@ implementation private, and register one game object.
   falls back to synthesized audio when the file is missing or cannot play.
   Turn-based games receive their cues through `act()`; realtime games can call
   `window.playoraSound.playGame(gameId, event)` from lifecycle or gameplay
-  callbacks. Sound is controlled by the site's shared sound toggle.
+  callbacks. Generated cues share a normalized peak level, and audio files use
+  the same playback volume; normalize custom audio files to a consistent
+  loudness before adding them. Sound is controlled by the site's shared sound
+  toggle.
 
 ## Online play notes
 

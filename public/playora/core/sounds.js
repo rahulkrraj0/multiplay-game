@@ -2,6 +2,8 @@
   "use strict";
 
   const STORAGE_KEY = "playora.sound-enabled.v1";
+  const CUE_PEAK_VOLUME = 0.06;
+  const SOUND_FILE_VOLUME = 0.6;
   const state = { enabled: true, context: null };
   const activeAudio = new Set();
 
@@ -112,13 +114,20 @@
       ],
     };
 
-    const sequence = patterns[kind] || patterns.move;
+    const sequence = normalizeCue(patterns[kind] || patterns.move);
     sequence.forEach((note, index) => {
       const delay = index * 0.06;
       setTimeout(() => {
         playTone(note);
       }, delay * 1000);
     });
+  }
+
+  function normalizeCue(notes) {
+    const peak = notes.reduce((maximum, note) => Math.max(maximum, note.volume || 0), 0);
+    if (!peak) return notes;
+    const scale = CUE_PEAK_VOLUME / peak;
+    return notes.map((note) => ({ ...note, volume: (note.volume || 0) * scale }));
   }
 
   const gameProfiles = {
@@ -233,6 +242,7 @@
       return;
     }
     audio.preload = "auto";
+    audio.volume = SOUND_FILE_VOLUME;
     activeAudio.add(audio);
     const releaseAudio = () => activeAudio.delete(audio);
     let fallbackPlayed = false;
@@ -282,7 +292,7 @@
     const notes = event === "win"
       ? genericProfile.win
       : profile[event] || profile[kind] || genericProfile[event] || genericProfile[kind] || genericProfile.move;
-    notes.forEach((note, index) => {
+    normalizeCue(notes).forEach((note, index) => {
       window.setTimeout(() => playTone(note), index * 60);
     });
   }

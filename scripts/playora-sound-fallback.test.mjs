@@ -83,9 +83,69 @@ test("missing game audio files fall back to synthesized sound", async () => {
   await new Promise((resolve) => setTimeout(resolve, 0));
 
   assert.equal(audioInstances[0].src, "/playora/sounds/chess/move.ogg");
+  assert.equal(audioInstances[0].volume, 0.6, "play sound files at the shared playback level");
   assert.equal(resumeCount, 1, "resume audio during the game sound request");
   assert.ok(oscillatorCount > 0, "play synthesized sound after the file fails");
-  assert.ok(gainPeaks.some((gain) => gain >= 0.15), "Chess fallback should use an audible gain level");
+  assert.ok(gainPeaks.some((gain) => Math.abs(gain - 0.06) < 0.0001), "Chess fallback should use the shared cue level");
+});
+
+test("generated cues across games use the same peak loudness", () => {
+  const rampValues = [];
+
+  class MockAudioContext {
+    state = "running";
+    currentTime = 0;
+    destination = {};
+    resume() { return Promise.resolve(); }
+    createOscillator() {
+      return {
+        frequency: { setValueAtTime() {}, exponentialRampToValueAtTime() {} },
+        connect() {},
+        start() {},
+        stop() {},
+      };
+    }
+    createGain() {
+      return {
+        gain: {
+          setValueAtTime() {},
+          exponentialRampToValueAtTime(value) { rampValues.push(value); },
+        },
+        connect() {},
+      };
+    }
+  }
+
+  const window = {
+    AudioContext: MockAudioContext,
+    location: { pathname: "/" },
+    setTimeout: (callback) => callback(),
+  };
+  const document = { readyState: "complete", getElementById: () => null };
+  const context = {
+    window,
+    document,
+    localStorage: { getItem: () => null, setItem() {} },
+    console,
+    setTimeout: (callback) => callback(),
+  };
+
+  vm.runInNewContext(readFileSync(soundsScript, "utf8"), context);
+  const cues = [
+    ["chess", "move"],
+    ["connect-four", "move"],
+    ["ludo", "roll"],
+    ["racer", "start"],
+    ["ttt", "win"],
+    ["watersort", "undo"],
+  ];
+  const peaks = cues.map(([game, event]) => {
+    rampValues.length = 0;
+    window.playoraSound.playGame(game, event);
+    return Math.max(...rampValues);
+  });
+
+  assert.ok(peaks.every((peak) => Math.abs(peak - 0.06) < 0.0001), `cue peaks: ${peaks.join(", ")}`);
 });
 
 test("touch devices play generated Chess sound immediately while checking for an asset", () => {
@@ -116,7 +176,9 @@ test("touch devices play generated Chess sound immediately while checking for an
   }
 
   class MockAudio {
-    constructor() {}
+    constructor() {
+      this.volume = 1;
+    }
     play() {
       audioPlayCount += 1;
       return Promise.resolve();
