@@ -137,8 +137,8 @@
 #room #hostControls #gameChoice{position:absolute!important;width:1px!important;height:1px!important;min-height:0!important;padding:0!important;border:0!important;clip-path:inset(50%)!important;overflow:hidden!important;white-space:nowrap!important}
 #room #hostControls #gamePicker>summary{display:flex;justify-content:space-between;align-items:center;gap:8px;list-style:none;font-size:13px;font-weight:700;cursor:pointer}
 #room #hostControls #gamePicker>summary::-webkit-details-marker{display:none}
-#room #hostControls #gamePicker>summary::after{content:"";flex:0 0 8px;width:8px;height:8px;margin:0 3px 4px 4px;border-right:2px solid #a78bfa;border-bottom:2px solid #a78bfa;transform:rotate(45deg);transition:transform .15s}
-#room #hostControls #gamePicker[open]>summary::after{margin-bottom:0;transform:rotate(225deg)}
+#room #hostControls #gamePicker .game-picker-arrow{flex:0 0 18px;width:18px;height:18px;margin-left:4px;fill:none;stroke:#a78bfa;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+#room #hostControls #gamePicker[open] .game-picker-arrow{transform:rotate(180deg)}
 #room #hostControls #gameSelection{font-weight:500;opacity:.75}
 #room .lobby-games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:6px 0}
 #room .lobby-game{display:grid;grid-template-columns:38px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;column-gap:10px;min-height:70px;padding:9px 11px!important;margin:0!important;text-align:left!important;background:#10182b!important;border:1px solid var(--bd)!important;border-radius:12px!important;transition:border-color .16s,background .16s,transform .16s}
