@@ -11,7 +11,17 @@ const gameStyles = readFileSync(fileURLToPath(new URL("../src/playora/game.css",
 
 test("the host game picker can collapse while showing the selected game", () => {
   assert.match(markup, /<details id="gamePicker" open><summary>Choose a game <span id="gameSelection"><\/span><\/summary>/);
+  assert.match(gameStyles, /#room #hostControls #gamePicker>summary::after\{content:"";[^}]*border-right:2px solid #a78bfa/);
   assert.match(networkSource, /\$\('gameSelection'\)\.textContent=GAMES\[pick\]\?\.t\|\|'Select a game'/);
+  assert.doesNotMatch(gameStyles, /#room #hostControls #gamePicker\{[^}]*display:grid/);
+});
+
+test("guests see available games without controls to change the host selection", () => {
+  assert.match(markup, /id="hostControls" class="hide"/);
+  assert.match(markup, /id="guestGameChoices" class="hide"/);
+  assert.match(gameStyles, /#room #hostControls\.hide\{display:none!important\}/);
+  assert.match(networkSource, /\$\('guestGameChoices'\)\.classList\.toggle\('hide',host\)/);
+  assert.match(networkSource, /renderLobbyGameCards\(\$\('guestLobbyGames'\),false\)/);
 });
 
 test("the game board stays hidden until the room enters active-game mode", () => {

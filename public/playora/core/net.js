@@ -191,18 +191,19 @@ async function sig(C,m){if(!m||!m.d||m.to==null||m.from==null)return;
   else if(P.pc.signalingState!=='stable'||!P.pc.currentRemoteDescription)await P.pc.setRemoteDescription(m.d)}catch{}}
 function mesh(){const n=peers().length;rep[myId]=n;bcast({k:'mesh',n});lobbyUp();updateMediaTilePermissions();startGameChannels();requestRejoin()}
 const onlineGames=()=>Object.values(GAMES).filter(g=>(g.max||2)>1);
-function renderLobbyGameCards(container){container.innerHTML='';onlineGames().forEach(g=>{const selected=g.id===pick,button=document.createElement('button');button.type='button';button.className='lobby-game'+(selected?' selected':'');button.dataset.game=g.id;button.setAttribute('aria-pressed',String(selected));button.setAttribute('aria-label',g.t+(selected?', selected':''));const icon=document.createElement('span');icon.className='lobby-game-icon';icon.setAttribute('aria-hidden','true');icon.textContent=g.i||'Game';const title=document.createElement('strong');title.textContent=g.t;const players=document.createElement('small');const max=g.max||2;players.textContent='Up to '+max+' players';button.append(icon,title,players);container.append(button);button.onclick=()=>{const choice=$('gameChoice');choice.value=g.id;choice.dispatchEvent(new Event('change',{bubbles:true}))}})}
+function renderLobbyGameCards(container,interactive){container.innerHTML='';onlineGames().forEach(g=>{const selected=g.id===pick,button=document.createElement('button');button.type='button';button.className='lobby-game'+(selected?' selected':'');button.dataset.game=g.id;button.disabled=!interactive;button.setAttribute('aria-pressed',String(selected));button.setAttribute('aria-label',g.t+(selected?', selected':''));const icon=document.createElement('span');icon.className='lobby-game-icon';icon.setAttribute('aria-hidden','true');icon.textContent=g.i||'Game';const title=document.createElement('strong');title.textContent=g.t;const players=document.createElement('small');const max=g.max||2;players.textContent='Up to '+max+' players';button.append(icon,title,players);container.append(button);if(interactive)button.onclick=()=>{const choice=$('gameChoice');choice.value=g.id;choice.dispatchEvent(new Event('change',{bubbles:true}))}})}
 function updateLobbyControls(){const host=amHost(),controls=$('hostControls'),choice=$('gameChoice'),count=$('playerCount');
- controls.classList.toggle('hide',!host);$('guestChoice').classList.toggle('hide',host);$('wt').classList.toggle('hide',host);
+ controls.classList.toggle('hide',!host);$('guestGameChoices').classList.toggle('hide',host);$('guestChoice').classList.toggle('hide',host);$('wt').classList.toggle('hide',host);
  if(host){if(!choice.options.length)onlineGames().forEach(g=>choice.add(new Option(g.t,g.id)));
   if(!GAMES[pick]||(GAMES[pick].max||2)<2)pick=choice.value||onlineGames()[0]?.id;choice.value=pick;
   $('gameSelection').textContent=GAMES[pick]?.t||'Select a game';
-  renderLobbyGameCards($('lobbyGames'));
+  renderLobbyGameCards($('lobbyGames'),true);
   const max=GAMES[pick]?.max||2;
   activeLimit=Math.max(2,Math.min(activeLimit,max));
   count.innerHTML='';for(let i=2;i<=max;i++)count.add(new Option(i+' players',String(i)));
   count.disabled=max<3;count.value=String(activeLimit);
   $('playerHint').textContent=max<3?'This game supports 2 active players. Additional guests spectate; voice chat is available when there are spectators.':'Choose how many attendees play. Everyone else spectates; voice chat is available when there are spectators.'}
+ else renderLobbyGameCards($('guestLobbyGames'),false);
 }
 function currentAttendees(){return[{id:myId,key:playerKey,seat:js,name:displayName},...peers().map(C=>({id:C.id,key:C.playerKey||C.id,seat:C.seat,name:peerName(C)}))].sort((a,b)=>a.seat-b.seat)}
 function renderAttendanceRoster(attendees,host){
