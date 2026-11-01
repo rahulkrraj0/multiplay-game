@@ -134,18 +134,16 @@
 #room #hostControls label{font-size:13px;font-weight:650;opacity:.9}
 #room #hostControls select{width:100%;min-height:42px}
 #room #hostControls #gameChoice{position:absolute!important;width:1px!important;height:1px!important;min-height:0!important;padding:0!important;border:0!important;clip-path:inset(50%)!important;overflow:hidden!important;white-space:nowrap!important}
-#room .lobby-games-label,#room #hostControls>label:first-child{font-size:13px;font-weight:700}
+#room #hostControls #gamePicker{display:grid;gap:6px}
+#room #hostControls #gamePicker>summary{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:700;cursor:pointer}
+#room #hostControls #gameSelection{font-weight:500;opacity:.75}
 #room .lobby-games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:6px 0}
 #room .lobby-game{display:grid;grid-template-columns:38px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;column-gap:10px;min-height:70px;padding:9px 11px!important;margin:0!important;text-align:left!important;background:#10182b!important;border:1px solid var(--bd)!important;border-radius:12px!important;transition:border-color .16s,background .16s,transform .16s}
 #room .lobby-game.selected{border-color:#a78bfa!important;background:#29244a!important;box-shadow:inset 0 0 0 1px #a78bfa44}
 #room .lobby-game:not(:disabled):hover{transform:translateY(-1px);border-color:#c4b5fd!important}
-#room .lobby-game:disabled{opacity:1;cursor:default}
 #room .lobby-game-icon{grid-row:1/3;display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:#ffffff0b;font-size:23px}
 #room .lobby-game strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
 #room .lobby-game small{color:#bfc8dd;font-size:11px}
-#room #guestGameChoices{margin:12px 0}
-#room .lobby-games-label{margin:0 0 6px}
-#room #guestLobbyGames .lobby-game:not(.selected){opacity:.58}
 #room #hostControls p,#room #roomCount{font-size:13px;line-height:1.5;opacity:.78;margin:4px 0}
 #room #playerCount:disabled{opacity:.75}
 #room .mv{animation:pl .7s infinite alternate}@keyframes pl{to{transform:scale(1.15)}}

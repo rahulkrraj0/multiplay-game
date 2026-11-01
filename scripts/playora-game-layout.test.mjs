@@ -6,7 +6,13 @@ import vm from "node:vm";
 
 const engineSource = readFileSync(fileURLToPath(new URL("../public/playora/core/engine.js", import.meta.url)), "utf8");
 const networkSource = readFileSync(fileURLToPath(new URL("../public/playora/core/net.js", import.meta.url)), "utf8");
+const markup = readFileSync(fileURLToPath(new URL("../src/playora/markup.html", import.meta.url)), "utf8");
 const gameStyles = readFileSync(fileURLToPath(new URL("../src/playora/game.css", import.meta.url)), "utf8");
+
+test("the host game picker can collapse while showing the selected game", () => {
+  assert.match(markup, /<details id="gamePicker" open><summary>Choose a game <span id="gameSelection"><\/span><\/summary>/);
+  assert.match(networkSource, /\$\('gameSelection'\)\.textContent=GAMES\[pick\]\?\.t\|\|'Select a game'/);
+});
 
 test("the game board stays hidden until the room enters active-game mode", () => {
   assert.match(gameStyles, /#room:not\(\.game-active\) #gm\{display:none!important\}/);
