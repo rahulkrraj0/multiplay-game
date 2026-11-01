@@ -94,5 +94,17 @@
     "tag": "Pour & sort",
     "diff": "Easy to learn",
     "art": "art-watersort"
+  },
+  {
+    "file": "joker-duel.js",
+    "id": "joker-duel",
+    "i": "🃏",
+    "t": "Joker Duel",
+    "d": "Build poker hands, score chips × mult, collect jokers and level up your hands. Win the best of three rounds.",
+    "max": 2,
+    "cat": "strategy",
+    "tag": "Card battler",
+    "diff": "Medium",
+    "art": "art-joker-duel"
   }
 ]
