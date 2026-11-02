@@ -60,6 +60,19 @@
     "art": "art-racer"
   },
   {
+    "file": "rummy.js",
+    "id": "rummy",
+    "i": "♣️",
+    "t": "Rummy",
+    "d": "Classic rummy for 2 to 6 players. Draw, make sets and runs, lay off on the table and be first to go out.",
+    "min": 2,
+    "max": 6,
+    "cat": "classic casual",
+    "tag": "Card classic",
+    "diff": "Medium",
+    "art": "art-rummy"
+  },
+  {
     "file": "snl.js",
     "id": "snl",
     "i": "🐍",
