@@ -517,6 +517,8 @@ $("jgo").onclick = () => joinRoom($("jid").value);
 $("inviteJoin").onclick = () => {
   clearAutoRejoin();
   const code = $("inviteCode").textContent;
+  const saved = readLastRoom();
+  room.rejoinId = saved?.code === code && !saved.host ? saved.playerId : null;
   document.body.classList.remove("invite-mode");
   $("playora-root").removeAttribute("data-invite");
   $("invitePage").hidden = true;
@@ -524,6 +526,8 @@ $("inviteJoin").onclick = () => {
   $("jid").value = code;
   void joinRoom(code);
 };
+$("inviteJoin").disabled = false;
+$("inviteJoin").textContent = "Join lobby";
 $("jid").addEventListener("keydown", (e) => {
   if (e.key === "Enter") $("jgo").click();
 });
