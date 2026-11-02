@@ -468,7 +468,7 @@
     context = canvas?.getContext("2d");
     if (!canvas || !context) return;
     localSeat = Number.isInteger(seat) && seat >= 0 && seat < 2 ? seat : seat < 0 ? 0 : 99;
-    if (typeof amHost === "function" && amHost()) {
+    if (typeof amHost === "function" && amHost() && !S.startedAt) {
       S.raceAt = Date.now() + 3200;
       S.startedAt = Date.now();
     }

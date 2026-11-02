@@ -180,3 +180,17 @@ test("realtime racer accepts fresh host snapshots and emits guest input", () => 
   assert.equal(state.msg, "Rahul wins the race!");
   racer.game.onStop();
 });
+
+test("realtime racer keeps its saved race timing when resumed", () => {
+  const racer = createRacer();
+  const state = racer.game.init();
+  state.startedAt = 98_000;
+  state.raceAt = 101_000;
+  racer.setState(state);
+
+  racer.game.onStart();
+
+  assert.equal(state.startedAt, 98_000);
+  assert.equal(state.raceAt, 101_000);
+  racer.game.onStop();
+});

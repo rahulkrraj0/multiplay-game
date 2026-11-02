@@ -243,11 +243,10 @@ async function roomHostAvailable(code) {
     },
     rtcKey(code),
   );
-  const hostListed = ws.peers.some((peer) => peer.id === hostId(code));
   const timeout = setTimeout(() => resolveProbe(false), 6000);
   try {
     await sgn(ws, "OFFER", hostId(code), { k: "probe" });
-    return (await response) || hostListed;
+    return await response;
   } finally {
     clearTimeout(timeout);
     sigClose(ws);
@@ -437,6 +436,7 @@ async function rejoinLastRoom() {
     updateRejoinButton();
     return;
   }
+  $("disconnectRecovery").hidden = true;
   const game = GAMES[saved.game] ? saved.game : Object.keys(GAMES)[0];
   const savedPlayerId =
     typeof saved.playerId === "string" && /^[a-z0-9]{1,32}$/i.test(saved.playerId)
