@@ -140,6 +140,9 @@
 .poker .pk-seat.is-out { opacity: 0.32; filter: grayscale(1); }
 .poker .pk-seat__top { display: flex; min-width: 0; align-items: baseline; justify-content: space-between; gap: 0.4rem; }
 .poker .pk-seat__name { min-width: 0; overflow: hidden; color: var(--sc); font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.poker .pk-seat__identity { display: flex; min-width: 0; align-items: center; gap: 0.3rem; }
+.poker .pk-seat__bot { display: inline-grid; flex: none; width: 1.25rem; height: 1.25rem; place-items: center; border-radius: 50%; background: rgba(251, 191, 36, 0.2); color: var(--pk-gold); }
+.poker .pk-seat__bot svg { width: 0.9rem; height: 0.9rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
 .poker .pk-seat__chips { font-size: 1.1rem; font-weight: 900; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .poker .pk-seat__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; min-height: 1.1rem; font-size: 0.7rem; opacity: 0.9; }
 .poker .pk-badge { padding: 0 0.35rem; border: 1px solid rgba(255, 255, 255, 0.45); border-radius: 0.5rem; font-weight: 800; }
@@ -218,6 +221,9 @@
 .poker .pk-hole .pk-card { width: calc(var(--cw) * 1.2); height: calc(var(--cw) * 1.7); font-size: calc(var(--cw) * 0.41); border-radius: calc(var(--cw) * 0.16); }
 .poker .pk-hole.is-folded .pk-card { opacity: 0.4; filter: grayscale(1); }
 .poker .pk-me__made { min-height: 1.3em; margin: 0; font-size: 0.9rem; font-weight: 800; color: var(--pk-gold); }
+.poker .pk-reveal { display: grid; justify-items: center; gap: 0.4rem; padding: 0.7rem; border: 1px solid rgba(251, 191, 36, 0.45); border-radius: 0.8rem; background: rgba(0, 0, 0, 0.22); }
+.poker .pk-reveal__title { margin: 0; color: var(--pk-gold); font-size: 0.85rem; font-weight: 800; }
+.poker .pk-reveal__hand { display: grid; justify-items: center; gap: 0.25rem; font-size: 0.8rem; font-weight: 700; }
 
 /* ---------- controls & panels ---------- */
 .poker .pk-controls { display: grid; gap: 0.5rem; justify-items: center; min-height: 2.6rem; margin-top: 0.1rem; }
@@ -488,6 +494,7 @@
 
   let anim = { seq: -1, start: 0 };   // local animation clock for S.last
   let mySeat = null;                  // seat this browser has played (see viewSeat)
+  let spectatorHands = null;
   let raiseTo = 0;                    // local, un-synced raise amount
   let rzKey = "";                     // which turn raiseTo belongs to
 
@@ -856,6 +863,21 @@
     return mySeat !== null && mySeat < S.np ? mySeat : null;
   }
 
+  function rememberComputerHands(seat) {
+    if (!isLocalComputerGame() || mySeat !== seat) return;
+    spectatorHands = S.hole.map((cards, i) => ({ seat: i, cards: cards.slice() }))
+      .filter((entry) => entry.seat !== seat && entry.cards.length > 0);
+  }
+
+  function spectatorHTML() {
+    if (!spectatorHands || !spectatorHands.length) return "";
+    return '<section class="pk-reveal" aria-label="Computer cards revealed after you folded">' +
+      '<h3 class="pk-reveal__title">Computer cards</h3>' +
+      spectatorHands.map((entry) => '<div class="pk-reveal__hand"><span>' + esc(nm(entry.seat)) + '</span><div class="pk-hole">' +
+        entry.cards.map((id) => '<span class="pk-card' + redCls(id) + '" role="img" aria-label="' + cardName(id) + '">' + face(id) + "</span>").join("") +
+        "</div></div>").join("") + "</section>";
+  }
+
   function face(id) {
     const r = RANK_LABELS[rank(id) - 2];
     const s = SUITS[suit(id)];
@@ -898,6 +920,7 @@
 
   function seatHTML(i, an, L) {
     const out = S.out[i];
+    const computer = isLocalComputerGame() && i !== mySeat;
     const inHand = S.ph === "bet" && S.in[i];
     const folded = inHand && S.fold[i];
     const allin = inHand && !folded && S.ch[i] === 0;
@@ -910,7 +933,8 @@
     const state = out ? "Out" : folded ? "Folded" : allin ? "All-in" : active ? "To act" : "";
     return '<div class="pk-seat pk-s' + i + (active ? " is-active" : "") + (acted ? " is-act" : "") +
       (folded ? " is-fold" : "") + (out ? " is-out" : "") + '">' +
-      '<div class="pk-seat__top"><span class="pk-seat__name">' + esc(nm(i)) + "</span>" +
+      '<div class="pk-seat__top"><span class="pk-seat__identity">' + (computer ? '<span class="pk-seat__bot" role="img" aria-label="Computer opponent" title="Computer opponent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v3M9 3h6M5 10h14a2 2 0 0 1 2 2v7H3v-7a2 2 0 0 1 2-2Z"/><path d="M3 14H1m22 0h-2M8 14h.01M16 14h.01M9 17h6"/></svg></span>' : "") +
+      '<span class="pk-seat__name">' + esc(nm(i)) + "</span></span>" +
       '<span class="pk-seat__chips" aria-label="' + S.ch[i] + ' chips">' + fmt(S.ch[i]) + "</span></div>" +
       '<div class="pk-seat__meta">' + badges.join("") + (state ? "<span>" + state + "</span>" : "") + "</div>" +
       '<div class="pk-seat__row">' +
@@ -1156,6 +1180,7 @@
     // players/n/count). Without it the first seat picks it in a setup step.
     init(opts) {
       mySeat = null;
+      spectatorHands = null;
       raiseTo = 0;
       rzKey = "";
       anim = { seq: -1, start: 0 };
@@ -1198,11 +1223,12 @@
         Object.assign(S, blank(action.players, "deal"));
         return;
       }
-      if (S.ph === "deal") { startHand(action.deal); return; }
+      if (S.ph === "deal") { spectatorHands = null; startHand(action.deal); return; }
 
       const seat = S.t;
       const who = nm(seat);
       if (has(action, "fold")) {
+        rememberComputerHands(seat);
         S.fold[seat] = true;
         S.todo[seat] = false;
         S.la = who + " folds";
@@ -1252,6 +1278,7 @@
       const an = el >= 0;
 
       const vs = viewSeat();
+
       if (S.ph === "bet" && mine()) {
         const key = S.seq + ":" + S.t;
         const b = bounds();
@@ -1264,6 +1291,7 @@
       else if (S.ph === "deal") body = dealHTML();
       else if (S.ph === "end") body = endHTML();
       else body = tableHTML(an, L) + meHTML(vs, an, L) + controlsHTML();
+      body += spectatorHTML();
 
       let status;
       if (S.over) status = S.msg;

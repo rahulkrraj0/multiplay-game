@@ -259,6 +259,7 @@
   line-height: 1.05;
   box-shadow: 0 0.1rem 0.25rem rgba(0, 0, 0, 0.4);
 }
+.rummy .rm-mini.rm-red { color: #dc2626; }
 .rummy .rm-mini i { font-style: normal; }
 
 /* ---------- controls & panels ---------- */
