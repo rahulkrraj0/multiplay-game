@@ -12,7 +12,7 @@ function requireDisplayName(action){if(displayName)return true;ensureDisplayName
 const nameForm=$('displayNameForm');nameForm.addEventListener('submit',saveDisplayName);$('cancelDisplayName').onclick=cancelDisplayName;
 function cleanGamePlayerNames(names){return Array.isArray(names)?names.map((name,index)=>cleanPlayerName(name)||'Player '+(index+1)):[]}
 const playerLabel=t=>localBot&&t!==seat?'Computer':gamePlayerNames[t]||G.n[t]||'Player '+(t+1);
-const nm=t=>playerLabel(t),canAct=()=>!S.over&&!disconnectPending&&(seat<0||seat===S.t);
+const nm=t=>playerLabel(t),canAct=()=>!S.over&&!disconnectPending&&(seat<0||seat===S.t||(ids.length&&typeof amHost==='function'&&amHost()&&dead.has(S.t)));
 function isLocalComputerGame(){return localBot}
 
 const GAMES={};const registerGame=g=>GAMES[g.id]=g;
@@ -51,7 +51,7 @@ function showDice(r){const d=$('dice');clearInterval(dt);d.classList.remove('hid
  let k=0;d.classList.add('roll');dt=setInterval(()=>{if(++k<7)d.textContent=1+Math.floor(Math.random()*6);else{clearInterval(dt);d.textContent=r;d.classList.remove('roll')}},70)}
 $('rl').onclick=()=>{if(!ids.length||amHost())return act({r:d6()});const H=peers().find(C=>C.seat===hostSeat());if(H){$('rl').disabled=true;if(typeof requestRollFromHost==='function')requestRollFromHost(H);else snd(H,{k:'rq'})}};
 /* online: rolls are accepted only from the host, moves only from the player whose turn it is, and each game can add a valid(a) check */
-const actOk=(C,a)=>{if(!a||typeof a!=='object'||S.over||disconnectPending)return false;if(G.hostSetup&&S.setup)return a.r===undefined&&C.seat===hostSeat()&&(!G.valid||G.valid(a));if(a.r!==undefined){if(C.seat!==hostSeat()||(G.roll&&!G.cr())||(!G.roll&&typeof G.valid!=='function'))return false}else if(ids.indexOf(C.id)!==S.t)return false;return !G.valid||G.valid(a)};
+const actOk=(C,a)=>{if(!a||typeof a!=='object'||S.over||disconnectPending)return false;if(G.hostSetup&&S.setup)return a.r===undefined&&C.seat===hostSeat()&&(!G.valid||G.valid(a));if(a.r!==undefined){if(C.seat!==hostSeat()||(G.roll&&!G.cr())||(!G.roll&&typeof G.valid!=='function'))return false}else if(ids.indexOf(C.id)!==S.t&&!(C.seat===hostSeat()&&dead.has(S.t)))return false;return !G.valid||G.valid(a)};
 $('rx').onclick=$('bk').onclick=()=>{if(ids.length&&!confirm('Leave this game?'))return;closeRoom()};$('rs').onclick=()=>ids.length?(amHost()?startNet():alert('Only the host can restart')):begin(G.id,np,null,localBot);$('panelRestart').onclick=()=>$('rs').click();
 
 $('mb').onclick=closeRoom;$('ml').onclick=()=>begin(pick,2,null,true);
