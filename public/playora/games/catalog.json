@@ -48,6 +48,19 @@
     "art": "art-ludo"
   },
   {
+    "file": "poker-game.js",
+    "id": "poker",
+    "i": "♠️",
+    "t": "Poker",
+    "d": "Texas Hold’em for 2 to 6 players. Blind bets, flop, turn and river, side pots and a showdown. Last player with chips wins.",
+    "min": 2,
+    "max": 6,
+    "cat": "classic casual",
+    "tag": "Card classic",
+    "diff": "Hard",
+    "art": "art-poker"
+  },
+  {
     "file": "racer.js",
     "id": "racer",
     "i": "🏎️",
@@ -71,6 +84,19 @@
     "tag": "Card classic",
     "diff": "Medium",
     "art": "art-rummy"
+  },
+  {
+    "file": "teenpatti.js",
+    "id": "teenpatti",
+    "i": "🃏",
+    "t": "Teen Patti",
+    "d": "Indian three-card poker for 2 to 6 players. Play blind or seen, bet, raise, pack, or call a show.",
+    "min": 2,
+    "max": 6,
+    "cat": "classic casual",
+    "tag": "Card classic",
+    "diff": "Medium",
+    "art": "art-teenpatti"
   },
   {
     "file": "snl.js",
