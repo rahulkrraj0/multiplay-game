@@ -13,6 +13,20 @@
     "logo": "carrom.svg"
   },
   {
+    "file": "2048-game.js",
+    "id": "2048",
+    "i": "🔢",
+    "t": "2048",
+    "d": "Slide numbered tiles on a 4×4 board, combine matching numbers, and build the 2048 tile. Your progress is saved on this device.",
+    "max": 1,
+    "cat": "puzzle",
+    "tag": "Number puzzle",
+    "diff": "Easy to learn",
+    "art": "art-puzzle",
+    "logo": "2048.svg",
+    "standalone": true
+  },
+  {
     "file": "chess.js",
     "id": "chess",
     "i": "♟️",
@@ -24,6 +38,19 @@
     "diff": "Deep to master",
     "art": "art-chess",
     "logo": "chess.svg"
+  },
+  {
+    "file": "checkers-game.js",
+    "id": "checkers",
+    "i": "🔴",
+    "t": "Checkers",
+    "d": "Jump opposing pieces, chain captures, and crown kings. Play against the computer or take turns with another player.",
+    "max": 2,
+    "cat": "classic strategy",
+    "tag": "Jump & capture",
+    "diff": "Easy to learn",
+    "art": "art-chess",
+    "logo": "checkers.svg"
   },
   {
     "file": "connect-four.js",
@@ -120,6 +147,20 @@
     "logo": "snl.svg"
   },
   {
+    "file": "sudoku.js",
+    "id": "sudoku",
+    "i": "🔢",
+    "t": "Sudoku",
+    "d": "Fill every row, column, and 3×3 box with the numbers 1–9. Choose a difficulty, add notes, undo moves, or ask for a hint.",
+    "max": 1,
+    "cat": "puzzle",
+    "tag": "Logic puzzle",
+    "diff": "Easy to hard",
+    "art": "art-puzzle",
+    "logo": "sudoku.svg",
+    "standalone": true
+  },
+  {
     "file": "ttt.js",
     "id": "ttt",
     "i": "❌",
@@ -131,6 +172,19 @@
     "diff": "Easy",
     "art": "art-ttt",
     "logo": "ttt.svg"
+  },
+  {
+    "file": "uno.js",
+    "id": "uno",
+    "i": "🃏",
+    "t": "UNO",
+    "d": "Match colors and numbers, play action cards, and race to empty your hand against up to three other players or computers.",
+    "max": 4,
+    "cat": "classic casual",
+    "tag": "Card game",
+    "diff": "Easy to learn",
+    "art": "art-cards",
+    "logo": "uno.svg"
   },
   {
     "file": "watersort-game.js",

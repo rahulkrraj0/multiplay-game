@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">2048</title>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#56d9c2"/><stop offset="1" stop-color="#3472bd"/></linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="10" flood-color="#173453" flood-opacity=".5"/></filter>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="#18324d"/>
+  <rect x="42" y="42" width="428" height="428" rx="100" fill="url(#bg)"/>
+  <g filter="url(#shadow)" stroke="#173453" stroke-width="9" stroke-linejoin="round">
+    <rect x="104" y="105" width="137" height="137" rx="25" fill="#d2eee0"/>
+    <rect x="271" y="105" width="137" height="137" rx="25" fill="#f3cf86"/>
+    <rect x="104" y="272" width="137" height="137" rx="25" fill="#eda66c"/>
+    <path d="M296 281h87a25 25 0 0 1 25 25v78a25 25 0 0 1-25 25h-87a25 25 0 0 1-25-25v-78a25 25 0 0 1 25-25z" fill="#e87558"/>
+    <path d="M134 174h77m-39-29v58M300 176h80m-47-21h41m-41 42h41" fill="none" stroke="#fff8e9" stroke-linecap="round" stroke-width="12"/>
+    <text x="172" y="361" text-anchor="middle" fill="#fff8e9" stroke="none" font-family="system-ui,sans-serif" font-size="43" font-weight="900">2</text>
+    <text x="340" y="354" text-anchor="middle" fill="#fff8e9" stroke="none" font-family="system-ui,sans-serif" font-size="47" font-weight="900">2048</text>
+  </g>
+</svg>

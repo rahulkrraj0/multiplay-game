@@ -4,7 +4,8 @@
  *
  * Setup (asked on the board when the game starts, by player 1 / the host):
  *   - 2 players: first choose "1 house each" (4 tokens) or "2 houses each" (8 tokens).
- *   - Then choose the house colour:
+ *   - Then choose the house colour. On subsequent restarts the house colours
+ *     rotate clockwise automatically, preserving the selected house count:
  *       1 house each  -> any of Red, Green, Yellow, Blue. A 2-player rival gets the
  *                        opposite (diagonal) house. With 3-4 players the others take the
  *                        next colours clockwise (Red -> Green -> Yellow -> Blue).
@@ -127,6 +128,7 @@
       /* local view rotation (individual 'rotate' property, so it never fights the entrance animation) */
       "  rotate:var(--lui-rot,0deg);transition:rotate .35s ease;",
       "}",
+      "#room .g.c15.lui{grid-template-columns:repeat(15,minmax(0,1fr))!important;grid-template-rows:repeat(15,minmax(0,1fr))!important}",
       ".g.c15.lui.lui-enter{animation:lui-board-in .55s cubic-bezier(.2,.8,.2,1) both}",
 
       /* cells */
@@ -972,7 +974,7 @@
         before.forEach(function (c, i) { c.classList.remove("lui-side", "lui-board"); c.classList.add("lui-full"); c.style.setProperty("--lui-row", String(i + 1)); });
         branch.classList.remove("lui-side", "lui-full");
         branch.classList.add("lui-board");
-        branch.style.setProperty("--lui-row", (before.length + 1) + " / span " + (sideKids.length + 2));
+        branch.style.setProperty("--lui-row", "1 / -1");
         sideKids.forEach(function (c, i) { c.classList.remove("lui-full", "lui-board"); c.classList.add("lui-side"); c.style.setProperty("--lui-row", String(before.length + 2 + i)); });
         after.forEach(function (c, i) { c.classList.remove("lui-side", "lui-board"); c.classList.add("lui-full"); c.style.setProperty("--lui-row", String(before.length + sideKids.length + 3 + i)); });
         return;
@@ -1613,9 +1615,23 @@
     roll: true,
     rollSides: rollSides,
     cr: function () { return !S.over && !S.die && !S.setup; },
-    init: function () {
+    init: function (previousState) {
       for (var i = 0; i < 4; i++) ludoGame.n[i] = SEAT_NAMES[i];
-      return makeState(playerCount());
+      var count = playerCount();
+      if (previousState && !previousState.setup && Array.isArray(previousState.cols) &&
+          previousState.cols.length === count && previousState.cols[0] && previousState.cols[0].length) {
+        var houses = count === 2 && previousState.h === 2 ? 2 : 1;
+        var firstColor = previousState.cols[0][0];
+        var nextColor = houses === 2 ? (firstColor === 0 ? 1 : 0) : (firstColor + 1) % 4;
+        var restarted = makeState(count);
+        restarted.h = houses;
+        restarted.p = makeTokens(count, houses);
+        restarted.cols = assignColors(count, houses, nextColor);
+        restarted.setup = 0;
+        restarted.log = "House colours rotated for the new game. " + playerName(0) + " starts.";
+        return restarted;
+      }
+      return makeState(count);
     },
     valid: validAction,
     soundEvent: function (action, previousState, currentState) {

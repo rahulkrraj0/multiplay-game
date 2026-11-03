@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Sudoku</title>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#c1a5ff"/><stop offset="1" stop-color="#5a67d8"/></linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="10" flood-color="#28275e" flood-opacity=".5"/></filter>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="#292653"/>
+  <rect x="42" y="42" width="428" height="428" rx="100" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <rect x="91" y="82" width="330" height="348" rx="30" fill="#f8f6ff" stroke="#332c63" stroke-width="12"/>
+    <path d="M201 91v330M311 91v330M98 198h316M98 314h316" stroke="#9392b5" stroke-width="8"/>
+    <path d="M201 91v330M98 198h316" stroke="#393568" stroke-width="14"/>
+    <g fill="#4d55b8" font-family="system-ui,sans-serif" font-size="52" font-weight="850" text-anchor="middle">
+      <text x="145" y="166">8</text><text x="256" y="166">3</text><text x="366" y="166">1</text>
+      <text x="145" y="280">4</text><text x="256" y="280" fill="#e76c75">9</text><text x="366" y="280">7</text>
+      <text x="145" y="394">2</text><text x="256" y="394">6</text><text x="366" y="394">5</text>
+    </g>
+  </g>
+</svg>

@@ -43,6 +43,7 @@ type GameCatalogEntry = {
   diff: string;
   art: string;
   logo?: string;
+  standalone?: boolean;
 };
 
 declare global {

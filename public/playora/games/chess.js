@@ -153,24 +153,28 @@ const reduced = () => !!(window.matchMedia && window.matchMedia("(prefers-reduce
 // 3D notes: .cb must not use overflow/isolation/opacity/filter (they flatten preserve-3d). Pieces are animated on
 // .mv3 (board-plane x/y plus a real Z hop); the upright counter-rotation lives on .up so animations never clobber it.
 const CSS = `
-.cb3w{width:100%}
-.cb3{--tilt:48deg;--bs:min(94vw,82vh,640px);perspective:calc(var(--bs)*2.3);perspective-origin:50% 40%;width:100%;
+.cb3w{width:100%;height:calc(100dvh - 112px);min-height:360px;margin:0 auto;padding:10px clamp(4px,1vw,16px);box-sizing:border-box;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:visible}
+.cb3{--tilt:36deg;--bs:min(98vw,calc(90dvh - 144px),900px);perspective:calc(var(--bs)*2.8);perspective-origin:50% 42%;width:100%;
   margin:calc(var(--bs)*-.06) 0 calc(var(--bs)*-.14);
   margin:calc(var(--bs)*((1 - cos(var(--tilt)))/-2 + sin(var(--tilt))*.11)) 0 calc(var(--bs)*((1 - cos(var(--tilt)))/-2 + .02));
   transition:margin .45s ease}
-.cb{--bs:min(94vw,82vh,640px);--cs:calc((var(--bs) - 20px)/8);position:relative;display:grid;
+.cb{--bs:min(98vw,calc(90dvh - 144px),900px);--cs:calc((var(--bs) - 20px)/8);position:relative;display:grid;
   grid-template:repeat(8,1fr)/repeat(8,1fr);width:var(--bs);aspect-ratio:1/1;margin:0 auto;box-sizing:border-box;
-  border:10px solid #3b2a1e;border-radius:8px;
+  border:10px solid #26342d;border-radius:10px;
   transform-style:preserve-3d;transform:rotateX(var(--tilt));transition:transform .45s ease;
-  box-shadow:0 0 50px rgba(30,20,10,.4)}
+  box-shadow:0 0 0 1px #e1c47e88,0 0 0 4px #17231e,0 0 0 6px #b99755aa,0 20px 46px rgba(0,0,0,.48),inset 0 0 0 2px #e9d39b55}
 .cb::before{content:"";position:absolute;left:-10px;right:-10px;top:calc(100% + 10px);height:calc(var(--cs)*.34);
-  transform-origin:50% 0;transform:rotateX(-90deg);background:linear-gradient(#4a3524,#24180f);border-radius:0 0 8px 8px;pointer-events:none}
-.cb::after{content:"";position:absolute;inset:-10px;background:rgba(15,10,5,.5);filter:blur(16px);
+  transform-origin:50% 0;transform:rotateX(-90deg);background:linear-gradient(#35473b,#17231e);border-radius:0 0 8px 8px;pointer-events:none}
+.cb::after{content:"";position:absolute;inset:-10px;background:rgba(4,10,8,.56);filter:blur(18px);
   transform:translateZ(calc(var(--cs)*-.45));pointer-events:none}
 .cb .sq{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;
   user-select:none;-webkit-tap-highlight-color:transparent;transform-style:preserve-3d;transform:translateZ(.5px)}
-.cb .sq.l{background:#efe0c2}.cb .sq.d{background:#a9774b}
+.cb .sq.l{background:linear-gradient(145deg,#f2e7ca,#d9c8a4)}
+.cb .sq.d{background:linear-gradient(145deg,#47705c,#254837)}
 .cb .sq::before{content:"";position:absolute;inset:0;pointer-events:none}
+.cb .sq.l::before{background:linear-gradient(135deg,rgba(255,255,255,.16),transparent 48%,rgba(91,67,37,.08))}
+.cb .sq.d::before{background:linear-gradient(135deg,rgba(255,255,255,.12),transparent 48%,rgba(0,0,0,.17))}
 .cb .sq.lm::before{background:rgba(255,214,10,.40)}
 .cb .sq.sel::before{background:rgba(70,190,110,.55)}
 .cb .sq.chk::before{background:radial-gradient(circle,rgba(255,40,40,.9) 0,rgba(255,40,40,.4) 45%,transparent 72%);
@@ -190,10 +194,12 @@ const CSS = `
 .cb .pc{position:relative;z-index:2;font-style:normal;font-weight:400;line-height:1;font-size:calc(var(--cs)*.9);
   font-family:"Segoe UI Symbol","Noto Sans Symbols 2","Apple Symbols","DejaVu Sans",serif;pointer-events:none;
   paint-order:stroke fill;transition:transform .16s ease;will-change:transform}
-.cb .pc.w{color:#fffdf4;-webkit-text-stroke:calc(var(--cs)*.035) #2a1d12;
-  text-shadow:0 calc(var(--cs)*.02) 0 #d9cdb0,0 calc(var(--cs)*.04) 0 #bcae8c,0 calc(var(--cs)*.06) 0 #9c8e6e,0 calc(var(--cs)*.1) calc(var(--cs)*.05) rgba(0,0,0,.35)}
-.cb .pc.b{color:#27211d;-webkit-text-stroke:calc(var(--cs)*.03) #e6d6b8;
-  text-shadow:0 calc(var(--cs)*.02) 0 #3a322c,0 calc(var(--cs)*.04) 0 #4c4238,0 calc(var(--cs)*.06) 0 #5d5146,0 calc(var(--cs)*.1) calc(var(--cs)*.05) rgba(0,0,0,.4)}
+.cb .pc.w{color:#fffdf4;-webkit-text-stroke:calc(var(--cs)*.035) #54452f;
+  filter:drop-shadow(0 2px 1px rgba(44,34,22,.55)) drop-shadow(0 5px 3px rgba(0,0,0,.28));
+  text-shadow:0 calc(var(--cs)*.018) 0 #e5d8ba,0 calc(var(--cs)*.04) 0 #c9b991,0 calc(var(--cs)*.07) 0 #a18d67,0 calc(var(--cs)*.1) calc(var(--cs)*.05) rgba(0,0,0,.38)}
+.cb .pc.b{color:#17251f;-webkit-text-stroke:calc(var(--cs)*.03) #d3b971;
+  filter:drop-shadow(0 2px 1px rgba(255,255,255,.14)) drop-shadow(0 5px 3px rgba(0,0,0,.5));
+  text-shadow:0 calc(var(--cs)*.018) 0 #526358,0 calc(var(--cs)*.04) 0 #38483e,0 calc(var(--cs)*.07) 0 #26352d,0 calc(var(--cs)*.1) calc(var(--cs)*.05) rgba(0,0,0,.5)}
 .cb .sq.mv{cursor:pointer}
 .cb .sq.mv:hover .pc,.cb .sq.sel .pc{transform:translateY(-7%) scale(1.07)}
 .cb .sq.mv:hover .sh,.cb .sq.sel .sh{transform:scale(.8)}
@@ -215,15 +221,43 @@ const CSS = `
 .cb-pick button:hover,.cb-pick button:focus-visible{background:#f3c969;transform:translateY(-4px)}
 .cb-pick .w{color:#fffdf4;-webkit-text-stroke:1px #2a1d12;paint-order:stroke fill}
 .cb-pick .b{color:#27211d}
-.cb3-ctl{display:flex;gap:8px;justify-content:center;margin:22px 0 2px;position:relative;z-index:2}
-.cb3-ctl button{border:0;border-radius:999px;padding:7px 14px;background:#e6d3ae;color:#3b2a1e;font:600 13px/1 system-ui,sans-serif;
+.cb3-ctl{display:flex;gap:8px;justify-content:center;width:max-content;max-width:100%;margin:16px auto 4px;padding:5px;border:1px solid rgba(226,196,126,.16);border-radius:14px;
+  background:rgba(8,14,23,.68);position:relative;z-index:2;backdrop-filter:blur(10px)}
+.cb3-ctl button{border:1px solid rgba(226,196,126,.2);border-radius:10px;padding:9px 16px;background:linear-gradient(145deg,#263a32,#18271f);color:#e9dfc6;font:650 13px/1 system-ui,sans-serif;
   cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .15s,background .15s}
-.cb3-ctl button:hover,.cb3-ctl button:focus-visible{background:#f3c969;transform:translateY(-2px)}
-.chess-turns{display:flex;justify-content:space-between;gap:12px;width:min(94vw,640px);margin:8px auto 0;font:14px/1.3 system-ui,sans-serif}
+.cb3-ctl button:hover,.cb3-ctl button:focus-visible{background:linear-gradient(145deg,#3b5949,#284331);border-color:#d6b56c;transform:translateY(-1px)}
+.chess-turns{display:flex;justify-content:space-between;gap:12px;width:min(94vw,560px);margin:12px auto 0;padding:12px 16px;border:1px solid rgba(226,196,126,.14);border-radius:16px;
+  background:linear-gradient(145deg,rgba(28,40,52,.94),rgba(17,26,38,.96));box-shadow:0 10px 24px rgba(0,0,0,.18);font:14px/1.3 system-ui,sans-serif}
 .chess-player{display:flex;align-items:baseline;gap:6px;min-width:0}
 .chess-player>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.8}
 .chess-player small{font-size:12px;opacity:.7}
-.chess-player.active{font-weight:700;text-decoration:underline;text-decoration-color:#c98a2b;text-decoration-thickness:2px;text-underline-offset:4px}
+.chess-player b{color:#e4d1a0}.chess-player.active{font-weight:700;color:#fff}
+.chess-player.active::before{content:"";width:7px;height:7px;flex:none;border-radius:50%;background:#c9a95d;box-shadow:0 0 10px #d8b963;align-self:center}
+#room .cb .sq.l{background:linear-gradient(145deg,#f2e7ca,#d9c8a4)}
+#room .cb .sq.d{background:linear-gradient(145deg,#47705c,#254837)}
+#room .cb3-ctl button{width:auto;margin:0;padding:9px 16px;border:1px solid rgba(226,196,126,.2);border-radius:10px;background:linear-gradient(145deg,#263a32,#18271f);color:#e9dfc6;font:650 13px/1 system-ui,sans-serif}
+#room .cb3-ctl button:hover,#room .cb3-ctl button:focus-visible{background:linear-gradient(145deg,#3b5949,#284331);border-color:#d6b56c}
+#room .cb-pick button{width:calc(var(--cs)*1.05);height:calc(var(--cs)*1.05);margin:0;padding:0;border:0;border-radius:12px;background:#e6d3ae}
+@media(min-width:900px){
+  .cb3w{--bs:min(84vh,760px,calc(100vw - 440px));display:grid;grid-template-columns:minmax(0,var(--bs)) minmax(180px,260px);
+    grid-template-rows:minmax(0,1fr);column-gap:clamp(48px,5vw,72px);justify-content:center;align-content:center;align-items:center}
+  .cb3,.cb{--bs:min(84vh,760px,calc(100vw - 440px))}
+  .cb3{grid-column:1;grid-row:1;width:var(--bs);margin-left:0;margin-right:0}
+  .cb3-tools{grid-column:2;grid-row:1;width:100%;display:flex;flex-direction:column;align-items:stretch;gap:14px}
+  .cb3-ctl{flex-direction:column;width:100%;margin:0}
+  #room .cb3-ctl button{width:100%}
+  .chess-turns{width:100%;margin:0;flex-direction:column;gap:10px}
+  .chess-player{flex-wrap:wrap}
+}
+@media(max-width:600px){.cb3w{width:100%;height:calc(100dvh - 112px);min-height:360px;margin:0;padding:6px 0;border:0;border-radius:0;background:none;box-shadow:none}
+  .cb3{--bs:min(100vw,calc(90dvh - 144px),560px);perspective:calc(var(--bs)*3.2);perspective-origin:50% 44%}
+  .cb{--bs:min(100vw,calc(90dvh - 144px),560px);border-width:7px;border-radius:8px;--cs:calc((var(--bs) - 14px)/8)}
+  .cb::before{left:-7px;right:-7px;top:calc(100% + 7px)}
+  .cb3-ctl{gap:4px;margin-top:10px;padding:4px}
+  #room .cb3-ctl button{padding:8px 9px;font-size:12px}
+  .chess-turns{width:min(100%,560px);margin-top:8px;padding:10px 12px;font-size:12px}
+  .chess-player{gap:4px}.chess-player small{font-size:10px}}
+#room:has(.cb3w) #st{display:none}
 .cbx-win{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .cbx-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,rgba(15,23,42,.3),rgba(15,23,42,.75));animation:cb-fade .4s ease both}
@@ -688,7 +722,7 @@ const game = {
       [0, 1].map(player => `<span class="chess-player${S.t === player && !S.over ? " active" : ""}"${S.t === player && !S.over ? ' aria-current="step"' : ""}>` +
         `<b>${player === 0 ? "White" : "Black"}</b><span>${nm(player)}</span>${S.t === player && !S.over ? "<small>to move</small>" : ""}</span>`).join("") +
       "</div>";
-    return [h + "</div></div>" + ctl + players + "</div>", status];
+    return [h + "</div></div><div class=\"cb3-tools\">" + ctl + players + "</div></div>", status];
   },
   click() { /* input is handled by the delegated listener above (squares carry data-sq, not data-m) */ }
 };

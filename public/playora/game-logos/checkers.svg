@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Checkers</title>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#efbd79"/><stop offset="1" stop-color="#a44c41"/></linearGradient>
+    <linearGradient id="red" x2="0" y2="1"><stop stop-color="#ff8672"/><stop offset="1" stop-color="#be2638"/></linearGradient>
+    <linearGradient id="black" x2="0" y2="1"><stop stop-color="#687a91"/><stop offset="1" stop-color="#18263c"/></linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="13" stdDeviation="10" flood-color="#382522" flood-opacity=".55"/></filter>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="#482a32"/>
+  <rect x="42" y="42" width="428" height="428" rx="100" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <rect x="83" y="83" width="346" height="346" rx="24" fill="#f2d9ad" stroke="#382a31" stroke-width="12"/>
+    <path d="M126 126h86v86h-86zm172 0h86v86h-86zm-86 86h86v86h-86zm-86 86h86v86h-86zm172 0h86v86h-86z" fill="#65434a"/>
+    <g stroke="#40242d" stroke-width="8">
+      <ellipse cx="169" cy="170" rx="37" ry="28" fill="url(#red)"/><path d="M132 170v19c0 16 74 16 74 0v-19" fill="#c73543"/>
+      <ellipse cx="341" cy="170" rx="37" ry="28" fill="url(#black)"/><path d="M304 170v19c0 16 74 16 74 0v-19" fill="#26354b"/>
+      <ellipse cx="255" cy="256" rx="37" ry="28" fill="url(#red)"/><path d="M218 256v19c0 16 74 16 74 0v-19" fill="#c73543"/>
+      <ellipse cx="169" cy="342" rx="37" ry="28" fill="url(#black)"/><path d="M132 342v19c0 16 74 16 74 0v-19" fill="#26354b"/>
+      <ellipse cx="341" cy="342" rx="37" ry="28" fill="url(#red)"/><path d="M304 342v19c0 16 74 16 74 0v-19" fill="#c73543"/>
+    </g>
+  </g>
+</svg>

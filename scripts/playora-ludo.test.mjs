@@ -59,6 +59,42 @@ test("Ludo identifies roll, token entry, capture and home sound events", () => {
   assert.equal(game.soundEvent({ token: 0 }, { p: [[1], [2]] }, { lastMove: { player: 0, to: 3 }, p: [[3], [2]] }), "move");
 });
 
+test("Ludo asks for colors on first start, then rotates them on restart", () => {
+  const ludo = createLudo({ players: 2 });
+  ludo.state = ludo.game.init();
+  assert.equal(ludo.state.setup, 1);
+  ludo.game.apply({ houses: 1 });
+  ludo.game.apply({ color: 0 });
+
+  ludo.state = ludo.game.init(ludo.state);
+  assert.equal(ludo.state.setup, 0);
+  assert.deepEqual(Array.from(ludo.state.cols, (colors) => Array.from(colors)), [[1], [3]]);
+
+  ludo.state = ludo.game.init(ludo.state);
+  assert.deepEqual(Array.from(ludo.state.cols, (colors) => Array.from(colors)), [[2], [0]]);
+});
+
+test("Ludo alternates two-house color pairs on restart", () => {
+  const ludo = createLudo({ players: 2 });
+  ludo.state = ludo.game.init();
+  ludo.game.apply({ houses: 2 });
+  ludo.game.apply({ color: 0 });
+
+  ludo.state = ludo.game.init(ludo.state);
+  assert.deepEqual(Array.from(ludo.state.cols, (colors) => Array.from(colors)), [[1, 3], [0, 2]]);
+  assert.equal(ludo.state.h, 2);
+  assert.equal(ludo.state.p[0].length, 8);
+});
+
+test("Ludo rotates all player colors clockwise on restart", () => {
+  const ludo = createLudo({ players: 4 });
+  ludo.state = ludo.game.init();
+  ludo.game.apply({ color: 2 });
+
+  ludo.state = ludo.game.init(ludo.state);
+  assert.deepEqual(Array.from(ludo.state.cols, (colors) => Array.from(colors)), [[3], [0], [1], [2]]);
+});
+
 test("Ludo limits its third consecutive six and applies the shown roll unchanged", () => {
   const ludo = createLudo();
   ludo.state = ludo.game.init();

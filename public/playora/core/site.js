@@ -3,8 +3,8 @@ const modal=$('modal'),stage=$('stage'),mTitle=$('modalTitle'),startBtn=$('start
 let snakeTimer=null,snake=[],food={x:8,y:8},dir={x:1,y:0},nextDir={x:1,y:0},score=0,running=false,activeFilter='all';
 /* solo / coming-soon cards: one object per card (turn-based multiplayer games register themselves in games/*.js instead) */
 const SOLO=[];
-function closeModal(){modal.classList.remove('open');document.body.style.overflow='';clearInterval(snakeTimer);running=false}
-function openGame(game){clearInterval(snakeTimer);running=false;const snk=game==='snake';startBtn.style.display=snk?'inline-block':'none';snakeControls.style.display=snk?'flex':'none';const x=SOLO.find(g=>g.id===game);mTitle.textContent=x.t;modal.classList.add('open');document.body.style.overflow='hidden';
+function closeModal(){stage.innerHTML='';modal.classList.remove('open');document.body.style.overflow='';clearInterval(snakeTimer);running=false}
+function openGame(game){clearInterval(snakeTimer);running=false;const snk=game==='snake';startBtn.style.display=snk?'inline-block':'none';snakeControls.style.display=snk?'flex':'none';const x=GAMES[game]||SOLO.find(g=>g.id===game);if(!x)throw new Error('Unknown solo game: '+game);mTitle.textContent=x.t;modal.classList.add('open');document.body.style.overflow='hidden';
  if(snk){score=0;stage.innerHTML='<div class="snake-board" id="snakeBoard" aria-label="Snake game board"></div><p class="stage-text" id="snakeStatus">Press Start, then use arrow keys or the buttons. Eat the pink food and avoid the walls and your tail.</p>';$('snakeBoard').style.display='grid';resetSnake(false)}
  else stage.innerHTML=`<div><div class="stage-emoji">${x.i}</div><p class="stage-text">${x.text}</p></div>`}
 function resetSnake(start=true){clearInterval(snakeTimer);running=false;snake=[{x:4,y:8},{x:3,y:8},{x:2,y:8}];food={x:10,y:8};dir={x:1,y:0};nextDir={x:1,y:0};score=0;drawSnake();if(start)beginSnake()}
@@ -25,7 +25,7 @@ function buildCards(){const grid=$('gameGrid');
  grid.innerHTML=Object.values(GAMES).map(g=>card(g,(g.max||2)===1?'1 player':'👥 '+(g.max>2?'2–'+g.max:'2')+' players',0,'Play now ↗')).join('')+SOLO.map(g=>card(g,g.pl,g.soon,g.soon?'Preview ↗':'Play now ↗')).join('');grid.setAttribute('aria-busy','false');grid.removeAttribute('aria-label');
  const activate=async tile=>{const game=tile.dataset.game;const metadata=GAMES[game];if(!metadata)return;
   const note=$('playora-boot');note.textContent='Loading '+metadata.t+'…';
-  try{await window.ensurePlayoraGame(game);note.textContent='';if(game in GAMES)openRoom(game);else openGame(game)}
+  try{await window.ensurePlayoraGame(game);note.textContent='';openRoom(game)}
   catch(error){console.error('[playora] Could not load game:',error);note.textContent='Could not load '+metadata.t+'. Check your connection and try again.'}};
  grid.querySelectorAll('.game').forEach(tile=>{tile.onclick=()=>activate(tile);tile.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activate(tile)}}})}
 function filterGames(){const q=$('search').value.toLowerCase().trim();let n=0;

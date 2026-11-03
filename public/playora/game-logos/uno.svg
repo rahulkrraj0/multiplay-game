@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">UNO</title>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#ff8065"/><stop offset="1" stop-color="#a9254d"/></linearGradient>
+    <linearGradient id="red" x2="0" y2="1"><stop stop-color="#ff7461"/><stop offset="1" stop-color="#d51f32"/></linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="10" flood-color="#501b36" flood-opacity=".55"/></filter>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="#53243d"/>
+  <rect x="42" y="42" width="428" height="428" rx="100" fill="url(#bg)"/>
+  <g filter="url(#shadow)" stroke="#fff8e8" stroke-width="10">
+    <g transform="rotate(-17 187 256)"><rect x="92" y="116" width="168" height="280" rx="26" fill="#2563c9"/><ellipse cx="176" cy="256" rx="52" ry="95" fill="#fff8e8" stroke="none" transform="rotate(18 176 256)"/><text x="176" y="278" text-anchor="middle" fill="#2563c9" stroke="none" font-family="system-ui,sans-serif" font-size="102" font-weight="950">2</text></g>
+    <g transform="rotate(15 329 256)"><rect x="248" y="116" width="168" height="280" rx="26" fill="url(#red)"/><ellipse cx="332" cy="256" rx="52" ry="95" fill="#fff8e8" stroke="none" transform="rotate(18 332 256)"/><text x="332" y="278" text-anchor="middle" fill="#d51f32" stroke="none" font-family="system-ui,sans-serif" font-size="102" font-weight="950">U</text></g>
+  </g>
+  <path d="M206 429h100" stroke="#ffe46b" stroke-width="18" stroke-linecap="round" filter="url(#shadow)"/>
+</svg>
