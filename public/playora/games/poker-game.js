@@ -220,6 +220,7 @@
 .poker .pk-me__made { min-height: 1.3em; margin: 0; font-size: 0.9rem; font-weight: 800; color: var(--pk-gold); }
 
 /* ---------- controls & panels ---------- */
+.poker .pk-player-layout { display: grid; gap: 0.7rem; width: 100%; }
 .poker .pk-controls { display: grid; gap: 0.5rem; justify-items: center; min-height: 2.6rem; margin-top: 0.1rem; }
 .poker .pk-hint { min-height: 1.4em; margin: 0; font-size: 0.9rem; font-weight: 700; }
 .poker .pk-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; }
@@ -411,6 +412,8 @@
   .poker .pk-seat { padding: 0.3rem 0.45rem; }
   .poker .pk-seat__chips { font-size: 1rem; }
   .poker .pk-btn { min-width: 0; flex: 1 1 6rem; }
+  .poker .pk-actions { width: 100%; flex-wrap: nowrap; gap: 0.45rem; }
+  .poker .pk-actions .pk-btn { min-width: 0 !important; flex: 1 1 0 !important; padding-right: 0.35rem !important; padding-left: 0.35rem !important; white-space: normal; }
   .poker .pk-sum__row { grid-template-columns: 4.5rem 1fr auto; }
 }
 
@@ -425,9 +428,53 @@
   .poker .pk-hint { font-size: 1.05rem; }
 }
 
+@container (min-width: 42rem) {
+  .poker .pk-player-layout {
+    position: relative;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas: "hand raise" "hint raise" "actions raise";
+    align-items: stretch;
+    gap: 0.25rem 0.65rem;
+    max-width: 56rem;
+    margin: 0 auto;
+  }
+  .poker .pk-player-layout::before,
+  .poker .pk-player-layout::after {
+    content: "";
+    z-index: 0;
+    border-radius: 0.9rem;
+    background: rgba(0, 0, 0, 0.28);
+  }
+  .poker .pk-player-layout::before { grid-area: 1 / 1 / 4 / 2; }
+  .poker .pk-player-layout::after { grid-area: 1 / 2 / 4 / 3; }
+  .poker .pk-me,
+  .poker .pk-hint,
+  .poker .pk-actions,
+  .poker .pk-raise {
+    position: relative;
+    z-index: 1;
+  }
+  .poker .pk-me {
+    grid-area: hand;
+    align-content: start;
+    width: 100%;
+    min-width: 0;
+    padding: 0.45rem 0.6rem 0;
+  }
+  .poker .pk-me__label { font-size: 0.95rem; }
+  .poker .pk-me__made { min-height: 0; }
+  .poker .pk-controls { display: contents; }
+  .poker .pk-hint { grid-area: hint; align-self: end; padding: 0 0.45rem; }
+  .poker .pk-actions { grid-area: actions; align-self: start; width: 100%; padding: 0 0.45rem 0.55rem; }
+  .poker .pk-actions .pk-btn { flex: 1 1 6rem; }
+  .poker .pk-raise { grid-area: raise; align-self: center; width: 100%; max-width: none; }
+}
+
 @media (max-width: 30rem) {
   .poker { min-height: calc(100vh - 4.625rem); min-height: calc(100dvh - 4.625rem); }
-  .poker button.pk-btn[data-i] { min-width: 0 !important; flex: 1 1 5.5rem !important; padding: 0.55rem 0.4rem !important; font-size: 0.9rem !important; }
+  .poker button.pk-btn[data-i] { min-width: 0 !important; flex: 1 1 0 !important; padding: 0.55rem 0.35rem !important; font-size: 0.9rem !important; }
+  .poker .pk-actions { width: 100%; flex-wrap: nowrap; gap: 0.45rem; }
 }
 
 @media (max-height: 48rem) {
@@ -1263,7 +1310,9 @@
       if (S.ph === "setup") body = setupHTML();
       else if (S.ph === "deal") body = dealHTML();
       else if (S.ph === "end") body = endHTML();
-      else body = tableHTML(an, L) + meHTML(vs, an, L) + controlsHTML();
+      else if (S.ph === "bet") {
+        body = tableHTML(an, L) + '<div class="pk-player-layout">' + meHTML(vs, an, L) + controlsHTML() + "</div>";
+      } else body = tableHTML(an, L) + meHTML(vs, an, L) + controlsHTML();
 
       let status;
       if (S.over) status = S.msg;
