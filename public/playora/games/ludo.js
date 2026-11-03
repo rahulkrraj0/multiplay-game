@@ -24,7 +24,8 @@
  *   - Two tokens of the same colour can never share a square (a move onto
  *     your own colour's square is not allowed) EXCEPT on safe squares (the
  *     stars and the start squares) and in the home lane, where tokens of the
- *     same colour may stay together.
+ *     same colour may stay together. In 2-house mode, a player's tokens cannot
+ *     share any track square, even if they belong to different house colours.
  *     Rivals share/capture as usual.
  *
  * Wide screens (>= 900px, landscape): the dice and the Roll button are placed
@@ -177,6 +178,16 @@
       ".g.c15.lui .tk.mv{cursor:pointer;z-index:8;animation:lui-ring 1.05s ease-in-out infinite}",
       ".g.c15.lui .tk.mv:hover,.g.c15.lui .tk.mv:focus-visible{transform:scale(1.2);filter:brightness(1.12)}",
       ".g.c15.lui .tk.mv:focus-visible{outline:3px solid #111827;outline-offset:3px}",
+      ".lui-stack-trigger{position:absolute;right:0;top:0;z-index:12;width:auto!important;min-width:1.55rem;height:1.55rem;margin:0!important;padding:0 3px!important;",
+      "  border:1px solid #fff!important;border-radius:999px!important;background:#111827!important;color:#fff!important;font:800 11px/1 system-ui,sans-serif!important;",
+      "  box-shadow:0 1px 4px #0008;cursor:pointer;rotate:var(--lui-unrot,0deg)}",
+      ".lui-stack-trigger[disabled]{opacity:.9;cursor:default}",
+      ".lui-stack-picker{position:absolute;left:50%;top:50%;z-index:15;display:grid;grid-template-columns:repeat(2,minmax(78px,1fr));gap:4px;",
+      "  width:max-content;max-width:min(76vw,260px);padding:6px;border:1px solid #fff;border-radius:10px;background:#111827;box-shadow:0 5px 16px #0009;",
+      "  transform:translate(-50%,-50%);rotate:var(--lui-unrot,0deg)}",
+      ".lui-stack-picker[hidden]{display:none!important}",
+      ".lui-stack-picker button{width:auto!important;min-height:32px;margin:0!important;padding:4px 7px!important;border:1px solid #fff8!important;",
+      "  border-radius:7px!important;color:#fff!important;font:700 11px/1.2 system-ui,sans-serif!important;white-space:nowrap;cursor:pointer}",
 
       /* in-game setup panel (houses per player + house colour) */
       ".g.c15.lui .lui-setup{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;",
@@ -378,8 +389,8 @@
     if (n === 4) return [[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2]][k];
     var columns = Math.ceil(Math.sqrt(n));
     var rows = Math.ceil(n / columns);
-    var size = columns === 3 ? 0.3 : 0.21;
-    var step = columns === 3 ? 0.32 : 0.24;
+    var size = 0.72 / columns;
+    var step = 1 / columns;
     return [
       (k % columns - (columns - 1) / 2) * step,
       (Math.floor(k / columns) - (rows - 1) / 2) * step,
@@ -591,6 +602,10 @@
 
       for (var k = 0; k < list.length; k++) {
         var tk = list[k], dx = 0, dy = 0;
+        tk.classList.remove("lui-stack-token");
+        tk.style.removeProperty("width");
+        tk.style.removeProperty("height");
+        tk.style.removeProperty("border-width");
         if (info.kind === "yard") {
           tk.classList.remove("sm");
           tk.classList.remove("xs", "xxs");
@@ -603,7 +618,14 @@
           tk.classList.remove("sm", "xs", "xxs");
           var so = stackOffset(k, list.length);
           var size = so[2] || SM;
-          tk.classList.add(size === SM ? "sm" : size === 0.3 ? "xs" : "xxs");
+          if (list.length > 4) {
+            tk.classList.add("lui-stack-token");
+            tk.style.width = (size * 100) + "%";
+            tk.style.height = (size * 100) + "%";
+            tk.style.borderWidth = "1px";
+          } else {
+            tk.classList.add("sm");
+          }
           dx = so[0]; dy = so[1];
           setTranslate(tk, dx, dy, size);
         } else {
@@ -1248,17 +1270,22 @@
     return FINISH[color];
   }
 
-  /* true if another token of the SAME COLOUR already stands on that square
-     (yard and home are shared spaces, so they never block) */
+  /* true if a same-colour token, or any teammate in two-house mode, blocks the square */
   function blockedBySameColor(player, token, to) {
     if (to < 0 || to >= HOME) return false;
     var color = colorOf(player, token);
     /* your own home lane is shared: tokens of the same colour may stack there */
     if (to > LAST_TRACK) return false;
-    /* safe squares (stars and start squares): any tokens may stay together */
-    if (SAFE.has(pathIndex(color, to))) return false;
+    var twoHouses = twoHouseMode();
+    /* safe squares allow different players to stack; two-house teammates remain blocked */
+    if (!twoHouses && SAFE.has(pathIndex(color, to))) return false;
     return S.p[player].some(function (position, other) {
-      return other !== token && position === to && colorOf(player, other) === color;
+      if (other === token) return false;
+      if (twoHouses) {
+        return position >= 0 && position <= LAST_TRACK &&
+          pathIndex(colorOf(player, other), position) === pathIndex(color, to);
+      }
+      return position === to && colorOf(player, other) === color;
     });
   }
 
@@ -1646,6 +1673,7 @@
       var player = S.t;
       var moves = S.die && !S.setup ? new Set(legalTokens(player, S.die)) : new Set();
       var cells = Array.from({ length: N * N }, function () { return []; });
+      var cellTokens = Array.from({ length: N * N }, function () { return []; });
 
       S.p.forEach(function (tokens, p) {
         tokens.forEach(function (position, token) {
@@ -1653,6 +1681,7 @@
           var cell = coords[0] * N + coords[1];
           var movable = p === player && moves.has(token);
           var color = colorOf(p, token);
+          cellTokens[cell].push({ player: p, token: token, color: color, movable: movable });
           var label = TOKEN_NAMES[color] + " token " + ((token % 4) + 1) +
             (position < 0 ? " in yard" : position === HOME ? " home" : "") +
             (movable ? ", move available" : "");
@@ -1666,8 +1695,21 @@
 
       var html = '<div class="g c15" role="grid" aria-label="Ludo board">';
       for (var i = 0; i < N * N; i++) {
-        html += '<div class="lc" role="gridcell" aria-label="Board square ' + (i + 1) + '">' +
-          cells[i].join("") + "</div>";
+        var stack = cellTokens[i], choices = stack.filter(function (entry) { return entry.movable; });
+        html += '<div class="lc" role="gridcell" aria-label="Board square ' + (i + 1) + '">' + cells[i].join("");
+        if (stack.length > 4) {
+          html += '<button type="button" class="lui-stack-trigger" data-i="stack" aria-expanded="false" aria-label="Choose from ' +
+            stack.length + " tokens; " + choices.length + ' can move"' + (choices.length ? "" : " disabled") + ">+" + stack.length + "</button>";
+          if (choices.length) {
+            html += '<div class="lui-stack-picker" role="group" aria-label="Choose a movable token" hidden>' +
+              choices.map(function (entry) {
+                var name = TOKEN_NAMES[entry.color] + " " + (entry.token % 4 + 1);
+                return '<button type="button" data-i="token" data-token="' + entry.token + '" data-player="' + entry.player +
+                  '" aria-label="Move ' + name + '" style="background:' + TOKEN_COLORS[entry.color] + '">' + name + "</button>";
+              }).join("") + "</div>";
+          }
+        }
+        html += "</div>";
       }
       html += playerNamesHtml();
       if (S.setup) html += setupHtml();
@@ -1684,6 +1726,18 @@
     click: function (element) {
       var setup = element && element.closest ? element.closest("[data-i=setup]") : null;
       if (setup) { setupPick(setup); return; }
+      var stack = element && element.closest ? element.closest("[data-i=stack]") : null;
+      if (stack) {
+        var picker = stack.parentNode.querySelector(".lui-stack-picker");
+        var isOpen = stack.getAttribute("aria-expanded") === "true";
+        stack.setAttribute("aria-expanded", isOpen ? "false" : "true");
+        if (picker) picker.hidden = isOpen;
+        if (!isOpen && picker) {
+          var firstChoice = picker.querySelector("button");
+          if (firstChoice) firstChoice.focus();
+        }
+        return;
+      }
       var token = element && element.closest ? element.closest("[data-token]") : element;
       if (!token || !token.dataset || Number(token.dataset.player) !== S.t) return;
       var index = Number(token.dataset.token);

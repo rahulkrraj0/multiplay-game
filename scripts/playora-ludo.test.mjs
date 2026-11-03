@@ -8,6 +8,7 @@ const source = readFileSync(join(process.cwd(), "public", "playora", "games", "l
 
 function createLudo({ players = 2, names } = {}) {
   let game;
+  const actions = [];
   const document = {
     readyState: "loading",
     addEventListener() {},
@@ -28,12 +29,14 @@ function createLudo({ players = 2, names } = {}) {
     np: players,
     S: null,
     nm: (seat) => (names || ["Red", "Green", "Yellow", "Blue"])[seat],
+    act: (action) => actions.push(action),
     registerGame: (registered) => { game = registered; },
     console,
   };
   vm.runInNewContext(source, sandbox, { filename: "ludo.js" });
   return {
     game,
+    actions,
     get state() { return sandbox.S; },
     set state(value) { sandbox.S = value; },
   };
@@ -72,6 +75,79 @@ test("Ludo limits its third consecutive six and applies the shown roll unchanged
   assert.equal(ludo.state.lastDie, 0, "an invalid third six must not be applied");
   ludo.game.apply({ r: 5 });
   assert.equal(ludo.state.lastDie, 5);
+});
+
+test("Ludo prevents two-house teammates from sharing any track square", () => {
+  const ludo = createLudo();
+  ludo.state = ludo.game.init();
+  ludo.game.apply({ houses: 2 });
+  ludo.game.apply({ color: 0 });
+
+  ludo.state.p[0][0] = 8;  // Red token on the star at track index 8.
+  ludo.state.p[0][4] = 39; // Yellow teammate on the destination star at index 13.
+  ludo.state.die = 5;
+
+  assert.equal(ludo.game.valid({ token: 0 }), false,
+    "a teammate's other-color token blocks a move onto a safe square");
+});
+
+test("Ludo still allows same-color stacks on safe squares in one-house mode", () => {
+  const ludo = createLudo();
+  ludo.state = ludo.game.init();
+  ludo.game.apply({ houses: 1 });
+  ludo.game.apply({ color: 0 });
+
+  ludo.state.p[0][0] = 8;
+  ludo.state.p[0][1] = 13;
+  ludo.state.die = 5;
+
+  assert.equal(ludo.game.valid({ token: 0 }), true);
+});
+
+test("Ludo keeps crowded safe-square tokens visible and selectable", () => {
+  const ludo = createLudo({ players: 4 });
+  ludo.state = ludo.game.init();
+  ludo.game.apply({ color: 0 });
+
+  // All four houses meet at one star; a five-space move lands on the next star.
+  const sharedStarPositions = [8, 47, 34, 21];
+  ludo.state.p.forEach((tokens, player) => tokens.fill(sharedStarPositions[player]));
+  ludo.state.die = 5;
+
+  const html = ludo.game.draw()[0];
+  assert.match(html, /class="lui-stack-trigger"[^>]*aria-label="Choose from 16 tokens; 4 can move">\+16/);
+  assert.equal((html.match(/data-i="token" data-token="\d" data-player="0"/g) || []).length, 8,
+    "the four highlighted moves are listed in the chooser as well as on the board");
+});
+
+test("Ludo crowded-stack picker opens and submits the selected move", () => {
+  const ludo = createLudo({ players: 4 });
+  ludo.state = ludo.game.init();
+  ludo.game.apply({ color: 0 });
+  ludo.state.p.forEach((tokens, player) => tokens.fill([8, 47, 34, 21][player]));
+  ludo.state.die = 5;
+
+  const attrs = { "aria-expanded": "false" };
+  let focused = false;
+  const picker = { hidden: true, querySelector: () => ({ focus: () => { focused = true; } }) };
+  const trigger = {
+    parentNode: { querySelector: () => picker },
+    getAttribute: (name) => attrs[name],
+    setAttribute: (name, value) => { attrs[name] = value; },
+  };
+  ludo.game.click({ closest: (selector) => selector === "[data-i=stack]" ? trigger : null });
+
+  assert.equal(picker.hidden, false);
+  assert.equal(attrs["aria-expanded"], "true");
+  assert.equal(focused, true, "opening the picker focuses its first token choice");
+
+  const choice = {
+    dataset: { player: "0", token: "2" },
+    closest(selector) { return selector === "[data-token]" ? this : null; },
+  };
+  ludo.game.click(choice);
+  assert.equal(ludo.actions.length, 1);
+  assert.equal(ludo.actions[0].token, 2);
 });
 
 test("four-player Ludo continues after each finish and ends after third place", () => {
@@ -147,7 +223,7 @@ test("Ludo shows each player name inside their colored board area", () => {
   assert.match(html, /left:2%;bottom:2%/);
   assert.equal((html.match(/class="lui-player-name-anchor"/g) || []).length, 4,
     "each player's name is anchored to its house corner on the rotating board");
-  assert.equal((source.match(/rotate:var\(--lui-unrot,0deg\)/g) || []).length, 3,
+  assert.equal((source.match(/rotate:var\(--lui-unrot,0deg\)/g) || []).length, 5,
     "the name badges and other board labels counter-rotate so their text stays upright");
 });
 
