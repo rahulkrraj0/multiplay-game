@@ -953,7 +953,7 @@
     const meta = S.ph === "play"
       ? '<div class="jd-seat__meta">Hands ' + S.pl[seat] + " · Discards " + S.dl[seat] + "</div>" : "";
     return '<div class="jd-seat jd-seat--' + seat + (!S.over && S.t === seat ? " is-active" : "") + '">' +
-      '<div class="jd-seat__top"><span class="jd-seat__name">' + esc(nm(seat)) + "</span>" +
+      '<div class="jd-seat__top"><span class="jd-seat__name">' + computerBadge(seat) + esc(nm(seat)) + "</span>" +
       '<span class="jd-seat__pips" aria-label="' + S.rw[seat] + ' round wins">' + pips + "</span></div>" +
       '<div class="jd-seat__score"><span class="jd-seat__label">Round</span> ' + rtHTML +
       ' <span class="jd-seat__total">Total ' + S.ts[seat] + "</span></div>" +

@@ -140,9 +140,6 @@
 .teenpatti .tp-seat.is-out { opacity: 0.35; }
 .teenpatti .tp-seat__top { display: flex; min-width: 0; align-items: baseline; justify-content: space-between; gap: 0.4rem; }
 .teenpatti .tp-seat__name { min-width: 0; overflow: hidden; color: var(--sc); font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
-.teenpatti .tp-seat__identity { display: flex; min-width: 0; align-items: center; gap: 0.3rem; }
-.teenpatti .tp-seat__bot { display: inline-grid; flex: none; width: 1.25rem; height: 1.25rem; place-items: center; border-radius: 50%; background: rgba(251, 191, 36, 0.2); color: var(--tp-gold); }
-.teenpatti .tp-seat__bot svg { width: 0.9rem; height: 0.9rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
 .teenpatti .tp-seat__chips { font-size: 1.1rem; font-weight: 900; line-height: 1.1; }
 .teenpatti .tp-seat__meta { display: flex; align-items: center; gap: 0.35rem; min-height: 1.1rem; font-size: 0.72rem; opacity: 0.9; }
 .teenpatti .tp-seat__dealer { padding: 0 0.35rem; border-radius: 0.5rem; background: var(--tp-gold); color: #1c1917; font-weight: 800; }
@@ -207,9 +204,6 @@
 .teenpatti .tp-handbtn { cursor: pointer; }
 .teenpatti .tp-handbtn:hover .tp-card { box-shadow: 0 0 0 0.16rem var(--tp-gold), 0 0.5rem 0.9rem rgba(0, 0, 0, 0.5); }
 .teenpatti .tp-handname { min-height: 1.5em; margin: 0.2rem 0 0; font-family: var(--tp-serif); font-size: 1.05rem; font-style: italic; color: var(--tp-gold); }
-.teenpatti .tp-reveal { display: grid; justify-items: center; gap: 0.4rem; padding: 0.7rem; border: 1px solid rgba(251, 191, 36, 0.45); border-radius: 0.8rem; background: rgba(0, 0, 0, 0.22); }
-.teenpatti .tp-reveal__title { margin: 0; color: var(--tp-gold); font-size: 0.85rem; font-weight: 800; }
-.teenpatti .tp-reveal__hand { display: grid; justify-items: center; gap: 0.25rem; font-size: 0.8rem; font-weight: 700; }
 
 .teenpatti .tp-btn:focus-visible,
 .teenpatti .tp-handbtn:focus-visible,
@@ -488,7 +482,6 @@
 
   let anim = { seq: -1, start: 0 };   // local animation clock for S.last
   let mySeat = null;                  // seat this browser has played (see viewSeat)
-  let spectatorHands = null;
 
   /* ------------------------------ helpers ------------------------------- */
 
@@ -653,21 +646,6 @@
     return mySeat !== null && mySeat < S.np ? mySeat : null;
   }
 
-  function rememberComputerHands(seat) {
-    if (!isLocalComputerGame() || mySeat !== seat) return;
-    spectatorHands = S.h.map((cards, i) => ({ seat: i, cards: sortDesc(cards) }))
-      .filter((entry) => entry.seat !== seat && entry.cards.length > 0);
-  }
-
-  function spectatorHTML() {
-    if (!spectatorHands || !spectatorHands.length) return "";
-    return '<section class="tp-reveal" aria-label="Computer cards revealed after you packed">' +
-      '<h3 class="tp-reveal__title">Computer cards</h3>' +
-      spectatorHands.map((entry) => '<div class="tp-reveal__hand"><span>' + esc(nm(entry.seat)) + '</span><div class="tp-hand">' +
-        entry.cards.map((id) => '<span class="tp-card' + redCls(id) + '" role="img" aria-label="' + cardName(id) + '">' + face(id) + "</span>").join("") +
-        "</div></div>").join("") + "</section>";
-  }
-
   function face(id) {
     const r = lbl(val(id));
     const s = SUITS[suit(id)];
@@ -705,7 +683,6 @@
 
   function seatHTML(i, an, L) {
     const play = S.ph === "play";
-    const computer = isLocalComputerGame() && i !== mySeat;
     const acted = an && L && L.seat === i && L.kind !== "deal";
     const packed = play && !S.al[i] && !S.ou[i];
     const dealer = S.ph !== "setup" && S.dealer === i && !S.ou[i];
@@ -716,8 +693,7 @@
       ? '<span class="tp-seat__cards" aria-hidden="true"><span class="tp-sback"></span><span class="tp-sback"></span><span class="tp-sback"></span></span>' : "";
     return '<div class="tp-seat tp-s' + i + (!S.over && S.t === i && S.ph !== "setup" && !S.ou[i] ? " is-active" : "") +
       (acted ? " is-act" : "") + (packed ? " is-packed" : "") + (S.ou[i] ? " is-out" : "") + '">' +
-      '<div class="tp-seat__top"><span class="tp-seat__identity">' + (computer ? '<span class="tp-seat__bot" role="img" aria-label="Computer opponent" title="Computer opponent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v3M9 3h6M5 10h14a2 2 0 0 1 2 2v7H3v-7a2 2 0 0 1 2-2Z"/><path d="M3 14H1m22 0h-2M8 14h.01M16 14h.01M9 17h6"/></svg></span>' : "") +
-      '<span class="tp-seat__name">' + esc(nm(i)) + "</span></span>" +
+      '<div class="tp-seat__top"><span class="tp-seat__name">' + computerBadge(i) + esc(nm(i)) + "</span>" +
       '<span class="tp-seat__chips" aria-label="' + S.ch[i] + ' chips">' + S.ch[i] + "</span></div>" +
       '<div class="tp-seat__meta">' + (tag ? "<span>" + tag + "</span>" : "") +
       (dealer ? '<span class="tp-seat__dealer">Dealer</span>' : "") + backs + "</div></div>";
@@ -876,7 +852,6 @@
     // players/n/count). Without it the first seat picks it in a setup step.
     init(opts) {
       mySeat = null;
-      spectatorHands = null;
       anim = { seq: -1, start: 0 };
 
       const raw = typeof opts === "number" ? opts
@@ -901,7 +876,6 @@
         return key === "players" && Number.isInteger(action.players) && action.players >= MIN_P && action.players <= MAX_P;
       }
       if (S.ph === "deal") {
-        spectatorHands = null;
         const p = action.deal;
         return key === "deal" && Array.isArray(p) && p.length === S.np * 3 &&
           p.every(isId) && new Set(p).size === p.length;
@@ -960,7 +934,6 @@
         return;
       }
       if (has(action, "pack")) {
-        rememberComputerHands(i);
         S.al[i] = false;
         S.last = { seq: ++S.seq, kind: "pack", seat: i };
         const a = aliveList();
@@ -1008,7 +981,6 @@
       else if (S.ph === "deal") body = dealHTML();
       else if (S.ph === "end") body = endHTML();
       else body = tableHTML(an, L) + handHTML(vs, an, L);
-      body += spectatorHTML();
 
       let status;
       if (S.over) status = S.msg;

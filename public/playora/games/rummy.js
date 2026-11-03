@@ -259,7 +259,6 @@
   line-height: 1.05;
   box-shadow: 0 0.1rem 0.25rem rgba(0, 0, 0, 0.4);
 }
-.rummy .rm-mini.rm-red { color: #dc2626; }
 .rummy .rm-mini i { font-style: normal; }
 
 /* ---------- controls & panels ---------- */
@@ -692,7 +691,7 @@
     const dealer = S.ph !== "setup" && S.dealer === i;
     return '<div class="rm-seat rm-s' + i + (!S.over && S.t === i && S.ph !== "setup" ? " is-active" : "") +
       (acted ? " is-act" : "") + '">' +
-      '<div class="rm-seat__top"><span class="rm-seat__name">' + esc(nm(i)) + "</span>" +
+      '<div class="rm-seat__top"><span class="rm-seat__name">' + computerBadge(i) + esc(nm(i)) + "</span>" +
       '<span class="rm-seat__score" aria-label="' + S.sc[i] + ' points">' + S.sc[i] + "</span></div>" +
       '<div class="rm-seat__meta"><span>' + S.h[i].length + " cards</span>" +
       (dealer ? '<span class="rm-seat__dealer">Dealer</span>' : "") + "</div></div>";
