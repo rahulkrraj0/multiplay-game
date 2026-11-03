@@ -42,7 +42,7 @@ type GameCatalogEntry = {
   tag: string;
   diff: string;
   art: string;
-  logo: string;
+  logo?: string;
 };
 
 declare global {
@@ -88,7 +88,7 @@ function getInviteRoomCode(value: string) {
 function bootScripts() {
   if (boot) return boot;
   boot = (async () => {
-    const catalogRequest = fetch(asset("/playora/games/catalog.json"), { cache: "force-cache" });
+    const catalogRequest = fetch(asset("/playora/games/catalog.json"), { cache: "no-cache" });
     const engineScripts = (async () => {
       for (const file of ENGINE_FILES) await loadScript(asset(file));
     })();
@@ -125,9 +125,8 @@ function bootScripts() {
           typeof game.diff === "string" &&
           "art" in game &&
           typeof game.art === "string" &&
-          "logo" in game &&
-          typeof game.logo === "string" &&
-          /^[a-z0-9][a-z0-9_-]*\.svg$/i.test(game.logo),
+          (!("logo" in game) ||
+            (typeof game.logo === "string" && /^[a-z0-9][a-z0-9_-]*\.svg$/i.test(game.logo))),
       ) ||
       new Set(catalog.map((game) => (game as GameCatalogEntry).id)).size !== catalog.length
     ) {
@@ -135,7 +134,7 @@ function bootScripts() {
     }
     window.PLAYORA_GAME_CATALOG = (catalog as GameCatalogEntry[]).map((game) => ({
       ...game,
-      logo: asset(`/playora/game-logos/${game.logo}`),
+      logo: asset(`/playora/game-logos/${game.logo ?? `${game.id}.svg`}`),
     }));
     window.PLAYORA_LOAD_SCRIPT = (file) => loadScript(asset(`/playora/games/${file}`));
     await loadScript(asset("/playora/core/game-loader.js"));
@@ -158,7 +157,8 @@ function Home() {
     if (!inviteCode) initializeStaticAdSenseSlots();
     const timer = window.setTimeout(() => {
       if (cancel) return;
-      bootScripts().catch(() => {
+      bootScripts().catch((error: unknown) => {
+        console.error("[playora] Could not initialize the game list.", error);
         const note = document.getElementById("playora-boot");
         if (note) note.textContent = "The game table didn’t finish loading. Refresh and try again.";
         const grid = document.getElementById("gameGrid");
