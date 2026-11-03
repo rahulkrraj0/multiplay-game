@@ -42,6 +42,7 @@ type GameCatalogEntry = {
   tag: string;
   diff: string;
   art: string;
+  logo: string;
 };
 
 declare global {
@@ -123,13 +124,19 @@ function bootScripts() {
           "diff" in game &&
           typeof game.diff === "string" &&
           "art" in game &&
-          typeof game.art === "string",
+          typeof game.art === "string" &&
+          "logo" in game &&
+          typeof game.logo === "string" &&
+          /^[a-z0-9][a-z0-9_-]*\.svg$/i.test(game.logo),
       ) ||
       new Set(catalog.map((game) => (game as GameCatalogEntry).id)).size !== catalog.length
     ) {
       throw new Error("The game list is invalid.");
     }
-    window.PLAYORA_GAME_CATALOG = catalog as GameCatalogEntry[];
+    window.PLAYORA_GAME_CATALOG = (catalog as GameCatalogEntry[]).map((game) => ({
+      ...game,
+      logo: asset(`/playora/game-logos/${game.logo}`),
+    }));
     window.PLAYORA_LOAD_SCRIPT = (file) => loadScript(asset(`/playora/games/${file}`));
     await loadScript(asset("/playora/core/game-loader.js"));
     for (const file of RUNTIME_FILES) await loadScript(asset(file));

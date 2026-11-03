@@ -9,7 +9,8 @@
     "cat": "classic strategy",
     "tag": "Flick & pocket",
     "diff": "Easy to learn",
-    "art": "art-carrom"
+    "art": "art-carrom",
+    "logo": "carrom.svg"
   },
   {
     "file": "chess.js",
@@ -21,7 +22,8 @@
     "cat": "classic strategy",
     "tag": "♛ Timeless",
     "diff": "Deep to master",
-    "art": "art-chess"
+    "art": "art-chess",
+    "logo": "chess.svg"
   },
   {
     "file": "connect-four.js",
@@ -33,7 +35,8 @@
     "cat": "classic strategy",
     "tag": "🔴 Classic",
     "diff": "Easy to learn",
-    "art": "art-connect-four"
+    "art": "art-connect-four",
+    "logo": "connect-four.svg"
   },
   {
     "file": "ludo.js",
@@ -45,7 +48,8 @@
     "cat": "classic casual",
     "tag": "Roll & race",
     "diff": "Easy to learn",
-    "art": "art-ludo"
+    "art": "art-ludo",
+    "logo": "ludo.svg"
   },
   {
     "file": "poker-game.js",
@@ -58,7 +62,8 @@
     "cat": "classic casual",
     "tag": "Card classic",
     "diff": "Hard",
-    "art": "art-poker"
+    "art": "art-poker",
+    "logo": "poker.svg"
   },
   {
     "file": "racer.js",
@@ -70,7 +75,8 @@
     "cat": "racing action",
     "tag": "Live racing",
     "diff": "Easy to learn",
-    "art": "art-racer"
+    "art": "art-racer",
+    "logo": "racer.svg"
   },
   {
     "file": "rummy.js",
@@ -83,7 +89,8 @@
     "cat": "classic casual",
     "tag": "Card classic",
     "diff": "Medium",
-    "art": "art-rummy"
+    "art": "art-rummy",
+    "logo": "rummy.svg"
   },
   {
     "file": "teenpatti.js",
@@ -96,7 +103,8 @@
     "cat": "classic casual",
     "tag": "Card classic",
     "diff": "Medium",
-    "art": "art-teenpatti"
+    "art": "art-teenpatti",
+    "logo": "teenpatti.svg"
   },
   {
     "file": "snl.js",
@@ -108,7 +116,8 @@
     "cat": "classic casual",
     "tag": "1-4 tokens each",
     "diff": "Easy",
-    "art": "art-snl"
+    "art": "art-snl",
+    "logo": "snl.svg"
   },
   {
     "file": "ttt.js",
@@ -120,7 +129,8 @@
     "cat": "classic casual",
     "tag": "Quick game",
     "diff": "Easy",
-    "art": "art-ttt"
+    "art": "art-ttt",
+    "logo": "ttt.svg"
   },
   {
     "file": "watersort-game.js",
@@ -132,7 +142,8 @@
     "cat": "puzzle",
     "tag": "Pour & sort",
     "diff": "Easy to learn",
-    "art": "art-watersort"
+    "art": "art-watersort",
+    "logo": "watersort.svg"
   },
   {
     "file": "joker-duel.js",
@@ -144,6 +155,7 @@
     "cat": "strategy",
     "tag": "Card battler",
     "diff": "Medium",
-    "art": "art-joker-duel"
+    "art": "art-joker-duel",
+    "logo": "joker-duel.svg"
   }
 ]

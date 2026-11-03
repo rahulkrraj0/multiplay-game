@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Rummy</title>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#4bd0b0"/><stop offset="1" stop-color="#167a79"/></linearGradient>
+    <linearGradient id="card" x2="0" y2="1"><stop stop-color="#fffdf5"/><stop offset="1" stop-color="#e4f0e9"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="13" stdDeviation="11" flood-color="#143f48" flood-opacity=".4"/></filter>
+    <filter id="extrude" x="-20%" y="-20%" width="140%" height="160%">
+      <feOffset in="SourceAlpha" dy="14" result="d14"/><feFlood flood-color="#153d48" result="c14"/><feComposite in="c14" in2="d14" operator="in" result="s14"/>
+      <feOffset in="SourceAlpha" dy="10" result="d10"/><feFlood flood-color="#1b5b59" result="c10"/><feComposite in="c10" in2="d10" operator="in" result="s10"/>
+      <feOffset in="SourceAlpha" dy="6" result="d6"/><feFlood flood-color="#208a77" result="c6"/><feComposite in="c6" in2="d6" operator="in" result="s6"/>
+      <feMerge><feMergeNode in="s14"/><feMergeNode in="s10"/><feMergeNode in="s6"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="#153d48"/>
+  <rect x="42" y="42" width="428" height="428" rx="100" fill="url(#bg)"/>
+  <g filter="url(#extrude)">
+  <circle cx="374" cy="127" r="52" fill="#fff" opacity=".08"/>
+  <g filter="url(#shadow)">
+    <g transform="rotate(-17 198 246)">
+      <rect x="111" y="113" width="177" height="260" rx="20" fill="url(#card)" stroke="#17464b" stroke-width="9"/>
+      <text x="137" y="180" fill="#d64c51" font-family="Georgia,serif" font-size="54" font-weight="700">A</text>
+      <path d="M205 211c-16-22-49-2-2 45 47-43 17-67 2-45zm-1 35-20 29h40z" fill="#d64c51"/>
+    </g>
+    <g transform="rotate(1 256 238)">
+      <rect x="168" y="99" width="177" height="260" rx="20" fill="url(#card)" stroke="#17464b" stroke-width="9"/>
+      <text x="194" y="166" fill="#21876b" font-family="Georgia,serif" font-size="54" font-weight="700">K</text>
+      <path d="M262 198c-16-22-49-2-2 45 47-43 17-67 2-45zm-1 35-20 29h40z" fill="#21876b"/>
+    </g>
+    <g transform="rotate(17 313 246)">
+      <rect x="224" y="113" width="177" height="260" rx="20" fill="url(#card)" stroke="#17464b" stroke-width="9"/>
+      <text x="250" y="180" fill="#21876b" font-family="Georgia,serif" font-size="54" font-weight="700">Q</text>
+      <path d="M318 211c-16-22-49-2-2 45 47-43 17-67 2-45zm-1 35-20 29h40z" fill="#21876b"/>
+    </g>
+  </g>
+  </g>
+</svg>

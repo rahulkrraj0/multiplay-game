@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Realtime Racer</title>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#ffc74d"/><stop offset="1" stop-color="#ee554b"/></linearGradient>
+    <linearGradient id="car" x2="0" y2="1"><stop stop-color="#fffdf4"/><stop offset="1" stop-color="#c9d8e6"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="13" stdDeviation="11" flood-color="#442c49" flood-opacity=".4"/></filter>
+    <filter id="extrude" x="-20%" y="-20%" width="140%" height="160%">
+      <feOffset in="SourceAlpha" dy="14" result="d14"/><feFlood flood-color="#342846" result="c14"/><feComposite in="c14" in2="d14" operator="in" result="s14"/>
+      <feOffset in="SourceAlpha" dy="10" result="d10"/><feFlood flood-color="#514052" result="c10"/><feComposite in="c10" in2="d10" operator="in" result="s10"/>
+      <feOffset in="SourceAlpha" dy="6" result="d6"/><feFlood flood-color="#b84e49" result="c6"/><feComposite in="c6" in2="d6" operator="in" result="s6"/>
+      <feMerge><feMergeNode in="s14"/><feMergeNode in="s10"/><feMergeNode in="s6"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="#342846"/>
+  <rect x="42" y="42" width="428" height="428" rx="100" fill="url(#bg)"/>
+  <g filter="url(#extrude)">
+  <g fill="none" stroke="#fff5da" opacity=".62">
+    <path d="M111 280a145 145 0 0 1 290 0v30a145 145 0 0 1-290 0z" stroke-width="24"/>
+    <path d="M256 122v58m0 222v38" stroke="#473a51" stroke-width="12" stroke-dasharray="17 17"/>
+  </g>
+  <g filter="url(#shadow)">
+    <path d="m185 207 36-49h70l36 49 28 26v102H157V233z" fill="url(#car)" stroke="#40344c" stroke-width="10" stroke-linejoin="round"/>
+    <path d="m219 174-27 46h148l-27-46z" fill="#55c9df" stroke="#40344c" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M176 251h160m-142 27h124" stroke="#ec5a58" stroke-width="10" stroke-linecap="round"/>
+    <path d="M183 326v20m154-20v20" stroke="#293142" stroke-width="18" stroke-linecap="round"/>
+    <path d="M110 235H75m43 27H86m-13 27h28" stroke="#fff8df" stroke-width="9" stroke-linecap="round" opacity=".85"/>
+    <path d="M402 235h35m-44 27h32m13 27h-28" stroke="#fff8df" stroke-width="9" stroke-linecap="round" opacity=".85"/>
+  </g>
+  </g>
+</svg>

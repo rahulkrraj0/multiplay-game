@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">3D Chess</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6acbd5"/><stop offset=".52" stop-color="#397bc5"/><stop offset="1" stop-color="#293b82"/></linearGradient>
+    <linearGradient id="board" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8fbf2"/><stop offset="1" stop-color="#a8c3dc"/></linearGradient>
+    <linearGradient id="boardSide" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#7095bc"/><stop offset="1" stop-color="#334c7b"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff1a7"/><stop offset=".48" stop-color="#f4be56"/><stop offset="1" stop-color="#cf743c"/></linearGradient>
+    <linearGradient id="ivory" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffef2"/><stop offset=".55" stop-color="#dce8e7"/><stop offset="1" stop-color="#91abc2"/></linearGradient>
+    <linearGradient id="dark" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#506a8c"/><stop offset="1" stop-color="#202d54"/></linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="170%"><feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#10234f" flood-opacity=".4"/></filter>
+    <filter id="depth" x="-20%" y="-20%" width="140%" height="160%">
+      <feOffset in="SourceAlpha" dy="12" result="d12"/><feFlood flood-color="#233765" result="c12"/><feComposite in="c12" in2="d12" operator="in" result="s12"/>
+      <feOffset in="SourceAlpha" dy="8" result="d8"/><feFlood flood-color="#42649a" result="c8"/><feComposite in="c8" in2="d8" operator="in" result="s8"/>
+      <feOffset in="SourceAlpha" dy="4" result="d4"/><feFlood flood-color="#89a9cc" result="c4"/><feComposite in="c4" in2="d4" operator="in" result="s4"/>
+      <feMerge><feMergeNode in="s12"/><feMergeNode in="s8"/><feMergeNode in="s4"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="pieceDepth" x="-30%" y="-25%" width="160%" height="175%">
+      <feOffset in="SourceAlpha" dy="8" result="d8"/><feFlood flood-color="#253559" result="c8"/><feComposite in="c8" in2="d8" operator="in" result="s8"/>
+      <feOffset in="SourceAlpha" dy="4" result="d4"/><feFlood flood-color="#8b7557" result="c4"/><feComposite in="c4" in2="d4" operator="in" result="s4"/>
+      <feMerge><feMergeNode in="s8"/><feMergeNode in="s4"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="#222f69"/>
+  <rect x="42" y="42" width="428" height="428" rx="100" fill="url(#bg)"/>
+  <circle cx="360" cy="126" r="95" fill="#fff" opacity=".07"/>
+  <circle cx="360" cy="126" r="65" fill="none" stroke="#fff" stroke-width="2" opacity=".12"/>
+  <path d="m124 119 8 15 17 2-13 12 3 17-15-8-15 8 3-17-13-12 17-2z" fill="#fff3c8" opacity=".8"/>
+  <circle cx="395" cy="223" r="4" fill="#fff3c8"/><circle cx="109" cy="221" r="5" fill="#fff3c8" opacity=".8"/>
+  <ellipse cx="256" cy="372" rx="160" ry="38" fill="#14224d" opacity=".3"/>
+  <g filter="url(#shadow)">
+    <g filter="url(#depth)">
+      <path d="m86 263 170 89 170-89v25l-170 99-170-99z" fill="url(#boardSide)" stroke="#253b68" stroke-width="8" stroke-linejoin="round"/>
+      <path d="m86 263 170 89 170-89-170-90z" fill="url(#board)" stroke="#263b68" stroke-width="8" stroke-linejoin="round"/>
+      <path d="m171 218 85 45 85-45-85-45z" fill="url(#dark)"/>
+      <path d="m128 241 43 22 42-22-42-23zm85 0 43 22 43-22-43-23zm85 0 43 22 43-22-43-23z" fill="url(#dark)"/>
+      <path d="m171 263 43 22 42-22-42-22zm85 0 43 22 43-22-43-22z" fill="url(#dark)"/>
+      <path d="m128 285 43 22 42-22-42-22zm85 0 43 22 43-22-43-22zm85 0 43 22 43-22-43-22z" fill="url(#dark)"/>
+      <path d="m171 218 85 45 85-45m-170 45 85 44 85-44m-128-67v135m85-135v135m85-90v90m-170-90v90" fill="none" stroke="#526f96" stroke-width="2" opacity=".65"/>
+    </g>
+    <g filter="url(#pieceDepth)">
+      <g>
+        <path d="M225 244c-14-11-20-25-18-42l4-22-16-28 35 12c12-14 32-19 49-10 18 10 25 29 20 47-3 11-10 19-20 25l9 23 14 17h-88z" fill="url(#dark)" stroke="#1b2b4d" stroke-width="7" stroke-linejoin="round"/>
+        <path d="m208 164 26 15 7-25-34-12z" fill="#83a0be" stroke="#1b2b4d" stroke-width="5" stroke-linejoin="round"/>
+        <path d="m225 192 32-14-8 26-23 7z" fill="#dbeaf3"/>
+        <circle cx="270" cy="184" r="3.5" fill="#fff1a7"/>
+        <path d="M222 240c12 6 24 7 39 4" fill="none" stroke="#b7cde0" stroke-width="4" stroke-linecap="round"/>
+        <path d="m219 248 73 0 12 16h-97z" fill="#263c62"/>
+      </g>
+      <g>
+        <path d="M317 246c-7-27-12-52-12-78v-23h50v23c0 26-5 51-12 78z" fill="url(#ivory)" stroke="#435c7b" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M310 181h40m-41 22h42m-43 22h44" fill="none" stroke="#829bb7" stroke-width="4" opacity=".75"/>
+        <path d="M300 243h59l12 18h-83z" fill="url(#dark)" stroke="#1b2b4d" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M306 142h54l-7-16h-40z" fill="url(#ivory)" stroke="#435c7b" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M309 126v-17h11v9h10v-9h11v9h10v-9h10v17z" fill="url(#ivory)" stroke="#435c7b" stroke-width="5" stroke-linejoin="round"/>
+      </g>
+      <g>
+        <path d="M175 255c-4-16-4-30 2-42l-10-12 22 3c10 8 14 22 12 37l-4 18z" fill="url(#gold)" stroke="#75543e" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M169 256h33l9 12h-51z" fill="url(#gold)" stroke="#75543e" stroke-width="5" stroke-linejoin="round"/>
+        <path d="m168 205 14 8 12-5" fill="none" stroke="#fff0b0" stroke-width="4" stroke-linecap="round"/>
+      </g>
+      <g>
+        <path d="M236 281c-2-12-1-24 4-34l-7-10 18 2c8 7 10 18 8 29l-2 15z" fill="url(#gold)" stroke="#75543e" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M231 281h29l8 10h-45z" fill="url(#gold)" stroke="#75543e" stroke-width="4" stroke-linejoin="round"/>
+        <path d="m232 241 12 7 10-4" fill="none" stroke="#fff0b0" stroke-width="3" stroke-linecap="round"/>
+      </g>
+      <g>
+        <path d="M252 157c-15-7-23-20-23-37 0-13 6-24 17-31l-7-19 23 10c17-5 35 3 42 19 7 16 1 32-12 42l9 35 16 20h-83l15-22z" fill="url(#gold)" stroke="#76523a" stroke-width="7" stroke-linejoin="round"/>
+        <path d="m243 94 18 13 14-18 17 13 17-7" fill="none" stroke="#fff3bd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="m263 80-9-15m24 13 4-17m14 26 13-11" fill="none" stroke="#fff3bd" stroke-width="5" stroke-linecap="round"/>
+        <path d="M244 127c13 9 29 12 44 7" fill="none" stroke="#fff2b7" stroke-width="5" stroke-linecap="round" opacity=".9"/>
+        <path d="m252 172 64 0 12 17h-89z" fill="url(#gold)" stroke="#76523a" stroke-width="6" stroke-linejoin="round"/>
+      </g>
+    </g>
+  </g>
+  <path d="M88 91h112" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".13"/>
+</svg>

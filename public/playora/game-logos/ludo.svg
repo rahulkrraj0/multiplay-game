@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Ludo</title>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#ffda66"/><stop offset="1" stop-color="#f2765f"/></linearGradient>
+    <linearGradient id="red" x2="0" y2="1"><stop stop-color="#ff8275"/><stop offset="1" stop-color="#d9384b"/></linearGradient>
+    <linearGradient id="green" x2="0" y2="1"><stop stop-color="#78dfa3"/><stop offset="1" stop-color="#219a69"/></linearGradient>
+    <linearGradient id="blue" x2="0" y2="1"><stop stop-color="#83d8ff"/><stop offset="1" stop-color="#3575d6"/></linearGradient>
+    <linearGradient id="yellow" x2="0" y2="1"><stop stop-color="#fff18a"/><stop offset="1" stop-color="#e9aa31"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#51314b" flood-opacity=".35"/></filter>
+    <filter id="extrude" x="-20%" y="-20%" width="140%" height="160%">
+      <feOffset in="SourceAlpha" dy="14" result="d14"/><feFlood flood-color="#40284d" result="c14"/><feComposite in="c14" in2="d14" operator="in" result="s14"/>
+      <feOffset in="SourceAlpha" dy="10" result="d10"/><feFlood flood-color="#694357" result="c10"/><feComposite in="c10" in2="d10" operator="in" result="s10"/>
+      <feOffset in="SourceAlpha" dy="6" result="d6"/><feFlood flood-color="#af684d" result="c6"/><feComposite in="c6" in2="d6" operator="in" result="s6"/>
+      <feMerge><feMergeNode in="s14"/><feMergeNode in="s10"/><feMergeNode in="s6"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="#51314b"/>
+  <rect x="42" y="42" width="428" height="428" rx="100" fill="url(#bg)"/>
+  <g filter="url(#extrude)">
+  <g filter="url(#shadow)">
+    <rect x="101" y="91" width="310" height="310" rx="45" fill="#fff9e9" stroke="#5d3b64" stroke-width="12"/>
+    <path d="M118 108h116v116H118z" fill="url(#red)"/><path d="M278 108h116v116H278z" fill="url(#green)"/>
+    <path d="M118 268h116v116H118z" fill="url(#blue)"/><path d="M278 268h116v116H278z" fill="url(#yellow)"/>
+    <g fill="#fff8e9" stroke="#743e52" stroke-width="6">
+      <circle cx="154" cy="145" r="18"/><circle cx="197" cy="145" r="18"/><circle cx="154" cy="188" r="18"/><circle cx="197" cy="188" r="18"/>
+      <circle cx="315" cy="145" r="18"/><circle cx="358" cy="145" r="18"/><circle cx="315" cy="188" r="18"/><circle cx="358" cy="188" r="18"/>
+      <circle cx="154" cy="305" r="18"/><circle cx="197" cy="305" r="18"/><circle cx="154" cy="348" r="18"/><circle cx="197" cy="348" r="18"/>
+      <circle cx="315" cy="305" r="18"/><circle cx="358" cy="305" r="18"/><circle cx="315" cy="348" r="18"/><circle cx="358" cy="348" r="18"/>
+    </g>
+    <path d="m256 206 57 50-57 50-57-50z" fill="#fff9e9" stroke="#5d3b64" stroke-width="8"/>
+    <path d="m256 218 43 38-43 38-43-38z" fill="#ec6b5b"/>
+    <path d="M256 218v76" stroke="#fff9e9" stroke-width="6"/>
+  </g>
+  </g>
+</svg>
