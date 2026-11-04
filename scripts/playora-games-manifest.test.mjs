@@ -130,6 +130,32 @@ test("Checkers and UNO expose Playora multiplayer game actions", () => {
   assert.match(unoStyle.textContent, /#room \.uno \.card/);
 });
 
+test("UNO animates a newly drawn card and a card played to the discard pile", () => {
+  const uno = createGame("uno.js", { np: 2 });
+  uno.context.S = uno.game.init();
+  const drawCard = uno.context.S.draw.find((card) => card.c === uno.context.S.color);
+  assert.ok(drawCard);
+  uno.context.S.draw = [drawCard];
+  uno.game.apply({ type: "draw", player: 0 });
+  assert.equal(uno.context.S.animation.type, "draw");
+  assert.equal(uno.context.S.animation.cardId, drawCard.id);
+  assert.match(uno.game.draw()[0], new RegExp('class="card[^"]*dealing'));
+  const unoStyle = uno.styles.find((style) => style.id === "uno-game-style");
+  assert.match(unoStyle.textContent, /@keyframes uno-card-play/);
+  assert.match(unoStyle.textContent, /@keyframes uno-card-deal/);
+  assert.match(unoStyle.textContent, /prefers-reduced-motion:reduce/);
+
+  uno.context.S = uno.game.init();
+  const player = uno.context.S.players[0];
+  const playCard = { id: 1000, c: uno.context.S.color, v: "5" };
+  player.hand[0] = playCard;
+  player.hand[1] = { id: 1001, c: uno.context.S.color, v: "6" };
+  uno.game.apply({ type: "play", player: 0, cardId: playCard.id });
+  assert.equal(uno.context.S.animation.type, "play");
+  assert.equal(uno.context.S.animation.cardId, playCard.id);
+  assert.match(uno.game.draw()[0], new RegExp('class="card[^"]*played'));
+});
+
 test("Checkers alternates the opening color on each new game", () => {
   const checkers = createGame("checkers-game.js");
   let state = checkers.game.init();

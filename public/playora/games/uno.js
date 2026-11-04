@@ -6,6 +6,7 @@
   var ORDER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'S', 'R', '+2', 'W', '+4'];
   var WIN_SCORE = 500, BOT_DELAY = 900;
   var G = { phase: 'setup', players: [] }, root = null, timer = null, styleNode = null;
+  var drawnRoomAnimationSeq = 0;
 
   /* ---------- rules ---------- */
   function shuffle(a) {
@@ -232,7 +233,7 @@
     '.uno .hand{display:flex;overflow-x:auto;overflow-y:hidden;padding:20px 14px 12px;flex:none}' +
     '.uno .hand .card:first-child{margin-left:auto}.uno .hand .card:last-child{margin-right:auto}.uno .hand .card+.card{margin-left:calc(var(--w)*-.28)}' +
     '.uno .hand .card.ok{transform:translateY(-14px);cursor:pointer;box-shadow:0 0 0 3px rgba(255,255,255,.4),0 6px 14px rgba(0,0,0,.5)}.uno .hand .card.no{filter:brightness(.55)}' +
-    '.uno .card{--cw:var(--w);position:relative;flex:none;width:var(--cw);height:calc(var(--cw)*1.5);padding:0;border-radius:calc(var(--cw)*.12);' +
+    '.uno .card{--cw:var(--w);position:relative;isolation:isolate;flex:none;width:var(--cw);height:calc(var(--cw)*1.5);padding:0;border-radius:calc(var(--cw)*.12);' +
     'border:calc(var(--cw)*.055) solid #fff;background:var(--c);color:#fff;font:inherit;font-weight:900;box-shadow:0 3px 8px rgba(0,0,0,.45);overflow:hidden}' +
     '.uno .opp .card{--cw:calc(var(--w)*.42)}.uno .ov{position:absolute;left:8%;right:8%;top:15%;bottom:15%;background:#fff;border-radius:50%;transform:rotate(-24deg);display:flex;align-items:center;justify-content:center}' +
     '.uno .ov b{transform:rotate(24deg);color:var(--c);font-size:calc(var(--cw)*.46);font-style:italic;line-height:1}' +
@@ -244,6 +245,14 @@
     '.uno .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}.uno .sw{width:64px;height:64px;border-radius:50%;border:4px solid #fff;cursor:pointer;background:var(--c)}' +
     '.uno .btn:focus-visible,.uno .pile:focus-visible,.uno .card:focus-visible,.uno .sw:focus-visible{outline:3px solid #fff;outline-offset:3px}' +
     '@media (prefers-reduced-motion:no-preference){.uno .hand .card{transition:transform .12s}}' +
+    '.uno .card{transform-style:preserve-3d;backface-visibility:hidden;border-color:#fffdf0;background-image:linear-gradient(112deg,rgba(255,255,255,.2),transparent 24%,transparent 73%,rgba(0,0,0,.14)),linear-gradient(160deg,rgba(255,255,255,.13),transparent 45%,rgba(0,0,0,.1));box-shadow:0 2px 0 #ffffff66 inset,0 -2px 0 #0002 inset,0 3px 0 #0003,0 8px 14px rgba(0,0,0,.42)}' +
+    '.uno .card::after{content:"";position:absolute;z-index:1;inset:2px;border:1px solid rgba(255,255,255,.27);border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}' +
+    '.uno .card .cn,.uno .card .ov{z-index:2}' +
+    '.uno .card.played{z-index:3;animation:uno-card-play .58s cubic-bezier(.18,.75,.22,1) both}' +
+    '.uno .hand .card.dealing{z-index:3;animation:uno-card-deal .58s cubic-bezier(.18,.75,.22,1) both}' +
+    '@keyframes uno-card-play{0%{transform:translate3d(0,150px,80px) rotateZ(-14deg) rotateY(-72deg) scale(.72);filter:brightness(1.35);box-shadow:0 22px 32px #0009}65%{transform:translate3d(0,-8px,0) rotateZ(5deg) rotateY(8deg) scale(1.06)}82%{transform:translateY(3px) rotateZ(-2deg) scale(.98)}100%{transform:translate(0) rotate(0) scale(1);filter:none}}' +
+    '@keyframes uno-card-deal{0%{transform:translate3d(0,-34vh,90px) rotateZ(22deg) rotateY(72deg) scale(.68);filter:brightness(1.35);box-shadow:0 22px 32px #0009}68%{transform:translate3d(-4px,4px,0) rotateZ(-4deg) rotateY(-6deg) scale(1.06)}84%{transform:translate3d(2px,-2px,0) rotateZ(2deg) scale(.98)}100%{transform:translate(0) rotate(0) scale(1);filter:none}}' +
+    '@media(prefers-reduced-motion:reduce){.uno .card.played,.uno .hand .card.dealing{animation:none!important}}' +
     '#room .uno button{width:auto;margin:0}' +
     '#room .uno .card{width:var(--cw);height:calc(var(--cw)*1.5);padding:0;border:calc(var(--cw)*.055) solid #fff;border-radius:calc(var(--cw)*.12);background:var(--c);color:#fff}' +
     '#room .uno .btn{font:inherit;font-weight:800;padding:.65em 1.3em;border:0;border-radius:999px;background:#f2c230;color:#1b1b1f}' +
@@ -307,13 +316,14 @@
     return cards;
   }
   function roomInit() {
+    drawnRoomAnimationSeq = 0;
     var players = Array.from({ length: np }, function (_, index) {
       return { name: typeof nm === 'function' ? nm(index) : 'Player ' + (index + 1), hand: [], score: 0 };
     });
     var state = {
       players: players, draw: shuffle(makeDeck()), discard: [], dir: 1, turn: 0,
       t: 0, color: '', drawnId: null, called: Array(players.length).fill(false),
-      winner: -1, over: false, msg: 'New game.'
+      winner: -1, over: false, msg: 'New game.', animationSeq: 0, animation: null
     };
     S = state;
     players.forEach(function (player) { player.hand.push.apply(player.hand, roomTake(7)); });
@@ -349,6 +359,7 @@
     }
     if (action.type === 'draw') {
       var drawn = roomGive(pi, 1)[0];
+      S.animation = drawn ? { seq: ++S.animationSeq, type: 'draw', player: pi, cardId: drawn.id } : null;
       S.called[pi] = false;
       if (drawn && roomPlayable(drawn, player)) {
         S.drawnId = drawn.id;
@@ -371,6 +382,7 @@
     }
     var cardIndex = player.hand.findIndex(function (item) { return item.id === action.cardId; });
     var card = player.hand.splice(cardIndex, 1)[0], victim = roomNext(pi, 1), steps = 1;
+    S.animation = { seq: ++S.animationSeq, type: 'play', player: pi, cardId: card.id };
     S.discard.push(card);
     S.drawnId = null;
     S.color = card.c === 'wild' ? action.color : card.c;
@@ -414,6 +426,8 @@
   }
   function roomDraw() {
     injectStyles();
+    var animation = S.animation && S.animation.seq > drawnRoomAnimationSeq ? S.animation : null;
+    if (animation) drawnRoomAnimationSeq = animation.seq;
     var active = !S.over && S.t === (seat < 0 ? S.t : seat) && canAct();
     var currentIndex = seat >= 0 && seat < S.players.length ? seat : ids.length ? -1 : S.t;
     var current = currentIndex >= 0 ? S.players[currentIndex] : null;
@@ -429,7 +443,8 @@
         '</span><span class="n">' + player.hand.length + ' cards</span></div>';
     });
     html += '</div><div class="table"><div class="pile"><span class="card back"><span class="ov"><b>UNO</b></span></span><span>Draw pile · ' + S.draw.length + '</span></div>' +
-      '<div class="cur disc" style="--cur:' + HEX[S.color] + '">' + cardHTML(top, '', '') + '<span>' +
+      '<div class="cur disc" style="--cur:' + HEX[S.color] + '">' + cardHTML(top,
+        animation && animation.type === 'play' && animation.cardId === top.id ? ' played' : '', '') + '<span>' +
       (S.dir === 1 ? '↻ ' : '↺ ') + S.color + '</span></div></div><div class="msg">' + S.msg +
       '<small>' + (S.over ? 'Use Restart to play again.' : S.t === currentIndex ? (S.drawnId != null ? 'Play the card you drew or pass.' : 'Your turn: play a card or draw.') : S.players[S.t].name + ' is playing…') +
       '</small></div><div class="acts">';
@@ -442,7 +457,10 @@
     html += '</div><div class="hand">';
     if (current) current.hand.slice().sort(function (a, b) { return sortKey(a) - sortKey(b); }).forEach(function (card) {
       var playable = active && S.t === currentIndex && (S.drawnId == null || card.id === S.drawnId) && roomPlayable(card, current);
-      html += cardHTML(card, playable ? ' ok' : ' no', playable ? 'data-m="p:' + card.id + '"' : '');
+      var animatedDraw = animation && animation.type === 'draw' &&
+        animation.player === currentIndex && animation.cardId === card.id;
+      html += cardHTML(card, (playable ? ' ok' : ' no') + (animatedDraw ? ' dealing' : ''),
+        playable ? 'data-m="p:' + card.id + '"' : '');
     });
     html += '</div>';
     if (sel != null && active && currentIndex === S.t) {
