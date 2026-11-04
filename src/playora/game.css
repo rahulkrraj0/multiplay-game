@@ -208,8 +208,12 @@
 @media(max-width:520px){#room #bd .sp-room .sp{--w:clamp(32px,11vw,44px)}}
 @media(max-height:520px){#room #bd .sp-room .sp{--w:clamp(32px,13vh,56px)}}
 #room #bd .bl-room .hand{max-width:1160px;margin-left:auto;margin-right:auto;grid-auto-rows:calc(var(--w)*.95);row-gap:0;overflow:visible;padding-bottom:calc(10px + var(--w)*.5)}
+#room #bd .bl-room .bl .setup-panel{display:grid;flex:1 1 auto;align-content:center;justify-items:center;gap:.8rem;padding:.5rem}
+#room #bd .bl-room .bl .setup-choice{display:grid;width:4.2rem;min-height:0;justify-items:center;margin:0;padding:.6rem .4rem;border:2px solid rgba(255,255,255,.35);border-radius:1rem;background:rgba(0,0,0,.3);color:#fff;font:inherit;font-size:1.6rem;font-weight:900;cursor:pointer;transition:transform .15s,border-color .15s}
+#room #bd .bl-room .bl .setup-choice small{font-size:.65rem;font-weight:600;opacity:.8}
+#room #bd .bl-room .bl .setup-choice:hover{transform:translateY(-.25rem);border-color:#ffd45c}
 @media(max-width:1250px){#room #bd .bl-room .bl{--w:clamp(36px,min(8vw,calc((100vw - 56px)/11)),92px)}}
-@media(max-width:600px){#room #bd .bl-room .bl{--w:clamp(36px,min(18vw,calc((100vw - 40px)/7)),76px)}#room #bd .bl-room .hand{grid-template-columns:repeat(20,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:calc(var(--w)*.95)}#room #bd .bl-room .hand button.card{grid-column:span 2}#room #bd .bl-room .hand button.card[style*="--mobile-row"]{grid-row:var(--mobile-row);grid-column:var(--mobile-column) / span 2}}
+@media(max-width:600px){#room #bd .bl-room .bl{--w:clamp(36px,min(18vw,calc((100vw - 40px)/7)),76px)}#room #bd .bl-room .bl .setup-choice{width:3.6rem;font-size:1.35rem}#room #bd .bl-room .hand{grid-template-columns:repeat(20,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:calc(var(--w)*.95)}#room #bd .bl-room .hand button.card{grid-column:span 2}#room #bd .bl-room .hand button.card[style*="--mobile-row"]{grid-row:var(--mobile-row);grid-column:var(--mobile-column) / span 2}}
 @media(max-width:600px){#room #bd .bl-room .acts{gap:6px;padding:0 8px}#room #bd .bl-room .acts button.btn{width:auto;min-width:0;max-width:100%;flex:1 1 0;margin:0;padding:10px 6px;font-size:clamp(12px,3.5vw,14px);white-space:normal}}
 @media(max-width:600px){
   #room #bd .cb,#room #bd .ce-room .ce,#room #bd .hr,#room #bd .sp-room .sp{--w:clamp(36px,min(18vw,calc((100vw - 40px)/7)),76px)}

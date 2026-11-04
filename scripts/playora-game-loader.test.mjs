@@ -16,7 +16,11 @@ test("lazy game loading starts the game script and its sounds together", async (
   const game = { id: "chess", catalogOnly: false };
   const GAMES = {};
   const window = {
-    PLAYORA_GAME_CATALOG: [{ id: "chess", file: "chess.js" }],
+    PLAYORA_GAME_CATALOG: [
+      { id: "chess", file: "chess.js" },
+      { id: "bluff", file: "bluff.js" },
+      { id: "poker", file: "poker-game.js" },
+    ],
     PLAYORA_LOAD_SCRIPT(file) {
       calls.push(["script", file]);
       return scriptPromise.then(() => register(game));
@@ -35,6 +39,11 @@ test("lazy game loading starts the game script and its sounds together", async (
   };
   register = (value) => { GAMES[value.id] = value; };
   vm.runInNewContext(readFileSync(loaderScript, "utf8"), context);
+
+  assert.deepEqual(calls, [], "register catalog metadata without downloading game scripts or sounds");
+  assert.equal(GAMES.chess.catalogOnly, true);
+  assert.equal(GAMES.bluff.catalogOnly, true);
+  assert.equal(GAMES.poker.catalogOnly, true);
 
   const loading = window.ensurePlayoraGame("chess");
   assert.deepEqual(calls, [["script", "chess.js"], ["sounds", "chess"]]);

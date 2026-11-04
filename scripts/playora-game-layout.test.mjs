@@ -180,7 +180,7 @@ test("Bluff centers each desktop and mobile row while increasing overlap", () =>
   assert.equal(position(0, 13), 'style="--hand-row:1;--hand-column:3;--mobile-row:1;--mobile-column:3"');
   assert.equal(position(8, 13), 'style="--hand-row:1;--hand-column:19;--mobile-row:2;--mobile-column:6"');
   assert.equal(position(12, 13), 'style="--hand-row:1;--hand-column:27;--mobile-row:2;--mobile-column:14"');
-  assert.match(gameStyles, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}#room #bd \.bl-room \.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\);grid-template-rows:none;grid-auto-rows:calc\(var\(--w\)\*\.95\)\}#room #bd \.bl-room \.hand button\.card\{grid-column:span 2\}#room #bd \.bl-room \.hand button\.card\[style\*="--mobile-row"\]\{grid-row:var\(--mobile-row\);grid-column:var\(--mobile-column\) \/ span 2\}\}/);
+  assert.match(gameStyles, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}#room #bd \.bl-room \.bl \.setup-choice\{width:3\.6rem;font-size:1\.35rem\}#room #bd \.bl-room \.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\);grid-template-rows:none;grid-auto-rows:calc\(var\(--w\)\*\.95\)\}#room #bd \.bl-room \.hand button\.card\{grid-column:span 2\}#room #bd \.bl-room \.hand button\.card\[style\*="--mobile-row"\]\{grid-row:var\(--mobile-row\);grid-column:var\(--mobile-column\) \/ span 2\}\}/);
 });
 
 test("Bluff mobile status follows the cards with five-percent bottom spacing", () => {
@@ -190,7 +190,7 @@ test("Bluff mobile status follows the cards with five-percent bottom spacing", (
 
 test("Bluff cards overlap on narrow mobile and wide desktop viewports", () => {
   assert.match(gameStyles, /@media\(max-width:1250px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(8vw,calc\(\(100vw - 56px\)\/11\)\),92px\)\}\}/);
-  assert.match(gameStyles, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}#room #bd \.bl-room \.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\);grid-template-rows:none;grid-auto-rows:calc\(var\(--w\)\*\.95\)\}/);
+  assert.match(gameStyles, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}#room #bd \.bl-room \.bl \.setup-choice\{width:3\.6rem;font-size:1\.35rem\}#room #bd \.bl-room \.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\);grid-template-rows:none;grid-auto-rows:calc\(var\(--w\)\*\.95\)\}/);
 });
 
 test("Call Break, Crazy Eights, Hearts, and Spades use larger eight-column mobile hands", () => {
