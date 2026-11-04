@@ -56,6 +56,11 @@ test("Spades hides duplicate engine status outside the game board", () => {
   assert.match(engineSource, /classList\.toggle\('spades-game',game==='spades'\)/);
 });
 
+test("games hide duplicate bottom status except Chess and Ludo", () => {
+  assert.match(gameStyles, /#room\.game-active:not\(\.ludo-game\):not\(\.chess-game\) #lg,#room\.game-active:not\(\.ludo-game\):not\(\.chess-game\) #st\{display:none!important\}/);
+  assert.match(engineSource, /classList\.toggle\('chess-game',game==='chess'\)/);
+});
+
 test("Spades unplayable cards stay legible while remaining visually muted", () => {
   assert.match(spadesSource, /'\.hand \.card\.no\{filter:brightness\(\.82\)\}'/);
 });

@@ -190,6 +190,7 @@
 #room.game-active .rin{max-width:none;margin:0;padding:5px 0 env(safe-area-inset-bottom,0px)}
 #room.game-active #gm{text-align:center}
 #room.game-active:not(.ludo-game) #bd{position:relative;min-height:calc(100dvh - 68px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+#room.game-active:not(.ludo-game):not(.chess-game) #lg,#room.game-active:not(.ludo-game):not(.chess-game) #st{display:none!important}
 #room.spades-game #lg,#room.spades-game #st{display:none!important}
 #room.ludo-game.game-active .rin{min-height:calc(100dvh - 64px);display:flex;flex-direction:column}
 #room.ludo-game.game-active #gm{flex:1;display:flex;flex-direction:column;justify-content:center}
