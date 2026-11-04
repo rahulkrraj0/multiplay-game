@@ -222,6 +222,7 @@
         '<button class="btn" data-a="next">' + (f > -1 ? 'New game' : 'Next round') + '</button></div>';
     }
     root.innerHTML = h;
+    if (typeof global.playoraStackHandCards === 'function') global.playoraStackHandCards(root);
     var nh = root.querySelector('.hand'); if (nh) nh.scrollLeft = sl;
   }
   function onClick(e) {
@@ -612,11 +613,11 @@
     '.su{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--cw)*.6);padding-top:10%}' +
     '.back{background:repeating-linear-gradient(45deg,#8a6d1c 0 6px,#a8862a 6px 12px);border:2px solid #fff;color:#fff}' +
     '.mini{--cw:calc(var(--w)*.5);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--w)*.26)}' +
-    '.bidbox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;width:min(90vw,340px);padding:14px;border-radius:16px;background:rgba(8,14,28,.95);text-align:center}' +
-    '.bidbox p{margin:0 0 10px;font-size:14px}.bids{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.bids .btn{padding:.6em 0}' +
+    '.bidbox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;width:min(90vw,340px);max-width:calc(100% - 16px);padding:14px;border-radius:16px;background:rgba(8,14,28,.95);text-align:center}' +
+    '.bidbox p{margin:0 0 10px;font-size:14px}.bids{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;min-width:0}.bids .btn{width:100%;min-width:0;box-sizing:border-box;padding:.6em 0}' +
     '.msg{text-align:center;font-size:14px;padding:4px 12px;min-height:3.2em;flex:none}.msg small{display:block;opacity:.8;margin-top:2px}.mine{text-align:center;font-size:12px;opacity:.85;flex:none}' +
     '.hand{display:flex;overflow-x:auto;overflow-y:hidden;padding:20px 14px 12px;flex:none}.hand .card:first-child{margin-left:auto}.hand .card:last-child{margin-right:auto}' +
-    '.hand .card+.card{margin-left:calc(var(--w)*-.45)}.hand .card{cursor:default}.hand .card.ok{transform:translateY(-14px);cursor:pointer;box-shadow:0 0 0 3px #ffd45c,0 6px 14px rgba(0,0,0,.5)}' +
+    '.hand .card+.card{margin-left:calc(var(--w)*-.45)}.hand .card{cursor:default}.hand .card.ok{position:relative;z-index:2;transform:translateY(-14px);cursor:pointer;box-shadow:0 0 0 3px #ffd45c,0 6px 14px rgba(0,0,0,.5)}' +
     '.hand .card.no{filter:brightness(.82)}' +
     '.ovl{position:absolute;inset:0;z-index:5;background:rgba(7,12,24,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}' +
     '.ovl h1{margin:0;font-size:clamp(34px,9vw,60px);color:#ffd45c}.ovl p{margin:0;max-width:44ch;line-height:1.45}' +

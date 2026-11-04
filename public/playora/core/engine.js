@@ -35,7 +35,7 @@ function openRoom(g){if(GAMES[g]?.catalogOnly){void window.ensurePlayoraGame(g).
  if(max===1){begin(g,1);return}
  $('mt').textContent='Choose how to play';
  const hasComputerOpponent=typeof x.bot==='function'||x.computer===true;
- $('ml').textContent='User vs Computer';$('ml').classList.toggle('hide',!hasComputerOpponent);
+ $('ml').textContent=g==='bluff'?'Play vs computers':'User vs Computer';$('ml').classList.toggle('hide',!hasComputerOpponent);
  $('ml').disabled=!hasComputerOpponent;
  $('localTwo').disabled=max<2;$('localTwo').classList.toggle('hide',max<2);
  $('mh').classList.toggle('hide',max<2);
@@ -44,7 +44,9 @@ function openRoom(g){if(GAMES[g]?.catalogOnly){void window.ensurePlayoraGame(g).
  show('mode')}
 function closeRoom(){const wasStandalone=$('room').classList.contains('standalone-game');disposeStandaloneGame();clearTimeout(aiTimer);aiTimer=undefined;localBot=false;$('room').classList.remove('standalone-game','embedded-game');$('bd').classList.remove('embedded-game-board');if(wasStandalone)$('bd').innerHTML='';if(typeof saveLastRoom==='function')saveLastRoom();if(typeof clearAutoRejoin==='function')clearAutoRejoin();leave();$('dice').classList.add('hide');$('topMic').classList.add('hide');$('topVideo').classList.add('hide');$('topMenu').classList.add('hide');$('room').classList.remove('open','ludo-game','spades-game');document.body.style.overflow='';history.replaceState(null,'',location.pathname);window.scrollTo(0,0)}
 /* ---------- CORE ---------- */
-function render(){$('rl').disabled=false;const[h,s]=G.draw();$('bd').innerHTML=h;$('st').textContent=ids.length&&seat===99?'Spectating · '+(S.msg||s):S.msg||s;$('lg').textContent=typeof S.last==='string'?S.last:'';$('rl').classList.toggle('hide',!(G.roll&&canAct()&&G.cr()))}
+function stackHandCards(root){root.querySelectorAll('.hand').forEach(hand=>hand.querySelectorAll('.card').forEach((card,index)=>{const order=Number(card.dataset.selectedOrder);card.style.zIndex=String(card.classList.contains('sel')?(Number.isInteger(order)?100000+order:100000+index):card.classList.contains('ok')?10000+index:index+1)}))}
+window.playoraStackHandCards=stackHandCards;
+function render(){$('rl').disabled=false;const[h,s]=G.draw();$('bd').innerHTML=h;stackHandCards($('bd'));$('st').textContent=ids.length&&seat===99?'Spectating · '+(S.msg||s):S.msg||s;$('lg').textContent=typeof S.last==='string'?S.last:'';$('rl').classList.toggle('hide',!(G.roll&&canAct()&&G.cr()))}
 /* begin(game, localPlayers, order): order = list of player ids when playing online (seat = position in the list) */
 function activateGameRuntime(){if(typeof G.onStart==='function')G.onStart();if(ids.length&&typeof startGameChannels==='function')startGameChannels()}
 function syncGameLayout(game){const isLudo=game==='ludo';$('room').classList.toggle('ludo-game',isLudo);$('room').classList.toggle('spades-game',game==='spades');const dice=$('dice');if(isLudo){dice.classList.remove('hide');dice.textContent=S&&S.die||'🎲'}else dice.classList.add('hide')}
@@ -66,5 +68,5 @@ $('rl').onclick=()=>{if(!ids.length||amHost())return act({r:d6()});const H=peers
 const actOk=(C,a)=>{if(!a||typeof a!=='object'||S.over||disconnectPending)return false;if(G.hostSetup&&S.setup)return a.r===undefined&&C.seat===hostSeat()&&(!G.valid||G.valid(a));if(a.r!==undefined){if(C.seat!==hostSeat()||(G.roll&&!G.cr())||(!G.roll&&typeof G.valid!=='function'))return false}else if(ids.indexOf(C.id)!==S.t&&!(C.seat===hostSeat()&&dead.has(S.t))&&!(C.seat===hostSeat()&&S.players?.[S.t]?.bot))return false;return !G.valid||G.valid(a)};
 $('rx').onclick=$('bk').onclick=()=>{if(ids.length&&!confirm('Leave this game?'))return;closeRoom()};$('rs').onclick=()=>ids.length?(amHost()?startNet(true):alert('Only the host can restart')):begin(G.id,np,null,localBot,undefined,true);$('panelRestart').onclick=()=>$('rs').click();
 
-$('mb').onclick=closeRoom;$('ml').onclick=()=>begin(pick,2,null,true);
+$('mb').onclick=closeRoom;$('ml').onclick=()=>begin(pick,pick==='bluff'?4:2,null,true);
 $('localTwo').onclick=()=>begin(pick,2,null,false);

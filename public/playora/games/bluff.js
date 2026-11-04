@@ -144,6 +144,17 @@
     return '<' + tag + ' class="card' + col + (cls || '') + '" ' + (attrs || '') + ' aria-label="' + cname(c) + '"><i class="rk">' +
       RK[c.r - 1] + '<br>' + SYM[c.s] + '</i><span class="su">' + SYM[c.s] + '</span></' + tag.split(' ')[0] + '>';
   }
+  function handGridPosition(index, count) {
+    var wideCapacity = 13, mobileCapacity = 8, wideColumns = 30, mobileColumns = 20;
+    var wideRow = Math.floor(index / wideCapacity) + 1, wideStart = (wideRow - 1) * wideCapacity;
+    var wideCount = Math.min(wideCapacity, count - wideStart);
+    var wideColumn = Math.floor((wideColumns - wideCount * 2) / 2) + 1 + (index - wideStart) * 2;
+    var mobileRow = Math.floor(index / mobileCapacity) + 1, mobileStart = (mobileRow - 1) * mobileCapacity;
+    var mobileCount = Math.min(mobileCapacity, count - mobileStart);
+    var mobileColumn = Math.floor((mobileColumns - mobileCount * 2) / 2) + 1 + (index - mobileStart) * 2;
+    return 'style="--hand-row:' + wideRow + ';--hand-column:' + wideColumn +
+      ';--mobile-row:' + mobileRow + ';--mobile-column:' + mobileColumn + '"';
+  }
   function seat(i) {
     var p = G.players[i], on = G.phase !== 'over' && G.focus === i, st = '';
     if (G.phase === 'play' && G.turn === i) st = 'to play';
@@ -179,9 +190,12 @@
     if (myTurn) h += '<button class="btn" data-a="put"' + (n ? '' : ' disabled') + '>' + (n ? 'Put down ' + cards(n) + ' as ' + RK[G.rank] : 'Select cards') + '</button>';
     if (asking) h += '<button class="btn red" data-a="call">Call bluff!</button><button class="btn alt" data-a="pass">Let it go</button>';
     h += '</div><div class="hand">';
-    me.hand.slice().sort(function (a, b) { return a.r - b.r || SUITS.indexOf(a.s) - SUITS.indexOf(b.s); }).forEach(function (c) {
-      var s = G.sel.indexOf(c.id) > -1;
-      h += cardHTML(c, (myTurn ? ' ok' : '') + (s ? ' sel' : ''), 'data-a="card" data-v="' + c.id + '" aria-pressed="' + s + '"');
+    var hand = me.hand.slice().sort(function (a, b) { return a.r - b.r || SUITS.indexOf(a.s) - SUITS.indexOf(b.s); });
+    hand.forEach(function (c, index) {
+      var selectedOrder = G.sel.indexOf(c.id), selected = selectedOrder > -1;
+      h += cardHTML(c, (myTurn ? ' ok' : '') + (selected ? ' sel' : ''),
+        'data-a="card" data-v="' + c.id + '" aria-pressed="' + selected + '"' +
+        (selected ? ' data-selected-order="' + selectedOrder + '"' : '') + ' ' + handGridPosition(index, hand.length));
     });
     h += '</div>';
     if (G.phase === 'over') {
@@ -189,6 +203,7 @@
         '</p><button class="btn" data-a="again">Play again</button></div>';
     }
     root.innerHTML = h;
+    if (typeof global.playoraStackHandCards === 'function') global.playoraStackHandCards(root);
     var nh = root.querySelector('.hand'); if (nh) nh.scrollLeft = sl;
   }
   function onClick(e) {
@@ -221,16 +236,15 @@
     if (typeof nm === 'function') return nm(index);
     return 'Player ' + (index + 1);
   }
-  function roomInit() {
-    roomSelected = [];
-    roomAnimationSeen = 0;
+  function roomCreateState(count) {
     var online = typeof ids !== 'undefined' && ids.length > 0;
-    var count = online ? 4 : Math.max(2, Math.min(4, Number(np) || 2));
-    var humans = online ? Math.min(Number(np) || 2, count) : (typeof localBot !== 'undefined' && localBot ? 1 : count);
+    var localComputer = typeof localBot !== 'undefined' && localBot;
+    count = online ? 4 : Math.max(2, Math.min(4, Number(count) || 2));
+    var humans = online ? Math.min(Number(np) || 2, count) : (localComputer ? 1 : count);
     var players = Array.from({ length: count }, function (_, index) {
       var bot = index >= humans;
       return {
-        name: bot ? ((typeof localBot !== 'undefined' && localBot && index === 1) ? 'Computer (Bot 1)' : 'Bot ' + (index - humans + 1)) : roomName(index),
+        name: bot ? (localComputer ? 'Computer (Bot ' + (index - humans + 1) + ')' : 'Bot ' + (index - humans + 1)) : roomName(index),
         bot: bot, hand: []
       };
     });
@@ -239,16 +253,33 @@
       var dealt = Math.floor(cardsInDeck.length / (players.length - index));
       player.hand = cardsInDeck.splice(0, dealt);
     });
-    S = {
+    return {
       players: players, phase: 'play', rank: 0, pile: [], last: null, queue: [], reveal: null,
       turn: 0, t: 0, winner: -1, over: false, msg: 'Cards dealt. ' + players[0].name + ' starts with Aces.',
       animationSeq: 0, animation: null
     };
+  }
+  function roomInit() {
+    roomSelected = [];
+    roomAnimationSeen = 0;
+    if (typeof localBot !== 'undefined' && localBot) {
+      S = {
+        players: [{ name: roomName(0), bot: false, hand: [] }],
+        phase: 'setup', rank: 0, pile: [], last: null, queue: [], reveal: null,
+        turn: 0, t: 0, winner: -1, over: false,
+        msg: roomName(0) + ', how many players total?',
+        animationSeq: 0, animation: null
+      };
+      return S;
+    }
+    S = roomCreateState(np);
     return S;
   }
   function roomValid(action) {
     if (!action || typeof action !== 'object' || S.over || action.player !== S.t ||
         !Number.isInteger(action.player) || !S.players[action.player]) return false;
+    if (S.phase === 'setup')
+      return action.type === 'players' && Number.isInteger(action.count) && action.count >= 2 && action.count <= 4;
     if (S.phase === 'play') {
       if (action.type !== 'play' || !Array.isArray(action.cardIds) || action.cardIds.length < 1 || action.cardIds.length > 4)
         return false;
@@ -295,6 +326,13 @@
   }
   function roomApply(action) {
     if (!roomValid(action)) return;
+    if (S.phase === 'setup') {
+      var nextState = roomCreateState(action.count);
+      Object.keys(S).forEach(function (key) { delete S[key]; });
+      Object.assign(S, nextState);
+      roomSelected = [];
+      return;
+    }
     var playerIndex = S.t, player = S.players[playerIndex];
     if (action.type === 'play') {
       var cardsToPlay = action.cardIds.map(function (id) {
@@ -383,6 +421,16 @@
   }
   function roomDraw() {
     injectRoomStyles();
+    if (S.phase === 'setup') {
+      var setup = '<div class="bl-room"><div class="bl"><div class="bar"><b class="logo">Bluff</b></div>' +
+        '<section class="setup-panel" aria-labelledby="bluff-setup-title"><h3 class="setup-title" id="bluff-setup-title">Bluff</h3>' +
+        '<p class="setup-copy">' + roomName(0) + ', how many players?</p><div class="setup-options">' +
+        [2, 3, 4].map(function (count) {
+          return '<button class="setup-choice" data-m="players:' + count + '">' + count +
+            '<small>players</small></button>';
+        }).join('') + '</div><p class="setup-copy">Computers fill the remaining seats.</p></section></div></div>';
+      return [setup, S.msg];
+    }
     var currentIndex = roomDisplayIndex(), current = currentIndex >= 0 ? S.players[currentIndex] : null;
     var active = current && currentIndex === S.t && (typeof canAct !== 'function' || canAct()) && !S.over;
     var showLast = S.last && S.phase !== 'play';
@@ -416,10 +464,15 @@
       html += '<button class="btn red" data-m="call">Call bluff!</button><button class="btn alt" data-m="pass">Let it go</button>';
     if (S.phase === 'reveal' && active) html += '<button class="btn" data-m="continue">Continue</button>';
     html += '</div><div class="hand">';
-    if (current) current.hand.slice().sort(function (a, b) { return a.r - b.r || SUITS.indexOf(a.s) - SUITS.indexOf(b.s); }).forEach(function (card) {
-      var selected = roomSelected.indexOf(card.id) >= 0;
+    var hand = current ? current.hand.slice().sort(function (a, b) {
+      return a.r - b.r || SUITS.indexOf(a.s) - SUITS.indexOf(b.s);
+    }) : [];
+    hand.forEach(function (card, index) {
+      var selectedOrder = roomSelected.indexOf(card.id), selected = selectedOrder >= 0;
       html += cardHTML(card, (S.phase === 'play' && active ? ' ok' : '') + (selected ? ' sel' : ''),
-        S.phase === 'play' && active ? 'data-m="card:' + card.id + '" aria-pressed="' + selected + '"' : '');
+        (S.phase === 'play' && active ? 'data-m="card:' + card.id + '" aria-pressed="' + selected + '"' : '') +
+        (selected ? ' data-selected-order="' + selectedOrder + '"' : '') +
+        ' ' + handGridPosition(index, hand.length));
     });
     html += '</div>';
     if (S.over) html += '<div class="ovl"><h1>' + S.players[S.winner].name + ' wins!</h1><p>' + S.msg + '</p><p>Use Restart to play again.</p></div>';
@@ -437,7 +490,9 @@
       if (typeof global.render === 'function') global.render();
       return;
     }
-    if (command === 'put') action = { type: 'play', player: S.t, cardIds: roomSelected.slice() };
+    if (command.indexOf('players:') === 0 && S.phase === 'setup')
+      action = { type: 'players', player: S.t, count: Number(command.slice(8)) };
+    else if (command === 'put') action = { type: 'play', player: S.t, cardIds: roomSelected.slice() };
     else if (command === 'call' || command === 'pass' || command === 'continue')
       action = { type: command, player: S.t };
     if (action && roomValid(action) && typeof act === 'function') act(action);
@@ -475,6 +530,7 @@
     'font-family:"Trebuchet MS","Avenir Next",system-ui,sans-serif;--w:clamp(44px,min(12.2vw,15vh),92px);' +
     'background:radial-gradient(ellipse at 50% 40%,#3a2a63 0,#271c47 60%,#170f2c 100%)}.bl *{box-sizing:border-box}' +
     '.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 14px;flex:none;font-size:13px}.bar .logo{font-size:20px;font-weight:800}' +
+    '.setup-panel{display:grid;flex:1 1 auto;align-content:center;justify-items:center;gap:.8rem;padding:.5rem}.setup-title{margin:0;font-size:clamp(1.1rem,4cqw,1.6rem)}.setup-copy{margin:0;opacity:.88}.setup-options{display:flex;flex-wrap:wrap;justify-content:center;gap:.6rem}.setup-choice{display:grid;width:4.2rem;justify-items:center;padding:.6rem .4rem;border:2px solid rgba(255,255,255,.35);border-radius:1rem;background:rgba(0,0,0,.3);color:#fff;font:inherit;font-size:1.6rem;font-weight:900;cursor:pointer;transition:transform .15s,border-color .15s}.setup-choice small{font-size:.65rem;font-weight:600;opacity:.8}.setup-choice:hover{transform:translateY(-.25rem);border-color:#ffd45c}.setup-choice:focus-visible{outline:3px solid #f59e0b;outline-offset:3px}' +
     '.bar span{opacity:.85;text-align:center}.btn{font:inherit;font-weight:800;padding:.6em 1.2em;border:0;border-radius:999px;background:#ffd45c;color:#20142f;cursor:pointer}' +
     '.btn.red{background:#e4453a;color:#fff}.btn.alt{background:transparent;color:#fff;box-shadow:inset 0 0 0 2px #fff}.btn:disabled{opacity:.45;cursor:default}' +
     '.table{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(0,1fr);grid-template-rows:auto 1fr;padding:0 8px}' +
@@ -497,13 +553,13 @@
     '.stack .back{--cw:calc(var(--w)*.95)}' +
     '.msg{text-align:center;font-size:14px;padding:4px 12px;min-height:3.4em;flex:none}.msg small{display:block;opacity:.8;margin-top:2px}' +
     '.acts{display:flex;justify-content:center;gap:10px;min-height:46px;flex:none;padding:0 12px}' +
-    '.hand{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));grid-template-rows:repeat(2,calc(var(--w)*.95));align-content:center;gap:0;overflow:visible;padding:16px 8px calc(10px + var(--w)*.5);flex:none}.hand .card{width:var(--w);height:calc(var(--w)*1.45);justify-self:center;cursor:default}.hand .card.ok{cursor:pointer}' +
-    '.hand .card.sel{z-index:2;box-shadow:0 0 0 3px #ffd45c,0 6px 14px rgba(0,0,0,.5)}' +
+    '.hand{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));grid-auto-rows:calc(var(--w)*.95);align-content:center;gap:0;overflow:visible;padding:16px 8px calc(10px + var(--w)*.5);flex:none}.hand .card{grid-column:span 2;width:var(--w);height:calc(var(--w)*1.45);justify-self:center;cursor:default}.hand .card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column) / span 2}.hand .card.ok{cursor:pointer}' +
+    '.hand .card.sel{position:relative;z-index:5;transform:translateY(calc(var(--w)*-.55));box-shadow:0 0 0 3px #ffd45c,0 6px 14px rgba(0,0,0,.5)}' +
     '.ovl{position:absolute;inset:0;z-index:5;background:rgba(15,8,30,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}' +
     '.ovl h1{margin:0;font-size:clamp(36px,9vw,64px);color:#ffd45c}.ovl p{margin:0;max-width:40ch;line-height:1.45}' +
     '.btn:focus-visible,.card:focus-visible{outline:3px solid #fff;outline-offset:3px}' +
     '@media(max-width:1250px){.bl{--w:clamp(36px,min(8vw,calc((100vw - 56px)/11)),92px)}}' +
-    '@media(max-width:600px){.bl{--w:clamp(32px,min(12vw,calc((100vw - 40px)/12)),48px)}.mid{grid-template-columns:minmax(0,1fr);grid-template-areas:"need" "pile" "claim" "rev"}.need{display:flex;align-items:center;justify-content:center;gap:4px}.need b{display:inline-block;margin:0;font-size:calc(var(--w)*.55)}}' +
+    '@media(max-width:600px){.bl{--w:clamp(36px,min(18vw,calc((100vw - 40px)/7)),76px);box-sizing:border-box;padding-bottom:5vh}.setup-choice{width:3.6rem;font-size:1.35rem}.hand{grid-template-columns:repeat(20,minmax(0,1fr))}.hand .card[style*="--mobile-row"]{grid-row:var(--mobile-row);grid-column:var(--mobile-column) / span 2}.acts{order:1}.hand{order:2}.msg{order:3;margin-top:8px}.mid{grid-template-columns:minmax(0,1fr);grid-template-areas:"need" "pile" "claim" "rev"}.need{display:flex;align-items:center;justify-content:center;gap:4px}.need b{display:inline-block;margin:0;font-size:calc(var(--w)*.55)}}' +
     '@keyframes card-reveal{from{opacity:0;translate:0 -18px;rotate:y 80deg;scale:.92}to{opacity:1;translate:0 0;rotate:none;scale:1}}' +
     '@media (prefers-reduced-motion:no-preference){.hand .card{transition:transform .2s cubic-bezier(.2,.8,.2,1)}.rev .card{animation:card-reveal .38s cubic-bezier(.2,.8,.2,1) both}.stack .card:last-child{animation:card-reveal .32s ease-out both}}' +
     '@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}';

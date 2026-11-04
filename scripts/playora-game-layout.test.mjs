@@ -7,7 +7,11 @@ import vm from "node:vm";
 const engineSource = readFileSync(fileURLToPath(new URL("../public/playora/core/engine.js", import.meta.url)), "utf8");
 const networkSource = readFileSync(fileURLToPath(new URL("../public/playora/core/net.js", import.meta.url)), "utf8");
 const bluffSource = readFileSync(fileURLToPath(new URL("../public/playora/games/bluff.js", import.meta.url)), "utf8");
+const callBreakSource = readFileSync(fileURLToPath(new URL("../public/playora/games/callbreak.js", import.meta.url)), "utf8");
+const crazyEightsSource = readFileSync(fileURLToPath(new URL("../public/playora/games/crazyeights.js", import.meta.url)), "utf8");
+const heartsSource = readFileSync(fileURLToPath(new URL("../public/playora/games/hearts.js", import.meta.url)), "utf8");
 const spadesSource = readFileSync(fileURLToPath(new URL("../public/playora/games/spades.js", import.meta.url)), "utf8");
+const unoSource = readFileSync(fileURLToPath(new URL("../public/playora/games/uno.js", import.meta.url)), "utf8");
 const markup = readFileSync(fileURLToPath(new URL("../src/playora/markup.html", import.meta.url)), "utf8");
 const gameStyles = readFileSync(fileURLToPath(new URL("../src/playora/game.css", import.meta.url)), "utf8");
 
@@ -56,15 +60,152 @@ test("Spades unplayable cards stay legible while remaining visually muted", () =
   assert.match(spadesSource, /'\.hand \.card\.no\{filter:brightness\(\.82\)\}'/);
 });
 
-test("Bluff cards overlap horizontally and vertically without translating selected cards", () => {
-  assert.match(bluffSource, /'\.hand\{[^']*grid-template-columns:repeat\(13,minmax\(0,1fr\)\);grid-template-rows:repeat\(2,calc\(var\(--w\)\*\.95\)\)/);
-  assert.match(gameStyles, /#room #bd \.bl-room \.hand\{max-width:1160px;margin-left:auto;margin-right:auto;grid-template-rows:repeat\(2,calc\(var\(--w\)\*\.95\)\);row-gap:0;overflow:visible;padding-bottom:calc\(10px \+ var\(--w\)\*\.5\)\}/);
-  assert.doesNotMatch(bluffSource, /\.hand \.card\.sel\{[^}]*translateY/);
+test("Spades bid choices stay within the bid panel on narrow screens", () => {
+  assert.match(spadesSource, /'\.bidbox\{[^']*width:min\(90vw,340px\);max-width:calc\(100% - 16px\);/);
+  assert.match(spadesSource, /'\.bidbox p\{[^']*\.bids\{display:grid;grid-template-columns:repeat\(5,minmax\(0,1fr\)\);gap:6px;min-width:0\}\.bids \.btn\{width:100%;min-width:0;box-sizing:border-box;padding:\.6em 0\}'/);
+});
+
+test("Spades mobile status text sits below the cards with bottom spacing", () => {
+  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.sp-room \.sp\{box-sizing:border-box;padding-bottom:calc\(18px \+ env\(safe-area-inset-bottom,0px\)\)\}\s*#room #bd \.sp-room \.hand\{order:1\}\s*#room #bd \.sp-room \.msg\{order:2;margin-top:8px;padding-bottom:calc\(12px \+ env\(safe-area-inset-bottom,0px\)\)\}\s*#room #bd \.sp-room \.mine\{order:3\}\s*\}/);
+});
+
+test("Crazy Eights mobile text follows cards with five-percent bottom spacing", () => {
+  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.ce-room \.ce\{box-sizing:border-box;padding-bottom:5vh\}\s*#room #bd \.ce-room \.hand\{order:1\}\s*#room #bd \.ce-room \.msg\{order:2;margin-top:8px\}\s*#room #bd \.ce-room \.acts\{order:3;margin-top:4px\}\s*#room #bd \.ce-room \.hand\{grid-template-columns:repeat\(16,minmax\(0,1fr\)\)\}\s*#room #bd \.ce-room \.hand button\.card\{grid-column:span 2\}\s*#room #bd \.ce-room \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\)\}\s*\}/);
+});
+
+test("Crazy Eights mobile card spread centers the incomplete row", () => {
+  const helper = crazyEightsSource.match(/function handGridPosition\(index, count\)\s*\{[\s\S]*?\n  \}/)?.[0];
+  assert.ok(helper, "Crazy Eights exposes mobile card row positioning");
+  const position = vm.runInNewContext("(" + helper + ")");
+  assert.equal(position(0, 7), 'style="--hand-row:1;--hand-column:2"');
+  assert.equal(position(8, 13), 'style="--hand-row:2;--hand-column:4"');
+  assert.equal(position(12, 13), 'style="--hand-row:2;--hand-column:12"');
+  assert.match(crazyEightsSource, /@media\(max-width:600px\)\{\.hand\{grid-template-columns:repeat\(16,minmax\(0,1fr\)\)\}\.hand \.card\{grid-column:span 2\}\.hand \.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\)\}\}/);
+  assert.match(gameStyles, /#room #bd \.ce-room \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\)\}/);
+});
+
+test("Call Break mobile status follows the hand with five-percent bottom spacing", () => {
+  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.cb\{box-sizing:border-box;padding-bottom:5vh\}\s*#room #bd \.cb \.hand\{order:1\}\s*#room #bd \.cb \.msg\{order:2;margin-top:8px\}\s*#room #bd \.cb \.mine\{order:3\}\s*#room #bd \.cb \.room-action\{order:4\}\s*#room #bd \.cb \.hand\{grid-template-columns:repeat\(16,minmax\(0,1fr\)\)\}\s*#room #bd \.cb \.hand button\.card\{grid-column:span 2\}\s*#room #bd \.cb \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2;translate:calc\(var\(--w\)\*\.3\) 0\}\s*\}/);
+});
+
+test("Call Break mobile hand centers its final row", () => {
+  const helper = callBreakSource.match(/function handGridPosition\(index, count\)\s*\{[\s\S]*?\n  \}/)?.[0];
+  assert.ok(helper, "Call Break exposes mobile card row positioning");
+  const position = vm.runInNewContext("(" + helper + ")");
+  assert.equal(position(0, 5), 'style="--hand-row:1;--hand-column:4"');
+  assert.equal(position(8, 13), 'style="--hand-row:2;--hand-column:4"');
+  assert.equal(position(12, 13), 'style="--hand-row:2;--hand-column:12"');
+  assert.match(callBreakSource, /@media\(max-width:600px\)\{\.hand\{display:grid;grid-template-columns:repeat\(16,minmax\(0,1fr\)\);grid-auto-rows:calc\(var\(--w\)\*\.95\);align-content:center;justify-items:center;gap:0;overflow:visible\}\.hand \.card\{grid-column:span 2;margin:0\}\.hand \.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2;translate:calc\(var\(--w\)\*\.3\) 0\}/);
+  assert.match(gameStyles, /#room #bd \.cb \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2;translate:calc\(var\(--w\)\*\.3\) 0\}/);
+});
+
+test("Bluff selected cards lift above neighboring cards", () => {
+  assert.match(bluffSource, /'\.hand\{[^']*grid-template-columns:repeat\(30,minmax\(0,1fr\)\);grid-auto-rows:calc\(var\(--w\)\*\.95\)/);
+  assert.match(bluffSource, /\.hand \.card\{grid-column:span 2;width:var\(--w\);height:calc\(var\(--w\)\*1\.45\);justify-self:center;cursor:default\}/);
+  assert.match(bluffSource, /\.hand \.card\.sel\{position:relative;z-index:5;transform:translateY\(calc\(var\(--w\)\*-.55\)\);/);
+  assert.match(gameStyles, /#room #bd \.bl-room \.hand\{max-width:1160px;margin-left:auto;margin-right:auto;grid-auto-rows:calc\(var\(--w\)\*\.95\);row-gap:0;overflow:visible;padding-bottom:calc\(10px \+ var\(--w\)\*\.5\)\}/);
+});
+
+test("Selectable cards stay above overlapping neighbors in every card game", () => {
+  for (const [source, selector] of [
+    [callBreakSource, /\.hand \.card\.ok\{position:relative;z-index:2;transform:translateY\(-14px\)/],
+    [crazyEightsSource, /\.hand \.card\.ok\{position:relative;z-index:2;transform:translateY\(-14px\)/],
+    [spadesSource, /\.hand \.card\.ok\{position:relative;z-index:2;transform:translateY\(-14px\)/],
+    [unoSource, /\.uno \.hand \.card\.ok\{position:relative;z-index:2;transform:translateY\(-14px\)/],
+  ]) {
+    assert.match(source, selector);
+  }
+  assert.match(heartsSource, /\.hand \.card\.ok:not\(\.sel\)\{position:relative;z-index:2;transform:translateY\(-8px\)\}\.hand \.card\.sel\{position:relative;z-index:5;transform:translateY\(-20px\)/);
+});
+
+test("selected hand cards stack above later overlapping cards in every view", () => {
+  const helper = engineSource.match(/function stackHandCards\(root\)(\{[^\n]+\})/)?.[1];
+  assert.ok(helper, "the engine exposes shared hand-card stacking");
+  const stackHandCards = vm.runInNewContext("(function(root)" + helper + ")");
+  const cards = [
+    { dataset: { selectedOrder: "0" }, style: {}, classList: { contains: name => name === "sel" } },
+    { dataset: {}, style: {}, classList: { contains: name => name === "ok" } },
+    { dataset: { selectedOrder: "1" }, style: {}, classList: { contains: name => name === "sel" } },
+  ];
+  const hand = { querySelectorAll: () => cards };
+  stackHandCards({ querySelectorAll: () => [hand] });
+  assert.deepEqual(cards.map(card => card.style.zIndex), ["100000", "10001", "100001"]);
+  assert.match(engineSource, /\$\(\'bd\'\)\.innerHTML=h;stackHandCards\(\$\(\'bd\'\)\)/);
+  for (const source of [bluffSource, callBreakSource, crazyEightsSource, heartsSource, spadesSource, unoSource]) {
+    assert.match(source, /global\.playoraStackHandCards\(root\)/);
+  }
+  assert.match(bluffSource, /data-selected-order="' \+ selectedOrder \+ '"/);
+  assert.match(heartsSource, /data-selected-order="' \+ selectedOrder \+ '"/);
+});
+
+test("offline Bluff asks in-game for 2, 3, or 4 total players", () => {
+  assert.doesNotMatch(markup, /bluffPlayerCount|data-bluff-players/);
+  assert.match(engineSource, /\$\('ml'\)\.onclick=\(\)=>begin\(pick,pick==='bluff'\?4:2,null,true\)/);
+  assert.match(bluffSource, /how many players\?/);
+  assert.match(bluffSource, /data-m="players:' \+ count \+ '"/);
+  assert.match(bluffSource, /\.setup-panel\{display:grid;flex:1 1 auto;align-content:center;justify-items:center;gap:\.8rem;padding:\.5rem\}/);
+  assert.match(bluffSource, /\.setup-choice\{display:grid;width:4\.2rem;justify-items:center;padding:\.6rem \.4rem;border:2px solid rgba\(255,255,255,\.35\);border-radius:1rem;background:rgba\(0,0,0,\.3\)/);
+
+  for (const count of [2, 3, 4]) {
+    let game;
+    const context = {
+      np: count,
+      ids: [],
+      localBot: true,
+      S: null,
+      registerGame(value) { game = value; },
+    };
+    vm.runInNewContext(bluffSource, context);
+
+    const state = game.init();
+    assert.equal(state.phase, "setup");
+    assert.equal(game.valid({ type: "players", player: 0, count }), true);
+    game.apply({ type: "players", player: 0, count });
+    assert.equal(state.players.length, count);
+    assert.deepEqual(Array.from(state.players, (player) => player.bot), [false, ...Array(count - 1).fill(true)]);
+    assert.deepEqual(Array.from(state.players, (player) => player.name), [
+      "Player 1",
+      ...Array.from({ length: count - 1 }, (_, index) => `Computer (Bot ${index + 1})`),
+    ]);
+    const handSizes = Array.from(state.players, (player) => player.hand.length);
+    assert.equal(handSizes.reduce((sum, size) => sum + size, 0), 52);
+    assert.ok(Math.max(...handSizes) - Math.min(...handSizes) <= 1);
+  }
+});
+
+test("Bluff centers each desktop and mobile row while increasing overlap", () => {
+  const helper = bluffSource.match(/function handGridPosition\(index, count\)\s*\{[\s\S]*?\n  \}/)?.[0];
+  assert.ok(helper, "Bluff exposes desktop and mobile card row positioning");
+  const position = vm.runInNewContext("(" + helper + ")");
+  assert.equal(position(0, 13), 'style="--hand-row:1;--hand-column:3;--mobile-row:1;--mobile-column:3"');
+  assert.equal(position(8, 13), 'style="--hand-row:1;--hand-column:19;--mobile-row:2;--mobile-column:6"');
+  assert.equal(position(12, 13), 'style="--hand-row:1;--hand-column:27;--mobile-row:2;--mobile-column:14"');
+  assert.match(gameStyles, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}#room #bd \.bl-room \.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\);grid-template-rows:none;grid-auto-rows:calc\(var\(--w\)\*\.95\)\}#room #bd \.bl-room \.hand button\.card\{grid-column:span 2\}#room #bd \.bl-room \.hand button\.card\[style\*="--mobile-row"\]\{grid-row:var\(--mobile-row\);grid-column:var\(--mobile-column\) \/ span 2\}\}/);
+});
+
+test("Bluff mobile status follows the cards with five-percent bottom spacing", () => {
+  assert.match(bluffSource, /@media\(max-width:600px\)\{\.bl\{[^}]*padding-bottom:5vh\}\.setup-choice\{width:3\.6rem;font-size:1\.35rem\}\.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\)\}\.hand \.card\[style\*="--mobile-row"\]\{[^}]*\}\.acts\{order:1\}\.hand\{order:2\}\.msg\{order:3;margin-top:8px\}/);
+  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.bl-room \.bl\{box-sizing:border-box;padding-bottom:5vh\}\s*#room #bd \.bl-room \.acts\{order:1\}\s*#room #bd \.bl-room \.hand\{order:2\}\s*#room #bd \.bl-room \.msg\{order:3;margin-top:8px\}\s*\}/);
 });
 
 test("Bluff cards overlap on narrow mobile and wide desktop viewports", () => {
   assert.match(gameStyles, /@media\(max-width:1250px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(8vw,calc\(\(100vw - 56px\)\/11\)\),92px\)\}\}/);
-  assert.match(gameStyles, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(32px,min\(12vw,calc\(\(100vw - 40px\)\/12\)\),48px\)\}\}/);
+  assert.match(gameStyles, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}#room #bd \.bl-room \.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\);grid-template-rows:none;grid-auto-rows:calc\(var\(--w\)\*\.95\)\}/);
+});
+
+test("Call Break, Crazy Eights, Hearts, and Spades use larger eight-column mobile hands", () => {
+  const gameClasses = [
+    [callBreakSource, "#room #bd .cb"],
+    [crazyEightsSource, "#room #bd .ce-room .ce"],
+    [heartsSource, "#room #bd .hr"],
+    [spadesSource, "#room #bd .sp-room .sp"],
+  ];
+  for (const [source, selector] of gameClasses) {
+    assert.match(source, /'\.hand\{display:flex;overflow-x:auto;overflow-y:hidden/);
+    assert.ok(gameStyles.includes(selector), `${selector} gets the mobile card-size override`);
+  }
+  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.cb,#room #bd \.ce-room \.ce,#room #bd \.hr,#room #bd \.sp-room \.sp\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}/);
+  assert.match(gameStyles, /#room #bd \.cb \.hand,#room #bd \.ce-room \.hand,#room #bd \.hr \.hand,#room #bd \.sp-room \.hand\{display:grid;grid-template-columns:repeat\(8,minmax\(0,1fr\)\);grid-template-rows:none;grid-auto-rows:calc\(var\(--w\)\*\.95\)/);
 });
 
 test("Bluff claim and pile are arranged side by side", () => {

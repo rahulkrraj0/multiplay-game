@@ -123,6 +123,13 @@
     return '<' + tag + ' class="card' + col + (cls || '') + '" ' + (attrs || '') + ' aria-label="' + cname(c) + '"><i class="rk">' +
       RK[c.r - 1] + '<br>' + SYM[c.s] + '</i><span class="su">' + SYM[c.s] + '</span></' + tag.split(' ')[0] + '>';
   }
+  function handGridPosition(index, count) {
+    var columns = 8, row = Math.ceil(count / columns), remainder = count % columns || columns;
+    var lastRowStart = count - remainder;
+    if (index < lastRowStart) return '';
+    var startColumn = Math.floor((columns * 2 - remainder * 2) / 2) + 1;
+    return 'style="--hand-row:' + row + ';--hand-column:' + (startColumn + (index - lastRowStart) * 2) + '"';
+  }
   var BACK = '<div class="card back"></div>';
   function render() {
     if (!root) return;
@@ -151,9 +158,11 @@
     h += '<div class="msg">' + G.msg + '<small>' + hint + '</small></div><div class="acts">';
     if (needDraw && !canDraw()) h += '<button class="btn" data-a="pass">Pass</button>';
     h += '</div><div class="hand">';
-    me.hand.slice().sort(function (a, b) { return SUITS.indexOf(a.s) - SUITS.indexOf(b.s) || a.r - b.r; }).forEach(function (c) {
+    var hand = me.hand.slice().sort(function (a, b) { return SUITS.indexOf(a.s) - SUITS.indexOf(b.s) || a.r - b.r; });
+    hand.forEach(function (c, index) {
       var ok = mine && playable(c);
-      h += cardHTML(c, mine ? (ok ? ' ok' : ' no') : '', 'data-a="card" data-v="' + c.id + '"');
+      h += cardHTML(c, mine ? (ok ? ' ok' : ' no') : '',
+        'data-a="card" data-v="' + c.id + '" ' + handGridPosition(index, hand.length));
     });
     h += '</div>';
     if (G.pick != null) {
@@ -168,6 +177,7 @@
         '.</p><button class="btn" data-a="next">' + (mw !== null ? 'New game' : 'Next round') + '</button></div>';
     }
     root.innerHTML = h;
+    if (typeof global.playoraStackHandCards === 'function') global.playoraStackHandCards(root);
     var nh = root.querySelector('.hand'); if (nh) nh.scrollLeft = sl;
   }
   function onClick(e) {
@@ -439,14 +449,16 @@
     if (active && S.phase === 'play' && S.drawnId != null && !roomPlayable(current.hand.find(function (card) { return card.id === S.drawnId; }), current))
       html += '<button class="btn alt" data-m="pass"' + (S.stock.length ? ' disabled' : '') + '>Pass</button>';
     html += '</div><div class="hand">';
-    if (current) current.hand.slice().sort(function (a, b) { return SUITS.indexOf(a.s) - SUITS.indexOf(b.s) || a.r - b.r; })
-      .forEach(function (card) {
+    if (current) {
+      var hand = current.hand.slice().sort(function (a, b) { return SUITS.indexOf(a.s) - SUITS.indexOf(b.s) || a.r - b.r; });
+      hand.forEach(function (card, index) {
         var allowed = active && S.phase === 'play' && roomPlayable(card, current) &&
           (S.drawnId == null || card.id === S.drawnId);
         var drawn = drawAnimating && fresh.cardId === card.id;
         html += cardHTML(card, (allowed ? ' ok' : ' no') + (drawn ? ' dealing' : ''),
-          allowed ? 'data-m="card:' + card.id + '"' : '');
+          (allowed ? 'data-m="card:' + card.id + '"' : '') + ' ' + handGridPosition(index, hand.length));
       });
+    }
     html += '</div>';
     if (roomWildCard != null && active) html += '<div class="ovl"><p>Choose a suit</p><div class="row">' +
       SUITS.map(function (suit) { return '<button class="sw' + (suit === 'H' || suit === 'D' ? ' red' : '') +
@@ -505,12 +517,13 @@
     '.msg{text-align:center;font-size:14px;padding:4px 12px;min-height:3.4em;flex:none}.msg small{display:block;opacity:.8;margin-top:2px}' +
     '.acts{display:flex;justify-content:center;gap:10px;min-height:44px;flex:none}' +
     '.hand{display:flex;overflow-x:auto;overflow-y:hidden;padding:20px 14px 12px;flex:none}.hand .card:first-child{margin-left:auto}.hand .card:last-child{margin-right:auto}' +
-    '.hand .card+.card{margin-left:calc(var(--w)*-.4)}.hand .card{cursor:default}.hand .card.ok{transform:translateY(-14px);cursor:pointer;box-shadow:0 0 0 3px #ffcf5a,0 6px 14px rgba(0,0,0,.5)}' +
+    '.hand .card+.card{margin-left:calc(var(--w)*-.4)}.hand .card{cursor:default}.hand .card.ok{position:relative;z-index:2;transform:translateY(-14px);cursor:pointer;box-shadow:0 0 0 3px #ffcf5a,0 6px 14px rgba(0,0,0,.5)}' +
     '.hand .card.no{filter:brightness(.6)}' +
     '.ovl{position:absolute;inset:0;z-index:5;background:rgba(5,24,30,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}' +
     '.ovl h1{margin:0;font-size:clamp(34px,9vw,60px);color:#ffcf5a}.ovl p{margin:0;max-width:42ch;line-height:1.45}.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}' +
     '.sw{width:68px;height:68px;border-radius:50%;border:4px solid #ffcf5a;background:#fff;color:#1b1f2a;font-size:34px;cursor:pointer;line-height:1}.sw.red{color:#d02b3a}' +
     '.btn:focus-visible,.card:focus-visible,.pile:focus-visible,.sw:focus-visible{outline:3px solid #fff;outline-offset:3px}' +
+    '@media(max-width:600px){.hand{grid-template-columns:repeat(16,minmax(0,1fr))}.hand .card{grid-column:span 2}.hand .card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column)}}' +
     '@keyframes card-land{from{opacity:0;translate:0 -34px;rotate:-8deg;scale:.9}to{opacity:1;translate:0 0;rotate:0deg;scale:1}}' +
     '@media (prefers-reduced-motion:no-preference){.hand .card{transition:transform .2s cubic-bezier(.2,.8,.2,1)}.cur .card.fresh{animation:card-land .34s cubic-bezier(.2,.8,.2,1) both}.hand .card.dealing{animation:card-land .34s cubic-bezier(.2,.8,.2,1) both}.pile .card{transition:transform .22s cubic-bezier(.2,.8,.2,1)}.pile.ok:hover .card{transform:translateY(-5px) rotate(-3deg)}}' +
     '@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}';

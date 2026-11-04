@@ -207,10 +207,46 @@
 .standalone-game-host .ar-ov{background:rgba(22,25,34,.9);color:#f5f6fa}
 @media(max-width:520px){#room #bd .sp-room .sp{--w:clamp(32px,11vw,44px)}}
 @media(max-height:520px){#room #bd .sp-room .sp{--w:clamp(32px,13vh,56px)}}
-#room #bd .bl-room .hand{max-width:1160px;margin-left:auto;margin-right:auto;grid-template-rows:repeat(2,calc(var(--w)*.95));row-gap:0;overflow:visible;padding-bottom:calc(10px + var(--w)*.5)}
+#room #bd .bl-room .hand{max-width:1160px;margin-left:auto;margin-right:auto;grid-auto-rows:calc(var(--w)*.95);row-gap:0;overflow:visible;padding-bottom:calc(10px + var(--w)*.5)}
 @media(max-width:1250px){#room #bd .bl-room .bl{--w:clamp(36px,min(8vw,calc((100vw - 56px)/11)),92px)}}
-@media(max-width:600px){#room #bd .bl-room .bl{--w:clamp(32px,min(12vw,calc((100vw - 40px)/12)),48px)}}
+@media(max-width:600px){#room #bd .bl-room .bl{--w:clamp(36px,min(18vw,calc((100vw - 40px)/7)),76px)}#room #bd .bl-room .hand{grid-template-columns:repeat(20,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:calc(var(--w)*.95)}#room #bd .bl-room .hand button.card{grid-column:span 2}#room #bd .bl-room .hand button.card[style*="--mobile-row"]{grid-row:var(--mobile-row);grid-column:var(--mobile-column) / span 2}}
 @media(max-width:600px){#room #bd .bl-room .acts{gap:6px;padding:0 8px}#room #bd .bl-room .acts button.btn{width:auto;min-width:0;max-width:100%;flex:1 1 0;margin:0;padding:10px 6px;font-size:clamp(12px,3.5vw,14px);white-space:normal}}
+@media(max-width:600px){
+  #room #bd .cb,#room #bd .ce-room .ce,#room #bd .hr,#room #bd .sp-room .sp{--w:clamp(36px,min(18vw,calc((100vw - 40px)/7)),76px)}
+  #room #bd .cb .hand,#room #bd .ce-room .hand,#room #bd .hr .hand,#room #bd .sp-room .hand{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:calc(var(--w)*.95);align-content:center;justify-items:center;gap:0;overflow:visible;padding:20px 8px calc(10px + var(--w)*.5 + env(safe-area-inset-bottom,0px))}
+  #room #bd .cb .hand button.card,#room #bd .ce-room .hand button.card,#room #bd .hr .hand button.card,#room #bd .sp-room .hand button.card{margin:0}
+}
+@media(max-width:600px){
+  #room #bd .sp-room .sp{box-sizing:border-box;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+  #room #bd .sp-room .hand{order:1}
+  #room #bd .sp-room .msg{order:2;margin-top:8px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+  #room #bd .sp-room .mine{order:3}
+}
+@media(max-width:600px){
+  #room #bd .ce-room .ce{box-sizing:border-box;padding-bottom:5vh}
+  #room #bd .ce-room .hand{order:1}
+  #room #bd .ce-room .msg{order:2;margin-top:8px}
+  #room #bd .ce-room .acts{order:3;margin-top:4px}
+  #room #bd .ce-room .hand{grid-template-columns:repeat(16,minmax(0,1fr))}
+  #room #bd .ce-room .hand button.card{grid-column:span 2}
+  #room #bd .ce-room .hand button.card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column)}
+}
+@media(max-width:600px){
+  #room #bd .cb{box-sizing:border-box;padding-bottom:5vh}
+  #room #bd .cb .hand{order:1}
+  #room #bd .cb .msg{order:2;margin-top:8px}
+  #room #bd .cb .mine{order:3}
+  #room #bd .cb .room-action{order:4}
+  #room #bd .cb .hand{grid-template-columns:repeat(16,minmax(0,1fr))}
+  #room #bd .cb .hand button.card{grid-column:span 2}
+  #room #bd .cb .hand button.card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column) / span 2;translate:calc(var(--w)*.3) 0}
+}
+@media(max-width:600px){
+  #room #bd .bl-room .bl{box-sizing:border-box;padding-bottom:5vh}
+  #room #bd .bl-room .acts{order:1}
+  #room #bd .bl-room .hand{order:2}
+  #room #bd .bl-room .msg{order:3;margin-top:8px}
+}
 .display-name-backdrop[hidden]{display:none}
 .display-name-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:rgba(5,9,20,.82);backdrop-filter:blur(8px)}
 .display-name-card{width:min(100%,440px);padding:clamp(22px,6vw,34px);border:1px solid rgba(196,181,253,.28);border-radius:22px;background:linear-gradient(150deg,#252a4d,#11192e);box-shadow:0 24px 80px #0009;color:#f6f7fb}

@@ -189,6 +189,7 @@
         '</p><p>' + G.players.map(function (p) { return p.name + ' ' + p.score; }).join(', ') + '</p><button class="btn" data-a="next">' + (fin ? 'New game' : 'Next round') + '</button></div>';
     }
     root.innerHTML = h;
+    if (typeof global.playoraStackHandCards === 'function') global.playoraStackHandCards(root);
     var nh = root.querySelector('.hand'); if (nh) nh.scrollLeft = sl;
   }
   function onCard(id) {
@@ -232,7 +233,7 @@
     '.uno .btn.uno{background:#e0302c;color:#fff}.uno .btn.uno[aria-pressed=true]{background:#fff;color:#e0302c;box-shadow:0 0 0 3px #e0302c}.uno .btn.alt{background:#fff}' +
     '.uno .hand{display:flex;overflow-x:auto;overflow-y:hidden;padding:20px 14px 12px;flex:none}' +
     '.uno .hand .card:first-child{margin-left:auto}.uno .hand .card:last-child{margin-right:auto}.uno .hand .card+.card{margin-left:calc(var(--w)*-.28)}' +
-    '.uno .hand .card.ok{transform:translateY(-14px);cursor:pointer;box-shadow:0 0 0 3px rgba(255,255,255,.4),0 6px 14px rgba(0,0,0,.5)}.uno .hand .card.no{filter:brightness(.55)}' +
+    '.uno .hand .card.ok{position:relative;z-index:2;transform:translateY(-14px);cursor:pointer;box-shadow:0 0 0 3px rgba(255,255,255,.4),0 6px 14px rgba(0,0,0,.5)}.uno .hand .card.no{filter:brightness(.55)}' +
     '.uno .card{--cw:var(--w);position:relative;isolation:isolate;flex:none;width:var(--cw);height:calc(var(--cw)*1.5);padding:0;border-radius:calc(var(--cw)*.12);' +
     'border:calc(var(--cw)*.055) solid #fff;background:var(--c);color:#fff;font:inherit;font-weight:900;box-shadow:0 3px 8px rgba(0,0,0,.45);overflow:hidden}' +
     '.uno .opp .card{--cw:calc(var(--w)*.42)}.uno .ov{position:absolute;left:8%;right:8%;top:15%;bottom:15%;background:#fff;border-radius:50%;transform:rotate(-24deg);display:flex;align-items:center;justify-content:center}' +

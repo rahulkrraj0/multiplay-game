@@ -200,11 +200,12 @@
     if (passing) h += '<button class="btn" data-a="pass"' + (G.sel.length === 3 ? '' : ' disabled') + '>Pass ' + G.sel.length + ' of 3 cards ' + G.dir + '</button>';
     h += '</div><div class="hand">';
     me.hand.slice().sort(function (a, b) { return ORDER.indexOf(a.s) - ORDER.indexOf(b.s) || b.r - a.r; }).forEach(function (c) {
-      var ok = L.some(function (x) { return x.id === c.id; }), s = G.sel.indexOf(c.id) > -1, cls = '';
+      var ok = L.some(function (x) { return x.id === c.id; }), selectedOrder = G.sel.indexOf(c.id), s = selectedOrder > -1, cls = '';
       if (passing) cls = ' ok' + (s ? ' sel' : '');
       else if (myTurn) cls = ok ? ' ok' : ' no';
       if (G.recv.indexOf(c.id) > -1) cls += ' new';
-      h += cardHTML(c, cls, 'data-a="card" data-v="' + c.id + '"');
+      h += cardHTML(c, cls, 'data-a="card" data-v="' + c.id + '"' +
+        (s ? ' data-selected-order="' + selectedOrder + '"' : ''));
     });
     h += '</div>';
     if (G.phase === 'roundend') {
@@ -216,6 +217,7 @@
         }).join('') + '</table><button class="btn" data-a="next">' + (fin ? 'New game' : 'Next round') + '</button></div>';
     }
     root.innerHTML = h;
+    if (typeof global.playoraStackHandCards === 'function') global.playoraStackHandCards(root);
     var nh = root.querySelector('.hand'); if (nh) nh.scrollLeft = sl;
   }
   function onClick(e) {
@@ -493,10 +495,11 @@
       return ORDER.indexOf(a.s) - ORDER.indexOf(b.s) || b.r - a.r;
     }).forEach(function (card) {
       var allowed = passing ? active : myTurn && legalCards.some(function (c) { return c.id === card.id; });
-      var classes = (allowed ? ' ok' : ' no') + (selected.indexOf(card.id) > -1 ? ' sel' : '') +
+      var selectedOrder = selected.indexOf(card.id), isSelected = selectedOrder > -1;
+      var classes = (allowed ? ' ok' : ' no') + (isSelected ? ' sel' : '') +
         (current.recv.indexOf(card.id) > -1 ? ' new' : '');
       var command = allowed ? ' data-m="' + (passing ? 'select:' : 'play:') + card.id + '"' : '';
-      html += cardHTML(card, classes, command);
+      html += cardHTML(card, classes, command + (isSelected ? ' data-selected-order="' + selectedOrder + '"' : ''));
     });
     html += '</div>';
     if (G.phase === 'roundend') {
@@ -557,7 +560,7 @@
     '.acts{display:flex;justify-content:center;min-height:44px;flex:none}' +
     '.hand{display:flex;overflow-x:auto;overflow-y:hidden;padding:20px 14px 12px;flex:none}.hand .card:first-child{margin-left:auto}.hand .card:last-child{margin-right:auto}' +
     '.hand .card+.card{margin-left:calc(var(--w)*-.45)}.hand .card{cursor:default}.hand .card.ok{cursor:pointer}' +
-    '.hand .card.ok:not(.sel){transform:translateY(-8px)}.hand .card.sel{transform:translateY(-20px);box-shadow:0 0 0 3px #ffd45c,0 6px 14px rgba(0,0,0,.5)}' +
+    '.hand .card.ok:not(.sel){position:relative;z-index:2;transform:translateY(-8px)}.hand .card.sel{position:relative;z-index:5;transform:translateY(-20px);box-shadow:0 0 0 3px #ffd45c,0 6px 14px rgba(0,0,0,.5)}' +
     '.hand .card.no{filter:brightness(.6)}.hand .card.new{box-shadow:0 0 0 3px #7be0a4}' +
     '.ovl{position:absolute;inset:0;z-index:5;background:rgba(24,6,12,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}' +
     '.ovl h1{margin:0;font-size:clamp(34px,9vw,60px);color:#ffd45c}.ovl p{margin:0;max-width:42ch;line-height:1.45}' +

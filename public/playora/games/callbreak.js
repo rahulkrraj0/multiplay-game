@@ -170,6 +170,13 @@
     return '<' + tag + ' class="card' + col + (cls || '') + '" ' + (attrs || '') + ' aria-label="' + cname(c) + '"><i class="rk">' +
       (RANK[c.r] || c.r) + '<br>' + SYM[c.s] + '</i><span class="su">' + SYM[c.s] + '</span></' + tag.split(' ')[0] + '>';
   }
+  function handGridPosition(index, count) {
+    var columns = 8, row = Math.ceil(count / columns), remainder = count % columns || columns;
+    var lastRowStart = count - remainder;
+    if (index < lastRowStart || remainder === columns) return '';
+    var startColumn = Math.floor((columns * 2 - remainder * 2) / 2) + 1;
+    return 'style="--hand-row:' + row + ';--hand-column:' + (startColumn + (index - lastRowStart) * 2) + '"';
+  }
   function seat(i) {
     var p = G.players[i], on = (G.phase === 'bid' || G.phase === 'play') && G.turn === i && !G.collect;
     var st = p.bid ? 'bid ' + p.bid + ', won ' + p.tricks : (G.phase === 'bid' ? (on ? 'bidding\u2026' : 'waiting') : '');
@@ -200,9 +207,11 @@
       myTurn ? 'Your turn.' : G.players[G.turn].name + ' is playing\u2026';
     h += '</div><div class="msg">' + G.msg + '<small>' + hint + '</small></div><div class="mine">You: ' +
       (me.bid ? 'bid ' + me.bid + ', won ' + me.tricks : 'no bid yet') + '</div><div class="hand">';
-    me.hand.slice().sort(function (a, b) { return SUITS.indexOf(a.s) - SUITS.indexOf(b.s) || b.r - a.r; }).forEach(function (c) {
+    var hand = me.hand.slice().sort(function (a, b) { return SUITS.indexOf(a.s) - SUITS.indexOf(b.s) || b.r - a.r; });
+    hand.forEach(function (c, index) {
       var ok = L.some(function (x) { return x.id === c.id; });
-      h += cardHTML(c, myTurn ? (ok ? ' ok' : ' no') : '', 'data-a="card" data-v="' + c.id + '"');
+      h += cardHTML(c, myTurn ? (ok ? ' ok' : ' no') : '',
+        'data-a="card" data-v="' + c.id + '" ' + handGridPosition(index, hand.length));
     });
     h += '</div>';
     if (G.phase === 'roundend') {
@@ -214,6 +223,7 @@
         }).join('') + '</table><button class="btn" data-a="next">' + (fin ? 'New game' : 'Next round') + '</button></div>';
     }
     root.innerHTML = h;
+    if (typeof global.playoraStackHandCards === 'function') global.playoraStackHandCards(root);
     var nh = root.querySelector('.hand'); if (nh) nh.scrollLeft = sl;
   }
   function onClick(e) {
@@ -439,13 +449,14 @@
       '</small></div><div class="mine">' + (player ? roomEscape(player.name) + ': ' +
         (player.bid == null ? 'no bid yet' : 'bid ' + player.bid + ', won ' + player.tricks) : 'Waiting for your turn') +
       '</div><div class="hand">';
-    if (player) player.hand.slice().sort(function (a, b) {
+    var hand = player ? player.hand.slice().sort(function (a, b) {
       return SUITS.indexOf(a.s) - SUITS.indexOf(b.s) || b.r - a.r;
-    }).forEach(function (card) {
+    }) : [];
+    hand.forEach(function (card, index) {
       var allowed = active && S.phase === 'play' && !S.collect &&
         roomLegal(player.hand, S.trick).some(function (item) { return item.id === card.id; });
       html += cardHTML(card, allowed ? ' ok' : ' no',
-        allowed ? 'data-m="card:' + card.id + '"' : '');
+        (allowed ? 'data-m="card:' + card.id + '"' : '') + ' ' + handGridPosition(index, hand.length));
     });
     html += '</div>';
     if (active && S.collect) html += '<div class="room-action"><button class="btn" data-m="collect">Collect trick</button></div>';
@@ -529,8 +540,9 @@
     '.msg{text-align:center;font-size:14px;padding:4px 12px;min-height:2.8em;flex:none}.msg small{display:block;opacity:.8;margin-top:2px}' +
     '.mine{text-align:center;font-size:12px;opacity:.85;flex:none}' +
     '.hand{display:flex;overflow-x:auto;overflow-y:hidden;padding:20px 14px 12px;flex:none}.hand .card:first-child{margin-left:auto}.hand .card:last-child{margin-right:auto}' +
-    '.hand .card+.card{margin-left:calc(var(--w)*-.45)}.hand .card{cursor:default}.hand .card.ok{transform:translateY(-14px);cursor:pointer;box-shadow:0 0 0 3px #ffd45c,0 6px 14px rgba(0,0,0,.5)}' +
+    '.hand .card+.card{margin-left:calc(var(--w)*-.45)}.hand .card{cursor:default}.hand .card.ok{position:relative;z-index:2;transform:translateY(-14px);cursor:pointer;box-shadow:0 0 0 3px #ffd45c,0 6px 14px rgba(0,0,0,.5)}' +
     '.hand .card.no{filter:brightness(.6)}' +
+    '@media(max-width:600px){.hand{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));grid-auto-rows:calc(var(--w)*.95);align-content:center;justify-items:center;gap:0;overflow:visible}.hand .card{grid-column:span 2;margin:0}.hand .card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column) / span 2;translate:calc(var(--w)*.3) 0}}' +
     '.ovl{position:absolute;inset:0;z-index:5;background:rgba(6,20,13,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}' +
     '.ovl h1{margin:0;font-size:clamp(34px,9vw,60px);color:#ffd45c}.ovl p{margin:0;max-width:40ch;line-height:1.45}' +
     '.sc{border-collapse:collapse;font-size:15px}.sc th,.sc td{padding:6px 12px;text-align:center}.sc th{opacity:.7;font-weight:600;font-size:12px}.sc tr+tr td{border-top:1px solid rgba(255,255,255,.18)}' +
