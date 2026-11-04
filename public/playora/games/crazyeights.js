@@ -252,7 +252,20 @@
   }
   function roomTop() { return S.disc[S.disc.length - 1]; }
   function roomPlayable(card, player) {
-    return card.r === 8 || card.s === S.color || card.r === roomTop().r;
+    return !!card && (card.r === 8 || card.s === S.color || card.r === roomTop().r);
+  }
+  function roomCanDraw(player) {
+    var drawnCard = player.hand.find(function (card) { return card.id === S.drawnId; });
+    var canDrawCard = S.stock.length > 0 || S.disc.length > 1;
+    if (!canDrawCard) return false;
+    return drawnCard && S.drawnId != null ? !roomPlayable(drawnCard, player) :
+      !player.hand.some(function (card) { return roomPlayable(card, player); });
+  }
+  function roomCanPass(player) {
+    if (S.stock.length > 0 || S.disc.length > 1) return false;
+    var drawnCard = player.hand.find(function (card) { return card.id === S.drawnId; });
+    return drawnCard && S.drawnId != null ? !roomPlayable(drawnCard, player) :
+      !player.hand.some(function (card) { return roomPlayable(card, player); });
   }
   function roomInit() {
     roomWildCard = null;
@@ -297,12 +310,8 @@
     var player = S.players[S.t];
     if (S.phase === 'roundend') return action.type === 'next' && !S.over;
     if (S.phase !== 'play') return false;
-    if (action.type === 'draw') {
-      var drawnCard = player.hand.find(function (card) { return card.id === S.drawnId; });
-      return !player.hand.some(function (card) { return roomPlayable(card, player); }) &&
-        (S.drawnId == null || !drawnCard || !roomPlayable(drawnCard, player));
-    }
-    if (action.type === 'pass') return S.stock.length === 0 && !player.hand.some(function (card) { return roomPlayable(card, player); });
+    if (action.type === 'draw') return roomCanDraw(player);
+    if (action.type === 'pass') return roomCanPass(player);
     if (action.type !== 'play' || !Number.isInteger(action.cardId)) return false;
     var card = player.hand.find(function (item) { return item.id === action.cardId; });
     if (!card || !roomPlayable(card, player) || (S.drawnId != null && action.cardId !== S.drawnId)) return false;
@@ -361,8 +370,9 @@
       return (S.drawnId == null || card.id === S.drawnId) && roomPlayable(card, player);
     });
     if (!options.length) {
-      if (S.stock.length) return { type: 'draw', player: pi };
-      return { type: 'pass', player: pi };
+      if (roomCanDraw(player)) return { type: 'draw', player: pi };
+      if (roomCanPass(player)) return { type: 'pass', player: pi };
+      return null;
     }
     var counts = { S: 0, H: 0, C: 0, D: 0 };
     player.hand.forEach(function (card) { if (card.r !== 8) counts[card.s]++; });
@@ -426,6 +436,7 @@
     var fresh = S.animation && S.animation.seq > roomAnimationSeq ? S.animation : null;
     if (fresh) roomAnimationSeq = fresh.seq;
     var drawAnimating = fresh && fresh.type === 'draw' && fresh.player === currentIndex;
+    var turnPlayer = S.players[S.t], canDraw = active && roomCanDraw(turnPlayer);
     var topCard = roomTop(), html = '<div class="ce-room"><div class="ce"><div class="bar"><b class="logo">Crazy Eights</b><span>' +
       S.players.map(function (player, index) { return '<span' + (index === S.t ? ' class="on"' : '') + '>' +
         roomEscape(player.name) + (player.bot ? ' 🤖' : '') + ' · ' + player.score + '</span>'; }).join('') +
@@ -436,18 +447,19 @@
         Array(Math.min(player.hand.length, 8)).fill(BACK).join('') + '</div><span class="nm">' + roomEscape(player.name) +
         (player.bot ? ' 🤖' : '') + '</span><span class="n">' + player.hand.length + ' cards</span></div>';
     });
-    html += '</div><div class="table"><button class="pile' + (active && !S.over && !S.players[S.t].hand.some(function (card) { return roomPlayable(card, S.players[S.t]); }) ? ' ok' : '') +
-      '" data-m="draw" aria-label="Draw a card"' + (!active || S.over || S.players[S.t].hand.some(function (card) { return roomPlayable(card, S.players[S.t]); }) ||
-        S.drawnId != null && roomPlayable(S.players[S.t].hand.find(function (card) { return card.id === S.drawnId; }), S.players[S.t]) ? ' disabled' : '') +
+    html += '</div><div class="table"><button class="pile' + (canDraw ? ' ok' : '') +
+      '" data-m="draw" aria-label="Draw a card"' + (!canDraw ? ' disabled' : '') +
       '>' + BACK + '<span>Draw (' + S.stock.length + ')</span></button><div class="cur">' +
       cardHTML(topCard, fresh && fresh.type === 'play' && fresh.cardId === topCard.id ? ' fresh' : '') +
       '<span class="suit' + (S.color === 'H' || S.color === 'D' ? ' red' : '') + '">' + SYM[S.color] + ' ' + SNAME[S.color] + '</span></div></div>' +
       '<div class="msg">' + roomEscape(S.msg) + '<small>' + (S.over ? 'Use Restart to play again.' :
         S.phase === 'roundend' ? (active ? 'Start the next round.' : S.players[S.t].name + ' is thinking…') :
-          active ? (S.drawnId != null ? 'Play the card you drew or draw again.' : 'Your turn: play a card or draw.') :
+          active ? (S.drawnId != null ? (roomPlayable(turnPlayer.hand.find(function (card) { return card.id === S.drawnId; }), turnPlayer)
+            ? 'Play the card you drew.' : canDraw ? 'That card cannot be played. Draw again.' : 'Nothing playable; pass.') :
+            'Your turn: play a card or draw.') :
             S.players[S.t].name + ' is playing…') + '</small></div><div class="acts">';
-    if (active && S.phase === 'play' && S.drawnId != null && !roomPlayable(current.hand.find(function (card) { return card.id === S.drawnId; }), current))
-      html += '<button class="btn alt" data-m="pass"' + (S.stock.length ? ' disabled' : '') + '>Pass</button>';
+    if (active && S.phase === 'play' && roomCanPass(turnPlayer))
+      html += '<button class="btn alt" data-m="pass">Pass</button>';
     html += '</div><div class="hand">';
     if (current) {
       var hand = current.hand.slice().sort(function (a, b) { return SUITS.indexOf(a.s) - SUITS.indexOf(b.s) || a.r - b.r; });

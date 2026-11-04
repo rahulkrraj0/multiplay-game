@@ -61,6 +61,23 @@ test("games hide duplicate bottom status except Chess and Ludo", () => {
   assert.match(engineSource, /classList\.toggle\('chess-game',game==='chess'\)/);
 });
 
+test("card-game status follows each hand with five-percent bottom spacing", () => {
+  const games = [
+    { root: ".bl-room .bl", hand: ".bl-room .hand", msg: ".bl-room .msg" },
+    { root: ".cb", hand: ".cb .hand", msg: ".cb .msg" },
+    { root: ".ce-room .ce", hand: ".ce-room .hand", msg: ".ce-room .msg" },
+    { root: ".hr", hand: ".hr .hand", msg: ".hr .msg" },
+    { root: ".sp-room .sp", hand: ".sp-room .hand", msg: ".sp-room .msg" },
+    { root: ".uno", hand: ".uno .hand", msg: ".uno .msg" },
+  ];
+  const roots = games.map((game) => `#room #bd ${game.root}`);
+  assert.ok(gameStyles.includes(roots.join(",") +
+    "{box-sizing:border-box;padding-bottom:calc(5vh + env(safe-area-inset-bottom,0px))}"));
+  assert.ok(gameStyles.includes(games.map((game) => `#room #bd ${game.hand}`).join(",") + "{order:1}"));
+  assert.ok(gameStyles.includes(games.map((game) => `#room #bd ${game.msg}`).join(",") +
+    "{order:2;margin-top:8px}"));
+});
+
 test("Spades unplayable cards stay legible while remaining visually muted", () => {
   assert.match(spadesSource, /'\.hand \.card\.no\{filter:brightness\(\.82\)\}'/);
 });

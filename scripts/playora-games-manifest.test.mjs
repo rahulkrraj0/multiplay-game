@@ -339,6 +339,65 @@ test("previously unlisted card games complete multiplayer bot matches", async (t
   }
 });
 
+test("Crazy Eights keeps the turn actionable after an unplayable draw", () => {
+  const { game, context } = createGame("crazyeights.js");
+  const state = game.init();
+  context.S = state;
+  const player = state.players[0];
+  const playable = { id: 100, s: "H", r: 8 };
+  const oldCard = { id: 101, s: "S", r: 10 };
+  const drawn = { id: 102, s: "H", r: 11 };
+  state.turn = 0;
+  state.t = 0;
+  state.color = "D";
+  state.disc = [{ id: 103, s: "D", r: 7 }];
+  player.hand = [playable, oldCard, drawn];
+  state.drawnId = drawn.id;
+  state.stock = [{ id: 104, s: "C", r: 3 }, { id: 105, s: "C", r: 4 }];
+
+  assert.equal(game.valid({ type: "draw", player: 0 }), true,
+    "an unplayable draw should allow another draw, even when an older card is playable");
+  assert.equal(game.valid({ type: "play", player: 0, cardId: playable.id, suit: "H" }), false,
+    "only the latest drawn card may be played after drawing");
+  assert.match(game.draw()[0], /That card cannot be played\. Draw again\./);
+  assert.match(game.draw()[0], /class="pile ok"[^>]*data-m="draw"/);
+
+  game.apply({ type: "draw", player: 0 });
+  assert.equal(state.drawnId, 105);
+  assert.equal(game.valid({ type: "draw", player: 0 }), true);
+  assert.equal(game.valid({ type: "play", player: 0, cardId: playable.id, suit: "H" }), false);
+
+  state.stock = [];
+  state.disc = [{ id: 103, s: "D", r: 7 }];
+  assert.equal(game.valid({ type: "pass", player: 0 }), true,
+    "a player must be able to pass when there are no drawable cards");
+  assert.match(game.draw()[0], /data-m="pass">Pass<\/button>/);
+});
+
+test("Crazy Eights lets the player play a drawn wild eight", () => {
+  const { game, context } = createGame("crazyeights.js");
+  const state = game.init();
+  context.S = state;
+  const eight = { id: 200, s: "H", r: 8 };
+  state.turn = 0;
+  state.t = 0;
+  state.color = "D";
+  state.disc = [{ id: 201, s: "D", r: 7 }];
+  state.players[0].hand = [eight, { id: 202, s: "S", r: 10 }, { id: 203, s: "H", r: 11 }];
+  state.drawnId = eight.id;
+
+  assert.equal(game.valid({ type: "play", player: 0, cardId: eight.id, suit: "H" }), true);
+  assert.match(game.draw()[0], new RegExp('data-m="card:' + eight.id + '"'));
+  game.click({ dataset: { m: "card:" + eight.id } });
+  game.click({ dataset: { m: "suit:H" } });
+  assert.equal(context.lastAction.cardId, eight.id);
+  assert.equal(game.valid(context.lastAction), true);
+  game.apply(context.lastAction);
+  assert.equal(state.color, "H");
+  assert.equal(state.drawnId, null);
+  assert.equal(state.t, 1);
+});
+
 test("Call Break keeps the local player's hand visible while bots play", () => {
   const { game, context } = createGame("callbreak.js", { localBot: true, np: 1 });
   const state = game.init();

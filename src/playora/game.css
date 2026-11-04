@@ -232,6 +232,11 @@
   #room #bd .hr .hand button.card,#room #bd .sp-room .hand button.card{grid-column:span 2}
   #room #bd .hr .hand button.card[style*="--hand-row"],#room #bd .sp-room .hand button.card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column) / span 2}
 }
+ #room #bd .bl-room .bl,#room #bd .cb,#room #bd .ce-room .ce,#room #bd .hr,#room #bd .sp-room .sp,#room #bd .uno{box-sizing:border-box;padding-bottom:calc(5vh + env(safe-area-inset-bottom,0px))}
+ #room #bd .bl-room .hand,#room #bd .cb .hand,#room #bd .ce-room .hand,#room #bd .hr .hand,#room #bd .sp-room .hand,#room #bd .uno .hand{order:1}
+ #room #bd .bl-room .msg,#room #bd .cb .msg,#room #bd .ce-room .msg,#room #bd .hr .msg,#room #bd .sp-room .msg,#room #bd .uno .msg{order:2;margin-top:8px}
+ #room #bd .bl-room .acts,#room #bd .cb .mine,#room #bd .ce-room .acts,#room #bd .hr .acts,#room #bd .sp-room .mine,#room #bd .uno .acts{order:3}
+ #room #bd .cb .room-action,#room #bd .sp-room .acts{order:4}
 @media(max-width:600px){
   #room #bd .ce-room .ce{box-sizing:border-box;padding-bottom:5vh}
   #room #bd .ce-room .hand{order:1}
