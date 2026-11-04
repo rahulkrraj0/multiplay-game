@@ -492,7 +492,12 @@
     if (command.indexOf('card:') === 0) {
       var cardId = Number(command.slice(5)), card = S.players[S.t].hand.find(function (item) { return item.id === cardId; });
       if (!card || !roomPlayable(card, S.players[S.t])) return;
-      if (card.r === 8) { roomWildCard = cardId; if (typeof render === 'function') render(); return; }
+      if (card.r === 8) {
+        roomWildCard = cardId;
+        if (root) render();
+        else if (typeof global.render === 'function') global.render();
+        return;
+      }
       action = { type: 'play', player: S.t, cardId: cardId, suit: card.s };
     } else if (command.indexOf('suit:') === 0 && roomWildCard != null) {
       action = { type: 'play', player: S.t, cardId: roomWildCard, suit: command.slice(5) };

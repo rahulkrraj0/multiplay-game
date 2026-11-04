@@ -388,7 +388,12 @@ test("Crazy Eights lets the player play a drawn wild eight", () => {
 
   assert.equal(game.valid({ type: "play", player: 0, cardId: eight.id, suit: "H" }), true);
   assert.match(game.draw()[0], new RegExp('data-m="card:' + eight.id + '"'));
+  let roomRenders = 0;
+  context.render = () => { roomRenders++; };
   game.click({ dataset: { m: "card:" + eight.id } });
+  assert.equal(roomRenders, 1, "selecting a room wild should redraw the room suit picker");
+  assert.match(game.draw()[0], /Choose a suit/);
+  assert.match(game.draw()[0], /data-m="suit:H"/);
   game.click({ dataset: { m: "suit:H" } });
   assert.equal(context.lastAction.cardId, eight.id);
   assert.equal(game.valid(context.lastAction), true);
