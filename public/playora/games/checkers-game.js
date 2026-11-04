@@ -1,5 +1,6 @@
 /* checkers-game.js
-   Checkers (8x8): American or Indian rules, 2 players or play against the computer.
+   American checkers (8x8): 2 players, or play against the computer.
+   The starting color alternates each time a new game is created.
    - Pure engine: init / legalMoves / valid / apply (no DOM, easy to reuse in a host runtime)
    - Computer opponent: minimax with alpha-beta pruning
    - UI: mount(rootElement)
@@ -9,8 +10,8 @@
 
   // ---------- Engine ----------
   // Cells: null | 'r' | 'R' | 'b' | 'B' (uppercase = king).
-  // Red starts at the bottom and moves first. American rules require captures;
-  // Indian rules allow quiet moves when a capture is available.
+  // Red starts at the bottom; the opening side alternates between new games. Capturing is mandatory,
+  // and a piece that becomes a king mid-jump ends its turn.
   const N = 8;
   const owner = p => (p ? p.toLowerCase() : null);
   const isKing = p => p === 'R' || p === 'B';
@@ -19,11 +20,9 @@
   const other = t => (t === 'r' ? 'b' : 'r');
   const DRAW_AFTER = 80; // plies with no capture and no man move
   let drawnRoomMoveSeq = 0;
+  let lastStartingTurn = 'b';
 
-  function init(previousState) {
-    const firstTurn = previousState
-      ? other(previousState.firstTurn === 'b' ? 'b' : 'r')
-      : 'r';
+  function init() {
     const board = Array.from({ length: N }, () => Array(N).fill(null));
     for (let r = 0; r < N; r++)
       for (let c = 0; c < N; c++)
@@ -31,7 +30,14 @@
           if (r < 3) board[r][c] = 'b';
           else if (r > 4) board[r][c] = 'r';
         }
-    return { board, turn: 'r', firstTurn, chain: null, winner: null, quiet: 0, variant: null };
+    return { board, turn: 'r', chain: null, winner: null, quiet: 0 };
+  }
+
+  function newGameState(previousState) {
+    lastStartingTurn = previousState && (previousState.startingTurn === 'r' || previousState.startingTurn === 'b')
+      ? other(previousState.startingTurn)
+      : other(lastStartingTurn);
+    return { ...init(), turn: lastStartingTurn, startingTurn: lastStartingTurn };
   }
 
   function dirs(p) {
@@ -57,7 +63,7 @@
   }
 
   function legalMoves(s) {
-    if (s.winner || !s.variant) return [];
+    if (s.winner) return [];
     if (s.chain) return pieceMoves(s, s.chain[0], s.chain[1]).jumps;
     const steps = [], jumps = [];
     for (let r = 0; r < N; r++)
@@ -67,21 +73,17 @@
           steps.push(...m.steps);
           jumps.push(...m.jumps);
         }
-    return s.variant === 'american' && jumps.length ? jumps : jumps.concat(steps);
+    return jumps.length ? jumps : steps;
   }
 
   function findMove(s, m) {
-    if (!m || !Array.isArray(m.from) || !Array.isArray(m.to)) return null;
     return legalMoves(s).find(x => same(x.from, m.from) && same(x.to, m.to)) || null;
   }
 
-  const valid = (s, m) => !s.variant
-    ? !!m && (m.variant === 'american' || m.variant === 'indian')
-    : !!findMove(s, m);
+  const valid = (s, m) => !!findMove(s, m);
 
   // Returns a new state; returns the same state if the move is illegal.
   function apply(s, m) {
-    if (!s.variant) return valid(s, m) ? { ...s, variant: m.variant, turn: s.firstTurn } : s;
     const move = findMove(s, m);
     if (!move) return s;
     const board = s.board.map(row => row.slice());
@@ -100,9 +102,7 @@
 
     const next = {
       board,
-      variant: s.variant,
       turn: s.turn,
-      firstTurn: s.firstTurn,
       chain: null,
       winner: null,
       quiet: move.capture || !wasKing ? 0 : s.quiet + 1,
@@ -174,16 +174,6 @@
 .ck-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:clamp(10px,2vw,18px);flex-wrap:wrap}
 .ck-status{font-size:clamp(14px,2.4vw,18px);font-weight:750;letter-spacing:.01em;color:#f5e5c4}
 .ck-bar select,.ck-bar button{font:inherit;padding:8px 12px;border:1px solid #ffffff27;border-radius:10px;background:#17213a;color:#fff;cursor:pointer}
-.ck-variant{max-width:520px;margin:clamp(20px,7vh,64px) auto;padding:clamp(18px,4vw,30px);border:1px solid #e4b86c66;border-radius:16px;background:linear-gradient(145deg,#202a3a,#121a28);box-shadow:0 16px 38px #0006;text-align:center;color:#fff}
-.ck-variant h2{margin:0 0 8px;color:#f5e5c4;font-size:clamp(20px,4vw,28px)}
-.ck-variant p{margin:0 0 18px;color:#d4d8df;line-height:1.5}
-.ck-variant-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.ck-variant-options button{min-height:84px;padding:12px;border:1px solid #e4b86c66;border-radius:12px;background:linear-gradient(145deg,#394a3b,#1d2b24);color:#fff;text-align:left;cursor:pointer}
-.ck-variant-options button:hover,.ck-variant-options button:focus-visible{border-color:#f5d789;background:linear-gradient(145deg,#4c614a,#293b2e)}
-.ck-variant-options b,.ck-variant-options small{display:block}
-.ck-variant-options small{margin-top:5px;color:#e3ddcf;line-height:1.35}
-#room .ck-variant-options button{width:100%;margin:0}
-@media(max-width:420px){.ck-variant-options{grid-template-columns:1fr}}
 .ck-board{--ck-light:repeating-linear-gradient(2deg,transparent 0 5px,#7b4e2520 6px,#fff0 8px),linear-gradient(135deg,#e6c084,#c99650 75%,#d9aa67);--ck-dark:repeating-linear-gradient(-2deg,transparent 0 6px,#5933132b 7px,#fff0 9px),linear-gradient(135deg,#c0843c,#98591f 78%,#b47431);display:grid;grid-template-columns:repeat(8,1fr);width:100%;aspect-ratio:1;border:clamp(5px,1vw,10px) ridge #8b5a27;border-radius:5px;overflow:hidden;user-select:none;-webkit-user-select:none;box-shadow:0 18px 42px #0007,inset 0 0 0 2px #e4b86c;background:#7a4a20}
 #room .ck-board .ck-sq{display:flex;align-items:center;justify-content:center;position:relative;width:100%;height:100%;margin:0;padding:0;border:0;border-radius:0;font:inherit;isolation:isolate;overflow:visible}
 .ck-sq.l{background-color:#d6a86a;background-image:var(--ck-light)}
@@ -224,12 +214,12 @@
   function mount(root, opts = {}) {
     injectStyles();
     let mode = opts.mode || 'cpu'; // 'cpu' (you are red) or 'two'
-    let s = init(), sel = null, gen = 0, drawnMoveSeq = 0;
+    let s = newGameState(), sel = null, gen = 0, drawnMoveSeq = 0;
 
     root.innerHTML =
       '<div class="ck-wrap"><div class="ck-bar"><span class="ck-status"></span><span>' +
       '<select class="ck-mode"><option value="cpu">vs Computer</option><option value="two">2 Players</option></select> ' +
-      '<button class="ck-new">New game</button></span></div><div class="ck-variant"></div><div class="ck-board"></div></div>';
+      '<button class="ck-new">New game</button></span></div><div class="ck-board"></div></div>';
     const $ = q => root.querySelector(q);
     $('.ck-mode').value = mode;
 
@@ -237,7 +227,6 @@
     const name = t => (t === 'r' ? 'Red' : 'Black');
 
     function statusText() {
-      if (!s.variant) return 'Choose a ruleset';
       if (s.winner === 'draw') return 'Draw';
       if (s.winner) return name(s.winner) + ' wins!';
       if (cpuTurn()) return 'Computer is thinking\u2026';
@@ -246,23 +235,12 @@
     }
 
     function render() {
-      const setup = $('.ck-variant');
-      const bd = $('.ck-board');
-      if (!s.variant) {
-        setup.hidden = false;
-        setup.innerHTML = variantHtml();
-        bd.hidden = true;
-        $('.ck-status').textContent = statusText();
-        return;
-      }
-      setup.hidden = true;
-      setup.innerHTML = '';
-      bd.hidden = false;
       const moves = legalMoves(s);
       const movable = new Set(moves.map(m => m.from.join()));
       const targets = sel ? moves.filter(m => same(m.from, sel)).map(m => m.to.join()) : [];
       const lastMove = s.lastMove && s.lastMove.seq > drawnMoveSeq ? s.lastMove : null;
       if (lastMove) drawnMoveSeq = lastMove.seq;
+      const bd = $('.ck-board');
       bd.innerHTML = '';
       for (let r = 0; r < N; r++)
         for (let c = 0; c < N; c++) {
@@ -322,19 +300,12 @@
       render();
     });
 
-    $('.ck-variant').addEventListener('click', e => {
-      const button = e.target.closest('[data-variant]');
-      if (!button || s.variant) return;
-      s = apply(s, { variant: button.dataset.variant });
-      render();
-      cpuMove();
-    });
-
-    function newGame() { gen++; s = init(s); sel = null; render(); }
+    function newGame() { gen++; s = newGameState(); sel = null; render(); cpuMove(); }
     $('.ck-new').addEventListener('click', newGame);
     $('.ck-mode').addEventListener('change', e => { mode = e.target.value; newGame(); });
 
     render();
+    cpuMove();
     return { newGame, getState: () => s, dispose: () => { gen++; root.innerHTML = ''; } };
   }
 
@@ -344,7 +315,7 @@
     name: 'Checkers',
     t: 'Checkers',
     i: '🔴',
-    d: 'Choose American Checkers with mandatory captures or Indian Checkers with optional captures. Chain jumps and crown kings.',
+    d: 'Jump opposing pieces, chain captures, and crown kings. Play against the computer or take turns with another player.',
     minPlayers: 2,
     maxPlayers: 2,
     max: 2,
@@ -357,11 +328,11 @@
     n: ['Red', 'Black'],
     init(previousState) {
       drawnRoomMoveSeq = 0;
-      const state = init(previousState);
+      const state = newGameState(previousState);
       return { ...state, t: state.turn === 'r' ? 0 : 1, moveSeq: 0 };
     },
     valid: (action) => {
-      if (!action) return false;
+      if (!action || !Array.isArray(action.from) || !Array.isArray(action.to)) return false;
       return valid(S, action);
     },
     apply(action) {
@@ -371,10 +342,6 @@
     bot: () => bestMove(S),
     draw() {
       injectStyles();
-      if (!S.variant) {
-        return ['<div class="ck-wrap"><section class="ck-variant" aria-labelledby="ck-variant-title">' +
-          variantHtml() + '</section></div>', 'Choose American or Indian Checkers'];
-      }
       const moves = legalMoves(S);
       const lastMove = S.lastMove && S.lastMove.seq > drawnRoomMoveSeq ? S.lastMove : null;
       if (lastMove) drawnRoomMoveSeq = lastMove.seq;
@@ -412,10 +379,6 @@
         (typeof nm === 'function' ? nm(S.t) : 'Player ' + (S.t + 1)) + ' to move'];
     },
     click(element) {
-      if (element.dataset.variant) {
-        if (!S.variant && valid(S, { variant: element.dataset.variant })) act({ variant: element.dataset.variant });
-        return;
-      }
       const index = Number(element.dataset.i);
       if (!Number.isInteger(index) || index < 0 || index >= N * N) return;
       const row = Math.floor(index / N), col = index % N;
@@ -429,15 +392,6 @@
     },
     legalMoves, mount,
   };
-
-  function variantHtml() {
-    return '<h2 id="ck-variant-title">Choose your rules</h2>' +
-      '<p>Pick a Checkers version to play. The choice applies to both players.</p>' +
-      '<div class="ck-variant-options">' +
-      '<button type="button" data-i="variant" data-variant="american"><b>American Checkers</b><small>Captures are mandatory.</small></button>' +
-      '<button type="button" data-i="variant" data-variant="indian"><b>Indian Checkers</b><small>Captures are optional.</small></button>' +
-      '</div>';
-  }
 
   if (typeof registerGame === 'function') {
     registerGame(api);

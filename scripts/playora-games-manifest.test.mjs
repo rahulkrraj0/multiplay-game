@@ -106,34 +106,14 @@ test("the lazy-load catalog maps every game script exactly once", () => {
 test("Checkers and UNO expose Playora multiplayer game actions", () => {
   const checkers = createGame("checkers-game.js");
   checkers.context.S = checkers.game.init();
-  assert.equal(checkers.context.S.turn, "r");
-  assert.equal(checkers.context.S.t, 0);
-  assert.equal(checkers.game.valid({ variant: "american" }), true);
-  assert.match(checkers.game.draw()[0], /Choose your rules/);
-  checkers.game.click({ dataset: { i: "variant", variant: "american" } });
-  assert.equal(checkers.context.lastAction.variant, "american");
-  checkers.game.apply(checkers.context.lastAction);
-  assert.equal(checkers.context.S.variant, "american");
   const move = checkers.game.legalMoves(checkers.context.S)[0];
   assert.ok(checkers.game.valid(move));
   checkers.game.apply(move);
   assert.equal(checkers.context.S.t, 1);
-  assert.equal(checkers.context.S.variant, "american");
   assert.deepEqual(checkers.context.S.lastMove.from, move.from);
   assert.deepEqual(checkers.context.S.lastMove.to, move.to);
   assert.equal(checkers.context.S.moveSeq, 1);
   assert.equal((checkers.game.draw()[0].match(/data-i=/g) || []).length, 64);
-
-  checkers.context.S = checkers.game.init(checkers.context.S);
-  assert.equal(checkers.context.S.turn, "r", "the rules choice remains available to the first seat");
-  assert.equal(checkers.context.S.t, 0);
-  assert.equal(checkers.context.S.firstTurn, "b");
-  checkers.game.apply({ variant: "american" });
-  assert.equal(checkers.context.S.turn, "b");
-  assert.equal(checkers.context.S.t, 1);
-  checkers.context.S = checkers.game.init(checkers.context.S);
-  assert.equal(checkers.context.S.turn, "r");
-  assert.equal(checkers.context.S.firstTurn, "r");
 
   const uno = createGame("uno.js", { np: 3 });
   uno.context.S = uno.game.init();
@@ -150,15 +130,21 @@ test("Checkers and UNO expose Playora multiplayer game actions", () => {
   assert.match(unoStyle.textContent, /#room \.uno \.card/);
 });
 
-test("standalone Checkers alternates the opening color on each new game", () => {
+test("Checkers alternates the opening color on each new game", () => {
   const checkers = createGame("checkers-game.js");
-  const first = checkers.game.init();
-  const second = checkers.game.init(first);
-  const third = checkers.game.init(second);
-  assert.deepEqual([first.firstTurn, second.firstTurn, third.firstTurn], ["r", "b", "r"]);
-  checkers.context.S = second;
-  checkers.game.apply({ variant: "indian" });
-  assert.equal(checkers.context.S.turn, "b");
+  let state = checkers.game.init();
+  assert.equal(state.turn, "r");
+  assert.equal(state.t, 0);
+
+  state = checkers.game.init(state);
+  assert.equal(state.turn, "b");
+  assert.equal(state.t, 1);
+  const move = checkers.game.legalMoves(state)[0];
+  assert.ok(move.from[0] < move.to[0], "Black's opening move advances from the top of the board");
+
+  state = checkers.game.init(state);
+  assert.equal(state.turn, "r");
+  assert.equal(state.t, 0);
 });
 
 test("Checkers enforces mandatory captures and forward-only man moves", () => {
@@ -167,7 +153,7 @@ test("Checkers enforces mandatory captures and forward-only man moves", () => {
   board[5][0] = "r";
   board[4][1] = "b";
   board[5][4] = "r";
-  checkers.context.S = { board, turn: "r", chain: null, winner: null, quiet: 0, variant: "american" };
+  checkers.context.S = { board, turn: "r", chain: null, winner: null, quiet: 0 };
 
   const moves = checkers.game.legalMoves(checkers.context.S);
   assert.equal(moves.length, 1);
@@ -179,27 +165,13 @@ test("Checkers enforces mandatory captures and forward-only man moves", () => {
     "a man cannot move backwards");
 });
 
-test("Indian Checkers allows a quiet move while a capture is available", () => {
-  const checkers = createGame("checkers-game.js");
-  const board = Array.from({ length: 8 }, () => Array(8).fill(null));
-  board[5][0] = "r";
-  board[4][1] = "b";
-  board[5][4] = "r";
-  checkers.context.S = { board, turn: "r", chain: null, winner: null, quiet: 0, variant: "indian" };
-
-  const moves = checkers.game.legalMoves(checkers.context.S);
-  assert.ok(moves.some((move) => move.capture));
-  assert.ok(moves.some((move) => !move.capture && move.from[0] === 5 && move.from[1] === 4));
-  assert.equal(checkers.game.valid({ from: [5, 4], to: [4, 3] }), true);
-});
-
 test("Checkers keeps a multi-jump with the same piece and crowns at turn end", () => {
   const checkers = createGame("checkers-game.js");
   const board = Array.from({ length: 8 }, () => Array(8).fill(null));
   board[5][0] = "r";
   board[4][1] = "b";
   board[2][3] = "b";
-  checkers.context.S = { board, turn: "r", chain: null, winner: null, quiet: 0, variant: "american" };
+  checkers.context.S = { board, turn: "r", chain: null, winner: null, quiet: 0 };
 
   let moves = checkers.game.legalMoves(checkers.context.S);
   assert.equal(moves.length, 1);
@@ -218,7 +190,7 @@ test("Checkers keeps a multi-jump with the same piece and crowns at turn end", (
   promotionBoard[2][1] = "r";
   promotionBoard[1][2] = "b";
   promotionBoard[1][4] = "b";
-  checkers.context.S = { board: promotionBoard, turn: "r", chain: null, winner: null, quiet: 0, variant: "american" };
+  checkers.context.S = { board: promotionBoard, turn: "r", chain: null, winner: null, quiet: 0 };
   moves = checkers.game.legalMoves(checkers.context.S);
   assert.equal(moves.length, 1);
   assert.deepEqual(Array.from(moves[0].to), [0, 3]);
@@ -232,8 +204,8 @@ test("Checkers kings move backwards and quiet king moves count toward draws", ()
   const checkers = createGame("checkers-game.js");
   const board = Array.from({ length: 8 }, () => Array(8).fill(null));
   board[4][3] = "R";
-  board[2][7] = "b";
-  checkers.context.S = { board, turn: "r", chain: null, winner: null, quiet: 0, variant: "american" };
+  board[0][1] = "b";
+  checkers.context.S = { board, turn: "r", chain: null, winner: null, quiet: 0 };
 
   const moves = checkers.game.legalMoves(checkers.context.S);
   assert.ok(moves.some((move) => move.to[0] === 5 && move.to[1] === 2));
