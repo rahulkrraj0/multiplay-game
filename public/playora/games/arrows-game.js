@@ -347,11 +347,12 @@
       if (motion) kick(); else draw(now);
     }
 
-    cv.addEventListener('pointerdown', e => {
+    cv.addEventListener('click', e => {
       if (s.won || s.over) return;
       const rect = cv.getBoundingClientRect();
-      const x = (e.clientX - rect.left) * cv.width / dpr / rect.width;
-      const y = (e.clientY - rect.top) * cv.height / dpr / rect.height;
+      if (!rect.width || !rect.height) return;
+      const x = (e.clientX - rect.left) * cv.clientWidth / rect.width;
+      const y = (e.clientY - rect.top) * cv.clientHeight / rect.height;
       let best = -1, bd = cell * 0.55;
       s.arrows.forEach((a, i) => {
         if (!a.alive) return;

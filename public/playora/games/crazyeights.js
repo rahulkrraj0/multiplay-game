@@ -409,7 +409,8 @@
       document.head.appendChild(roomStyleNode);
     }
     var currentIndex = typeof seat === 'number' && seat >= 0 && seat < S.players.length ? seat :
-      (typeof ids !== 'undefined' && ids.length ? -1 : (S.players[S.t].bot ? -1 : S.t));
+      (typeof ids !== 'undefined' && ids.length ? -1 :
+        (S.players[S.t].bot ? S.players.findIndex(function (player) { return !player.bot; }) : S.t));
     var current = currentIndex >= 0 ? S.players[currentIndex] : null;
     var active = currentIndex === S.t && !S.over && (typeof canAct !== 'function' || canAct());
     var fresh = S.animation && S.animation.seq > roomAnimationSeq ? S.animation : null;
@@ -484,7 +485,7 @@
   }
 
   var CSS = '.ce{position:absolute;inset:0;display:flex;flex-direction:column;color:#fff;overflow:hidden;user-select:none;' +
-    'font-family:"Trebuchet MS","Avenir Next",system-ui,sans-serif;--w:clamp(44px,min(11.5vw,15vh),84px);' +
+    'font-family:"Trebuchet MS","Avenir Next",system-ui,sans-serif;--w:clamp(44px,min(12.2vw,15vh),92px);' +
     'background:radial-gradient(ellipse at 50% 40%,#1b6d7a 0,#0f4552 60%,#082a33 100%)}.ce *{box-sizing:border-box}' +
     '.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 14px;flex:none;font-size:13px}.bar .logo{font-size:20px;font-weight:800}' +
     '.sc{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}.btn{font:inherit;font-weight:800;padding:.6em 1.2em;border:0;border-radius:999px;background:#ffcf5a;color:#0d2530;cursor:pointer}' +

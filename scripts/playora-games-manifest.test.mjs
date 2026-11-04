@@ -129,6 +129,76 @@ test("Arrows is cataloged as a standalone puzzle with a matching logo", () => {
   assert.match(soundsSource, /arrows:\s*\{[\s\S]*?move:[\s\S]*?error:[\s\S]*?win:/);
 });
 
+test("Arrows removes a free arrow when its canvas is clicked", () => {
+  let game;
+  const listeners = {};
+  const canvas = {
+    style: {},
+    get clientWidth() { return Number.parseInt(this.style.width, 10) || 0; },
+    get clientHeight() { return Number.parseInt(this.style.height, 10) || 0; },
+    getBoundingClientRect() {
+      return { left: 100, top: 50, width: this.clientWidth, height: this.clientHeight };
+    },
+    getContext() {
+      return {
+        setTransform() {}, clearRect() {}, beginPath() {}, arc() {}, fill() {}, save() {},
+        translate() {}, moveTo() {}, lineTo() {}, stroke() {}, closePath() {}, restore() {},
+      };
+    },
+    addEventListener(name, callback) { listeners[name] = callback; },
+  };
+  const elements = {
+    ".ar-wrap": { clientWidth: 560, parentElement: { clientHeight: 800 } },
+    ".ar-bar": { getBoundingClientRect: () => ({ height: 40 }) },
+    ".ar-lv": { textContent: "" },
+    ".ar-hearts": { textContent: "" },
+    canvas,
+    ".ar-ov": { classList: { add() {}, remove() {} } },
+    ".ar-hint": { addEventListener() {} },
+    ".ar-restart": { addEventListener() {} },
+  };
+  const root = {
+    innerHTML: "",
+    querySelector(selector) { return elements[selector]; },
+  };
+  const document = {
+    getElementById() { return null; },
+    createElement() { return {}; },
+    head: { appendChild() {} },
+  };
+  const window = {
+    devicePixelRatio: 2,
+    innerHeight: 800,
+    matchMedia: () => ({ matches: true }),
+    addEventListener() {},
+    removeEventListener() {},
+  };
+  const context = {
+    console, Math, document, window, performance: { now: () => 0 },
+    localStorage: { getItem: () => null, setItem() {} },
+    setTimeout, clearTimeout, registerGame(value) { game = value; },
+  };
+  vm.runInNewContext(
+    readFileSync(new URL("../public/playora/games/arrows-game.js", import.meta.url), "utf8"),
+    context,
+  );
+  const mounted = game.mount(root);
+  const state = mounted.getState();
+  const arrowIndex = game.freeArrows(state)[0];
+  const [row, col] = state.arrows[arrowIndex].cells[0];
+  const cell = canvas.clientWidth / state.cols;
+
+  assert.equal(typeof listeners.click, "function", "the board should listen for click events");
+  listeners.click({
+    clientX: 100 + (col + 0.5) * cell,
+    clientY: 50 + (row + 0.5) * cell,
+  });
+
+  assert.equal(mounted.getState().arrows[arrowIndex].alive, false);
+  assert.equal(mounted.getState().lives, 3);
+  mounted.dispose();
+});
+
 test("previously unlisted card games support rooms, bots, and game feedback", () => {
   const catalog = JSON.parse(readFileSync(new URL("../public/playora/games/catalog.json", import.meta.url), "utf8"));
   const soundsSource = readFileSync(new URL("../public/playora/core/sounds.js", import.meta.url), "utf8");
@@ -166,6 +236,57 @@ test("previously unlisted card games support rooms, bots, and game feedback", ()
     assert.match(source, /prefers-reduced-motion:reduce/);
     assert.ok(soundsSource.includes(id + ": {"), `${id} is missing a custom sound profile`);
   }
+});
+
+test("interactive cards in the new games keep their card dimensions in room UI", () => {
+  const gameStyles = readFileSync(new URL("../src/playora/game.css", import.meta.url), "utf8");
+  const bluffSource = readFileSync(new URL("../public/playora/games/bluff.js", import.meta.url), "utf8");
+  const callBreakSource = readFileSync(new URL("../public/playora/games/callbreak.js", import.meta.url), "utf8");
+  const cardGameSources = ["bluff.js", "callbreak.js", "crazyeights.js", "hearts.js", "spades.js"]
+    .map((file) => readFileSync(new URL(`../public/playora/games/${file}`, import.meta.url), "utf8"));
+  const selector = /#room #bd \.bl-room button\.card,#room #bd \.cb button\.card,#room #bd \.ce-room button\.card,#room #bd \.hr button\.card,#room #bd \.sp-room button\.card\{([^}]+)\}/;
+  const cardRule = gameStyles.match(selector);
+
+  assert.ok(cardRule, "all five new card games should override the shared room button rule");
+  assert.match(cardRule[1], /width:var\(--cw\)/);
+  assert.match(cardRule[1], /height:calc\(var\(--cw\)\*1\.45\)/);
+  assert.match(cardRule[1], /flex:0 0 var\(--cw\)/);
+  assert.match(cardRule[1], /margin:0/);
+  assert.match(cardRule[1], /padding:0/);
+  assert.match(cardRule[1], /background:#fff/);
+  assert.match(cardRule[1], /color:var\(--k\)/);
+  assert.match(cardRule[1], /border:1px solid #c9ccd6/);
+  assert.match(cardRule[1], /appearance:none/);
+  assert.match(gameStyles, /#room #bd \.bl-room \.hand button\.card:first-child,#room #bd \.bl-room \.hand button\.card:last-child,#room #bd \.bl-room \.hand button\.card\+button\.card\{margin-left:0;margin-right:0\}/,
+    "Bluff cards should use the grid layout without overlap margins");
+  assert.match(gameStyles, /#room #bd \.cb \.hand button\.card\+button\.card,#room #bd \.ce-room \.hand button\.card\+button\.card,#room #bd \.hr \.hand button\.card\+button\.card,#room #bd \.sp-room \.hand button\.card\+button\.card\{margin-left:calc\(var\(--w\)\*-.45\)\}/,
+    "standard card hands should retain their intended overlap");
+  assert.match(gameStyles, /#room #bd \.bl-room \.hand,#room #bd \.cb \.hand,#room #bd \.ce-room \.hand,#room #bd \.hr \.hand,#room #bd \.sp-room \.hand\{padding-top:28px;padding-bottom:20px;margin-top:5px\}/,
+    "all new card-game hands should avoid cropping raised cards while keeping Poker-like spacing");
+  assert.match(gameStyles, /@media\(max-width:520px\) and \(max-height:700px\)\{#room #bd \.bl-room \.bl,#room #bd \.cb,#room #bd \.ce-room \.ce,#room #bd \.hr,#room #bd \.sp-room \.sp\{--w:clamp\(36px,min\(12vw,12vh\),46px\)\}/,
+    "card games should scale down to fit short mobile viewports without cropping");
+  assert.match(gameStyles, /#room #bd \.bl-room \.acts button\.btn\{width:auto;min-width:min\(220px,100%\);margin:0;padding:10px 24px\}/,
+    "Bluff's single action button should be compact and centered like Poker's actions");
+  assert.match(bluffSource, /\.hand\{display:grid;grid-template-columns:repeat\(13,minmax\(0,1fr\)\);grid-template-rows:repeat\(2,auto\)/,
+    "Bluff cards should display in two rows rather than requiring horizontal scrolling");
+  assert.match(bluffSource, /\.hand \.card\{width:var\(--w\);height:calc\(var\(--w\)\*1\.45\);justify-self:center;cursor:default\}/,
+    "Bluff cards should keep readable Rummy-sized card faces in the two-row hand");
+  assert.match(bluffSource, /\.hand \.card\.sel\{z-index:2;transform:translateY\(-18px\)/,
+    "selected Bluff cards should rise above the overlapping hand");
+  for (const source of cardGameSources) {
+    assert.match(source, /--w:clamp\(44px,min\(12\.2vw,15vh\),92px\)/,
+      "the new card games should use the larger responsive card size");
+  }
+  assert.match(callBreakSource, /\.hand\{display:flex;overflow-x:auto;overflow-y:hidden;padding:20px 14px 12px;flex:none\}/,
+    "Call Break should leave hand spacing to the shared room styles");
+  assert.match(callBreakSource, /\.seat\{[^}]*min-height:84px\}/,
+    "Call Break's top seat should reserve room for its card and player label");
+  assert.match(callBreakSource, /\.bids\{display:grid;grid-template-columns:repeat\(5,minmax\(0,1fr\)\);gap:6px\}\.bids \.btn\{box-sizing:border-box;width:100%;min-width:0;/,
+    "Call Break's bid buttons should fit their columns on narrow screens");
+  assert.match(callBreakSource, /#bd \.cb \.bids \.btn\{box-sizing:border-box;width:100%;min-width:0;padding:\.6em 0\}/,
+    "the room button override should not force bid buttons beyond their columns");
+  assert.match(callBreakSource, /@media\(max-width:520px\)\{#bd \.cb \.table\{padding-top:12px\}\}/,
+    "Call Break should keep its top player's card clear of the mobile toolbar");
 });
 
 test("previously unlisted card games complete multiplayer bot matches", async (t) => {
@@ -207,6 +328,54 @@ test("previously unlisted card games complete multiplayer bot matches", async (t
 
       assert.equal(state.over, true, `the bot match should finish within ${actions} actions`);
     });
+  }
+});
+
+test("Call Break keeps the local player's hand visible while bots play", () => {
+  const { game, context } = createGame("callbreak.js", { localBot: true, np: 1 });
+  const state = game.init();
+  context.S = state;
+  const handSize = state.players[0].hand.length;
+
+  assert.equal(handSize, 13);
+  game.apply({ type: "bid", player: 0, value: 3 });
+  let actions = 0;
+  while ((state.phase !== "play" || state.t !== 0 || state.collect) && actions < 20) {
+    const botAction = game.bot();
+    assert.ok(botAction, `a bot should act during ${state.phase}`);
+    game.apply(botAction);
+    actions++;
+  }
+  assert.equal(state.t, 0, "play should return to the local player after bidding");
+  const card = game._t.legal(state.players[0].hand, state.trick)[0];
+  assert.ok(card);
+  game.apply({ type: "play", player: 0, cardId: card.id });
+  assert.equal(state.players[0].hand.length, handSize - 1);
+
+  const [html] = game.draw();
+  assert.match(html, /<div class="hand">/,
+    "Call Break should render the hand during the bot's turn");
+  assert.equal((html.match(/class="card/g) || []).length,
+    state.players[0].hand.length + state.trick.length + state.players.length - 1,
+    "the remaining hand, table cards, and opponents' card counts should stay visible");
+});
+
+test("local card games keep the human hand visible during bot turns", () => {
+  const games = ["bluff.js", "callbreak.js", "crazyeights.js", "hearts.js", "spades.js"];
+
+  for (const file of games) {
+    const { game, context } = createGame(file, { localBot: true, np: 1 });
+    const state = game.init();
+    context.S = state;
+    state.t = 1;
+    if ("turn" in state) state.turn = 1;
+    if ("phase" in state && file !== "hearts.js") state.phase = "play";
+    if (file === "hearts.js") state.phase = "play";
+
+    const [html] = game.draw();
+    const accessibleCards = (html.match(/aria-label="/g) || []).length;
+    assert.ok(accessibleCards >= state.players[0].hand.length,
+      `${file} should continue rendering the local player's hand while a bot is active`);
   }
 });
 

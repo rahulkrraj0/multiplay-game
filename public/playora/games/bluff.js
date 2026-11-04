@@ -472,7 +472,7 @@
   }
 
   var CSS = '.bl{position:absolute;inset:0;display:flex;flex-direction:column;color:#fff;overflow:hidden;user-select:none;' +
-    'font-family:"Trebuchet MS","Avenir Next",system-ui,sans-serif;--w:clamp(44px,min(11.5vw,15vh),84px);' +
+    'font-family:"Trebuchet MS","Avenir Next",system-ui,sans-serif;--w:clamp(44px,min(12.2vw,15vh),92px);' +
     'background:radial-gradient(ellipse at 50% 40%,#3a2a63 0,#271c47 60%,#170f2c 100%)}.bl *{box-sizing:border-box}' +
     '.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 14px;flex:none;font-size:13px}.bar .logo{font-size:20px;font-weight:800}' +
     '.bar span{opacity:.85;text-align:center}.btn{font:inherit;font-weight:800;padding:.6em 1.2em;border:0;border-radius:999px;background:#ffd45c;color:#20142f;cursor:pointer}' +
@@ -496,9 +496,8 @@
     '.stack .back{--cw:calc(var(--w)*.95)}' +
     '.msg{text-align:center;font-size:14px;padding:4px 12px;min-height:3.4em;flex:none}.msg small{display:block;opacity:.8;margin-top:2px}' +
     '.acts{display:flex;justify-content:center;gap:10px;min-height:46px;flex:none;padding:0 12px}' +
-    '.hand{display:flex;overflow-x:auto;overflow-y:hidden;padding:22px 14px 12px;flex:none}.hand .card:first-child{margin-left:auto}.hand .card:last-child{margin-right:auto}' +
-    '.hand .card+.card{margin-left:calc(var(--w)*-.45)}.hand .card{cursor:default}.hand .card.ok{cursor:pointer}' +
-    '.hand .card.sel{transform:translateY(-18px);box-shadow:0 0 0 3px #ffd45c,0 6px 14px rgba(0,0,0,.5)}' +
+    '.hand{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));grid-template-rows:repeat(2,auto);align-content:center;gap:4px 0;overflow:hidden;padding:16px 8px 10px;flex:none}.hand .card{width:var(--w);height:calc(var(--w)*1.45);justify-self:center;cursor:default}.hand .card.ok{cursor:pointer}' +
+    '.hand .card.sel{z-index:2;transform:translateY(-18px);box-shadow:0 0 0 3px #ffd45c,0 6px 14px rgba(0,0,0,.5)}' +
     '.ovl{position:absolute;inset:0;z-index:5;background:rgba(15,8,30,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}' +
     '.ovl h1{margin:0;font-size:clamp(36px,9vw,64px);color:#ffd45c}.ovl p{margin:0;max-width:40ch;line-height:1.45}' +
     '.btn:focus-visible,.card:focus-visible{outline:3px solid #fff;outline-offset:3px}' +

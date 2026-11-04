@@ -402,11 +402,15 @@
       roomStyleNode = document.createElement('style');
       roomStyleNode.id = 'callbreak-room-style';
       roomStyleNode.textContent = scopeCSS(CSS, '.cb') +
-        '#bd .cb button{width:auto;margin:0}#bd .cb .btn{font:inherit;font-weight:800;padding:.55em 1.1em;border:0;border-radius:999px;background:#ffd45c;color:#16251d;cursor:pointer}';
+        '#bd .cb button{width:auto;margin:0}#bd .cb .btn{font:inherit;font-weight:800;padding:.55em 1.1em;border:0;border-radius:999px;background:#ffd45c;color:#16251d;cursor:pointer}' +
+        '#bd .cb .bids .btn{box-sizing:border-box;width:100%;min-width:0;padding:.6em 0}' +
+        '@media(max-width:520px){#bd .cb .table{padding-top:12px}}';
       document.head.appendChild(roomStyleNode);
     }
-    var online = roomOnline(), currentIndex = seat >= 0 && seat < S.players.length ? seat :
-      (online ? -1 : (S.players[S.t].bot ? -1 : S.t)), active = !S.over && S.t === currentIndex &&
+    var online = roomOnline();
+    var currentIndex = seat >= 0 && seat < S.players.length ? seat :
+      (online ? -1 : (S.players[S.t].bot ? S.players.findIndex(function (p) { return !p.bot; }) : S.t)),
+      active = !S.over && S.t === currentIndex &&
       (typeof canAct !== 'function' || canAct());
     var player = currentIndex >= 0 ? S.players[currentIndex] : null;
     var fresh = S.animation && S.animation.seq > roomAnimationSeq ? S.animation : null;
@@ -503,12 +507,12 @@
   }
 
   var CSS = '.cb{position:absolute;inset:0;display:flex;flex-direction:column;color:#fff;overflow:hidden;user-select:none;' +
-    'font-family:"Trebuchet MS","Avenir Next",system-ui,sans-serif;--w:clamp(44px,min(11.5vw,15vh),84px);' +
+    'font-family:"Trebuchet MS","Avenir Next",system-ui,sans-serif;--w:clamp(44px,min(12.2vw,15vh),92px);' +
     'background:radial-gradient(ellipse at 50% 40%,#1f6b49 0,#134a33 60%,#0b2e20 100%)}.cb *{box-sizing:border-box}' +
     '.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 14px;flex:none;font-size:13px}.bar .logo{font-size:20px;font-weight:800}' +
     '.bar span{opacity:.85;text-align:center}.btn{font:inherit;font-weight:800;padding:.55em 1.1em;border:0;border-radius:999px;background:#ffd45c;color:#16251d;cursor:pointer}' +
     '.table{position:relative;flex:1;min-height:0;display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto 1fr;padding:0 8px}' +
-    '.seat{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 8px;border-radius:12px;font-size:12px;border:2px solid transparent;min-width:64px}' +
+    '.seat{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 8px;border-radius:12px;font-size:12px;border:2px solid transparent;min-width:64px;min-height:84px}' +
     '.seat.on{border-color:#ffd45c;background:rgba(255,212,92,.14)}.seat .st{opacity:.85;font-size:11px;text-align:center}.seat .nm{font-weight:800;font-size:13px}' +
     '.s2{grid-column:1/-1;justify-self:center}.s1{grid-column:1;grid-row:2;align-self:center}.s3{grid-column:3;grid-row:2;align-self:center}' +
     '.trick{grid-column:2;grid-row:2;justify-self:center;align-self:center;position:relative;width:calc(var(--w)*2.9);height:calc(var(--w)*2.7)}' +
@@ -521,7 +525,7 @@
     '.back{background:repeating-linear-gradient(45deg,#24408e 0 6px,#2d4fa8 6px 12px);border:2px solid #fff;color:#fff}' +
     '.mini{--cw:calc(var(--w)*.5);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--w)*.26)}' +
     '.bidbox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;width:min(88vw,330px);padding:14px;border-radius:16px;background:rgba(8,24,16,.94);text-align:center}' +
-    '.bidbox p{margin:0 0 10px;font-size:14px}.bids{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.bids .btn{padding:.6em 0}' +
+    '.bidbox p{margin:0 0 10px;font-size:14px}.bids{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.bids .btn{box-sizing:border-box;width:100%;min-width:0;padding:.6em 0}' +
     '.msg{text-align:center;font-size:14px;padding:4px 12px;min-height:2.8em;flex:none}.msg small{display:block;opacity:.8;margin-top:2px}' +
     '.mine{text-align:center;font-size:12px;opacity:.85;flex:none}' +
     '.hand{display:flex;overflow-x:auto;overflow-y:hidden;padding:20px 14px 12px;flex:none}.hand .card:first-child{margin-left:auto}.hand .card:last-child{margin-right:auto}' +

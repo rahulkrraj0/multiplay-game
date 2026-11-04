@@ -594,7 +594,7 @@
   }
 
   var CSS = '.sp{position:absolute;inset:0;display:flex;flex-direction:column;color:#fff;overflow:hidden;user-select:none;' +
-    'font-family:"Trebuchet MS","Avenir Next",system-ui,sans-serif;--w:clamp(44px,min(11.5vw,15vh),84px);' +
+    'font-family:"Trebuchet MS","Avenir Next",system-ui,sans-serif;--w:clamp(44px,min(12.2vw,15vh),92px);' +
     'background:radial-gradient(ellipse at 50% 40%,#33456b 0,#1d2a46 60%,#0e1526 100%)}.sp *{box-sizing:border-box}' +
     '.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 14px;flex:none;font-size:13px}.bar .logo{font-size:20px;font-weight:800}' +
     '.sc{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}.sc small{opacity:.75}.sub{text-align:center;font-size:12px;opacity:.85;flex:none}' +

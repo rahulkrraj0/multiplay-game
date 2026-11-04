@@ -461,11 +461,13 @@
   }
   function roomDraw() {
     injectRoomStyles();
-    var viewer = typeof seat === 'number' && seat >= 0 && seat < G.players.length ? seat : G.t;
-    var current = G.players[viewer], active = G.t === viewer && !G.over &&
+    var online = typeof ids !== 'undefined' && Array.isArray(ids) && ids.length > 0;
+    var viewer = typeof seat === 'number' && seat >= 0 && seat < G.players.length ? seat :
+      (online ? -1 : (G.players[G.t].bot ? G.players.findIndex(function (player) { return !player.bot; }) : G.t));
+    var current = viewer >= 0 ? G.players[viewer] : null, active = current && G.t === viewer && !G.over &&
       (typeof canAct !== 'function' || canAct());
     var passing = G.phase === 'pass', myTurn = G.phase === 'play' && active && !G.collect;
-    var selected = passing ? G.selected[viewer] : [], legalCards = myTurn ?
+    var selected = passing && viewer >= 0 ? G.selected[viewer] : [], legalCards = myTurn ?
       legal(current.hand, G.trick, G.first, G.broken) : [];
     var html = '<div class="hr"><div class="bar"><b class="logo">Hearts</b><span class="sc">' +
       G.players.map(function (p) {
@@ -487,7 +489,7 @@
       (selected.length === 3 ? '' : ' disabled') + '>Pass ' + selected.length + ' of 3 cards ' + roomEsc(G.dir) + '</button>';
     if (G.collect && active) html += '<button class="btn" data-m="collect">Collect trick</button>';
     html += '</div><div class="hand">';
-    current.hand.slice().sort(function (a, b) {
+    if (current) current.hand.slice().sort(function (a, b) {
       return ORDER.indexOf(a.s) - ORDER.indexOf(b.s) || b.r - a.r;
     }).forEach(function (card) {
       var allowed = passing ? active : myTurn && legalCards.some(function (c) { return c.id === card.id; });
@@ -533,7 +535,7 @@
   }
 
   var CSS = '.hr{position:absolute;inset:0;display:flex;flex-direction:column;color:#fff;overflow:hidden;user-select:none;' +
-    'font-family:"Trebuchet MS","Avenir Next",system-ui,sans-serif;--w:clamp(44px,min(11.5vw,15vh),84px);' +
+    'font-family:"Trebuchet MS","Avenir Next",system-ui,sans-serif;--w:clamp(44px,min(12.2vw,15vh),92px);' +
     'background:radial-gradient(ellipse at 50% 40%,#8a2438 0,#561628 60%,#2c0b15 100%)}.hr *{box-sizing:border-box}' +
     '.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 14px;flex:none;font-size:13px}.bar .logo{font-size:20px;font-weight:800}' +
     '.sc{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}.sub{text-align:center;font-size:12px;opacity:.85;flex:none}' +

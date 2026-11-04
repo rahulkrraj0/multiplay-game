@@ -35,6 +35,16 @@
 #room button.p{background:linear-gradient(135deg,#8b5cf6,#6468f5)}#room .hide{display:none!important}
 #room h3,#room h4{margin:8px 0}
 #room button{font:inherit;padding:12px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);width:100%;margin:5px 0}
+#room #bd .bl-room button.card,#room #bd .cb button.card,#room #bd .ce-room button.card,#room #bd .hr button.card,#room #bd .sp-room button.card{width:var(--cw);height:calc(var(--cw)*1.45);flex:0 0 var(--cw);margin:0;padding:0;border:1px solid #c9ccd6;border-radius:calc(var(--cw)*.1);background:#fff;color:var(--k);font:inherit;text-align:left;box-shadow:0 3px 8px rgba(0,0,0,.4);appearance:none;-webkit-appearance:none;overflow:hidden}
+#room #bd .bl-room button.card{--cw:var(--w);width:var(--cw);height:calc(var(--cw)*1.45);flex:none;justify-self:center;margin:0;padding:0}
+#room #bd .bl-room .hand button.card:first-child,#room #bd .cb .hand button.card:first-child,#room #bd .ce-room .hand button.card:first-child,#room #bd .hr .hand button.card:first-child,#room #bd .sp-room .hand button.card:first-child{margin-left:auto}
+#room #bd .bl-room .hand button.card:last-child,#room #bd .cb .hand button.card:last-child,#room #bd .ce-room .hand button.card:last-child,#room #bd .hr .hand button.card:last-child,#room #bd .sp-room .hand button.card:last-child{margin-right:auto}
+#room #bd .bl-room .hand button.card:first-child,#room #bd .bl-room .hand button.card:last-child,#room #bd .bl-room .hand button.card+button.card{margin-left:0;margin-right:0}
+#room #bd .bl-room .hand,#room #bd .cb .hand,#room #bd .ce-room .hand,#room #bd .hr .hand,#room #bd .sp-room .hand{padding-top:28px;padding-bottom:20px;margin-top:5px}
+#room #bd .bl-room .acts{margin-top:12px}
+#room #bd .bl-room .acts button.btn{width:auto;min-width:min(220px,100%);margin:0;padding:10px 24px}
+#room #bd .cb .hand button.card+button.card,#room #bd .ce-room .hand button.card+button.card,#room #bd .hr .hand button.card+button.card,#room #bd .sp-room .hand button.card+button.card{margin-left:calc(var(--w)*-.45)}
+@media(max-width:520px) and (max-height:700px){#room #bd .bl-room .bl,#room #bd .cb,#room #bd .ce-room .ce,#room #bd .hr,#room #bd .sp-room .sp{--w:clamp(36px,min(12vw,12vh),46px)}#room #bd .bl-room .hand,#room #bd .cb .hand,#room #bd .ce-room .hand,#room #bd .hr .hand,#room #bd .sp-room .hand{padding-top:24px}}
 #room button.p{background:var(--ac);color:#fff;border:0}
 #room .mode-options{display:grid;gap:8px;margin:14px 0}
 #room .mode-options button{margin:0;text-align:left;min-height:58px}
