@@ -190,6 +190,7 @@
 #room.game-active .rin{max-width:none;margin:0;padding:5px 0 env(safe-area-inset-bottom,0px)}
 #room.game-active #gm{text-align:center}
 #room.game-active:not(.ludo-game) #bd{position:relative;min-height:calc(100dvh - 68px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+#room.spades-game #lg,#room.spades-game #st{display:none!important}
 #room.ludo-game.game-active .rin{min-height:calc(100dvh - 64px);display:flex;flex-direction:column}
 #room.ludo-game.game-active #gm{flex:1;display:flex;flex-direction:column;justify-content:center}
 #room:not(.game-active) #gm{display:none!important}
@@ -204,6 +205,8 @@
 .standalone-game-host .ar-wrap{box-sizing:border-box;width:min(100%,560px);max-width:560px;padding:0 12px;color:#f3f5fa}
 .standalone-game-host .ar-board{box-sizing:border-box;width:fit-content;max-width:100%;margin:0 auto;background:#20232c!important;border-radius:18px;box-shadow:0 16px 38px rgba(0,0,0,.4)}
 .standalone-game-host .ar-ov{background:rgba(22,25,34,.9);color:#f5f6fa}
+@media(max-width:520px){#room #bd .sp-room .sp{--w:clamp(32px,11vw,44px)}}
+@media(max-height:520px){#room #bd .sp-room .sp{--w:clamp(32px,13vh,56px)}}
 .display-name-backdrop[hidden]{display:none}
 .display-name-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:rgba(5,9,20,.82);backdrop-filter:blur(8px)}
 .display-name-card{width:min(100%,440px);padding:clamp(22px,6vw,34px);border:1px solid rgba(196,181,253,.28);border-radius:22px;background:linear-gradient(150deg,#252a4d,#11192e);box-shadow:0 24px 80px #0009;color:#f6f7fb}

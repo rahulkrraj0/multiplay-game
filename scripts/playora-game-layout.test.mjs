@@ -41,6 +41,20 @@ test("Spades table cards render above overlapping game messages", () => {
   assert.match(spadesSource, /'\.table\{position:relative;z-index:1;flex:1;min-height:0;/);
 });
 
+test("Spades hand cards scale down on narrow and short mobile viewports", () => {
+  assert.match(gameStyles, /@media\(max-width:520px\)\{#room #bd \.sp-room \.sp\{--w:clamp\(32px,11vw,44px\)\}\}/);
+  assert.match(gameStyles, /@media\(max-height:520px\)\{#room #bd \.sp-room \.sp\{--w:clamp\(32px,13vh,56px\)\}\}/);
+});
+
+test("Spades hides duplicate engine status outside the game board", () => {
+  assert.match(gameStyles, /#room\.spades-game #lg,#room\.spades-game #st\{display:none!important\}/);
+  assert.match(engineSource, /classList\.toggle\('spades-game',game==='spades'\)/);
+});
+
+test("Spades unplayable cards stay legible while remaining visually muted", () => {
+  assert.match(spadesSource, /'\.hand \.card\.no\{filter:brightness\(\.82\)\}'/);
+});
+
 test("entering a game resets the room scroll position", () => {
   const showAssignment = engineSource.match(/show=id=>\{[^\n]+\}/)?.[0];
   assert.ok(showAssignment, "the engine exposes its shared screen transition helper");
@@ -115,6 +129,6 @@ test("restored Ludo and Snakes and Ladders states apply their own dice layout", 
   assert.ok(classes.has("hide"), "hide the shared die used only by Ludo");
 });
 
-test("both rejoin state paths synchronize the restored game's layout", () => {
-  assert.equal((networkSource.match(/syncGameLayout\(G\.id\)/g) || []).length, 2);
+test("all rejoin state paths synchronize the restored game's layout", () => {
+  assert.equal((networkSource.match(/syncGameLayout\(G\.id\)/g) || []).length, 3);
 });
