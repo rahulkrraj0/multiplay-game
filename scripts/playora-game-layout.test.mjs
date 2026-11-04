@@ -56,8 +56,15 @@ test("Spades unplayable cards stay legible while remaining visually muted", () =
   assert.match(spadesSource, /'\.hand \.card\.no\{filter:brightness\(\.82\)\}'/);
 });
 
-test("Bluff cards overlap vertically at all screen sizes", () => {
-  assert.match(gameStyles, /#room #bd \.bl-room \.hand\{grid-template-rows:repeat\(2,calc\(var\(--w\)\*1\.05\)\)\}/);
+test("Bluff cards overlap horizontally and vertically without translating selected cards", () => {
+  assert.match(bluffSource, /'\.hand\{[^']*grid-template-columns:repeat\(13,minmax\(0,1fr\)\);grid-template-rows:repeat\(2,calc\(var\(--w\)\*\.95\)\)/);
+  assert.match(gameStyles, /#room #bd \.bl-room \.hand\{max-width:1160px;margin-left:auto;margin-right:auto;grid-template-rows:repeat\(2,calc\(var\(--w\)\*\.95\)\);row-gap:0;overflow:visible;padding-bottom:calc\(10px \+ var\(--w\)\*\.5\)\}/);
+  assert.doesNotMatch(bluffSource, /\.hand \.card\.sel\{[^}]*translateY/);
+});
+
+test("Bluff cards overlap on narrow mobile and wide desktop viewports", () => {
+  assert.match(gameStyles, /@media\(max-width:1250px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(8vw,calc\(\(100vw - 56px\)\/11\)\),92px\)\}\}/);
+  assert.match(gameStyles, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(32px,min\(12vw,calc\(\(100vw - 40px\)\/12\)\),48px\)\}\}/);
 });
 
 test("Bluff claim and pile are arranged side by side", () => {
@@ -67,7 +74,7 @@ test("Bluff claim and pile are arranged side by side", () => {
 });
 
 test("Bluff claim label and rank are inline on mobile", () => {
-  assert.match(bluffSource, /@media\(max-width:600px\)\{\.mid\{grid-template-columns:minmax\(0,1fr\);grid-template-areas:"need" "pile" "claim" "rev"\}\.need\{display:flex;align-items:center;justify-content:center;gap:4px\}\.need b\{display:inline-block;margin:0;font-size:calc\(var\(--w\)\*\.55\)\}\}/);
+  assert.match(bluffSource, /@media\(max-width:600px\)\{[^']*\.mid\{grid-template-columns:minmax\(0,1fr\);grid-template-areas:"need" "pile" "claim" "rev"\}\.need\{display:flex;align-items:center;justify-content:center;gap:4px\}\.need b\{display:inline-block;margin:0;font-size:calc\(var\(--w\)\*\.55\)\}\}/);
 });
 
 test("Bluff call and pass buttons fit within the mobile action row", () => {

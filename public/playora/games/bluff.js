@@ -497,12 +497,13 @@
     '.stack .back{--cw:calc(var(--w)*.95)}' +
     '.msg{text-align:center;font-size:14px;padding:4px 12px;min-height:3.4em;flex:none}.msg small{display:block;opacity:.8;margin-top:2px}' +
     '.acts{display:flex;justify-content:center;gap:10px;min-height:46px;flex:none;padding:0 12px}' +
-    '.hand{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));grid-template-rows:repeat(2,auto);align-content:center;gap:4px 0;overflow:hidden;padding:16px 8px 10px;flex:none}.hand .card{width:var(--w);height:calc(var(--w)*1.45);justify-self:center;cursor:default}.hand .card.ok{cursor:pointer}' +
-    '.hand .card.sel{z-index:2;transform:translateY(-18px);box-shadow:0 0 0 3px #ffd45c,0 6px 14px rgba(0,0,0,.5)}' +
+    '.hand{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));grid-template-rows:repeat(2,calc(var(--w)*.95));align-content:center;gap:0;overflow:visible;padding:16px 8px calc(10px + var(--w)*.5);flex:none}.hand .card{width:var(--w);height:calc(var(--w)*1.45);justify-self:center;cursor:default}.hand .card.ok{cursor:pointer}' +
+    '.hand .card.sel{z-index:2;box-shadow:0 0 0 3px #ffd45c,0 6px 14px rgba(0,0,0,.5)}' +
     '.ovl{position:absolute;inset:0;z-index:5;background:rgba(15,8,30,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}' +
     '.ovl h1{margin:0;font-size:clamp(36px,9vw,64px);color:#ffd45c}.ovl p{margin:0;max-width:40ch;line-height:1.45}' +
     '.btn:focus-visible,.card:focus-visible{outline:3px solid #fff;outline-offset:3px}' +
-    '@media(max-width:600px){.mid{grid-template-columns:minmax(0,1fr);grid-template-areas:"need" "pile" "claim" "rev"}.need{display:flex;align-items:center;justify-content:center;gap:4px}.need b{display:inline-block;margin:0;font-size:calc(var(--w)*.55)}}' +
+    '@media(max-width:1250px){.bl{--w:clamp(36px,min(8vw,calc((100vw - 56px)/11)),92px)}}' +
+    '@media(max-width:600px){.bl{--w:clamp(32px,min(12vw,calc((100vw - 40px)/12)),48px)}.mid{grid-template-columns:minmax(0,1fr);grid-template-areas:"need" "pile" "claim" "rev"}.need{display:flex;align-items:center;justify-content:center;gap:4px}.need b{display:inline-block;margin:0;font-size:calc(var(--w)*.55)}}' +
     '@keyframes card-reveal{from{opacity:0;translate:0 -18px;rotate:y 80deg;scale:.92}to{opacity:1;translate:0 0;rotate:none;scale:1}}' +
     '@media (prefers-reduced-motion:no-preference){.hand .card{transition:transform .2s cubic-bezier(.2,.8,.2,1)}.rev .card{animation:card-reveal .38s cubic-bezier(.2,.8,.2,1) both}.stack .card:last-child{animation:card-reveal .32s ease-out both}}' +
     '@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}';
