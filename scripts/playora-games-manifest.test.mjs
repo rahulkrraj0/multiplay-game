@@ -247,6 +247,8 @@ test("interactive cards in the new games keep their card dimensions in room UI",
   const selector = /#room #bd \.bl-room button\.card,#room #bd \.cb button\.card,#room #bd \.ce-room button\.card,#room #bd \.hr button\.card,#room #bd \.sp-room button\.card\{([^}]+)\}/;
   const cardRule = gameStyles.match(selector);
 
+  assert.match(gameStyles, /#room \.rbar\{position:sticky;top:0;z-index:16;/,
+    "the room toolbar should stay above game content and floating media tiles");
   assert.ok(cardRule, "all five new card games should override the shared room button rule");
   assert.match(cardRule[1], /width:var\(--cw\)/);
   assert.match(cardRule[1], /height:calc\(var\(--cw\)\*1\.45\)/);
@@ -261,10 +263,16 @@ test("interactive cards in the new games keep their card dimensions in room UI",
     "Bluff cards should use the grid layout without overlap margins");
   assert.match(gameStyles, /#room #bd \.cb \.hand button\.card\+button\.card,#room #bd \.ce-room \.hand button\.card\+button\.card,#room #bd \.hr \.hand button\.card\+button\.card,#room #bd \.sp-room \.hand button\.card\+button\.card\{margin-left:calc\(var\(--w\)\*-.45\)\}/,
     "standard card hands should retain their intended overlap");
+  assert.match(gameStyles, /@media\(max-width:600px\)\{#room #bd \.hr \.hand\{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:4px 2px;overflow:hidden\}/,
+    "Hearts cards should wrap into centered rows instead of requiring horizontal scrolling");
+  assert.match(gameStyles, /#room #bd \.hr \.hand button\.card:first-child,#room #bd \.hr \.hand button\.card:last-child,#room #bd \.hr \.hand button\.card\+button\.card\{margin:0\}/,
+    "Hearts cards should not overlap when arranged in rows");
   assert.match(gameStyles, /#room #bd \.bl-room \.hand,#room #bd \.cb \.hand,#room #bd \.ce-room \.hand,#room #bd \.hr \.hand,#room #bd \.sp-room \.hand\{padding-top:28px;padding-bottom:20px;margin-top:5px\}/,
     "all new card-game hands should avoid cropping raised cards while keeping Poker-like spacing");
   assert.match(gameStyles, /@media\(max-width:520px\) and \(max-height:700px\)\{#room #bd \.bl-room \.bl,#room #bd \.cb,#room #bd \.ce-room \.ce,#room #bd \.hr,#room #bd \.sp-room \.sp\{--w:clamp\(36px,min\(12vw,12vh\),46px\)\}/,
     "card games should scale down to fit short mobile viewports without cropping");
+  assert.match(gameStyles, /@media\(max-width:520px\)\{#room #bd \.bl-room \.hand,#room #bd \.cb \.hand,#room #bd \.ce-room \.hand,#room #bd \.hr \.hand,#room #bd \.sp-room \.hand\{padding-bottom:calc\(32px \+ env\(safe-area-inset-bottom,0px\)\)\}\}/,
+    "card hands should leave safe-area-aware room above the mobile navigation gesture");
   assert.match(gameStyles, /#room #bd \.bl-room \.acts button\.btn\{width:auto;min-width:min\(220px,100%\);margin:0;padding:10px 24px\}/,
     "Bluff's single action button should be compact and centered like Poker's actions");
   assert.match(bluffSource, /\.hand\{display:grid;grid-template-columns:repeat\(13,minmax\(0,1fr\)\);grid-template-rows:repeat\(2,auto\)/,

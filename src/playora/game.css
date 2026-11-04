@@ -1,6 +1,6 @@
 #room{--card:#17213a;--fg:#f6f7fb;--bd:rgba(255,255,255,.14);--ac:#7c5cf0;position:fixed;inset:0;z-index:30;display:none;overflow-y:auto;color:var(--fg);font:16px system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;touch-action:manipulation;background:radial-gradient(ellipse at 80% -10%,#27215c 0,transparent 38%),#0b1020}
 #room *{box-sizing:border-box}#room.open{display:block}
-#room .rbar{position:sticky;top:0;z-index:4;display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;background:#0b1020ee;backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+#room .rbar{position:sticky;top:0;z-index:16;display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;background:#0b1020ee;backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 #room .rbar h2{margin:0;font-size:18px}#room .rbar button{width:auto;margin:0;padding:9px 14px}
 #room .rbar h2{flex:1;min-width:0}
 #room .rbar #bk,#room .rbar #rs,#room .rbar #reconnect{flex:0 0 auto;white-space:nowrap}
@@ -44,6 +44,8 @@
 #room #bd .bl-room .acts{margin-top:12px}
 #room #bd .bl-room .acts button.btn{width:auto;min-width:min(220px,100%);margin:0;padding:10px 24px}
 #room #bd .cb .hand button.card+button.card,#room #bd .ce-room .hand button.card+button.card,#room #bd .hr .hand button.card+button.card,#room #bd .sp-room .hand button.card+button.card{margin-left:calc(var(--w)*-.45)}
+@media(max-width:600px){#room #bd .hr .hand{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:4px 2px;overflow:hidden}#room #bd .hr .hand button.card:first-child,#room #bd .hr .hand button.card:last-child,#room #bd .hr .hand button.card+button.card{margin:0}}
+@media(max-width:520px){#room #bd .bl-room .hand,#room #bd .cb .hand,#room #bd .ce-room .hand,#room #bd .hr .hand,#room #bd .sp-room .hand{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}}
 @media(max-width:520px) and (max-height:700px){#room #bd .bl-room .bl,#room #bd .cb,#room #bd .ce-room .ce,#room #bd .hr,#room #bd .sp-room .sp{--w:clamp(36px,min(12vw,12vh),46px)}#room #bd .bl-room .hand,#room #bd .cb .hand,#room #bd .ce-room .hand,#room #bd .hr .hand,#room #bd .sp-room .hand{padding-top:24px}}
 #room button.p{background:var(--ac);color:#fff;border:0}
 #room .mode-options{display:grid;gap:8px;margin:14px 0}
