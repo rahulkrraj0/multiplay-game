@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Hearts</title>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#f16f79"/><stop offset="1" stop-color="#8f1e3c"/></linearGradient>
+    <linearGradient id="card" x2="0" y2="1"><stop stop-color="#fffef8"/><stop offset="1" stop-color="#f0e5e5"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="14" stdDeviation="11" flood-color="#3d0d24" flood-opacity=".5"/></filter>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="#51172f"/>
+  <rect x="42" y="42" width="428" height="428" rx="100" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <g transform="rotate(-12 205 254)"><rect x="112" y="107" width="184" height="276" rx="22" fill="url(#card)" stroke="#fff" stroke-width="8"/><text x="136" y="169" fill="#b92649" font-family="Georgia,serif" font-size="52" font-weight="700">Q</text><path d="M202 206c-18-27-61-4 0 53 60-57 18-80 0-53z" fill="#d53051"/></g>
+    <g transform="rotate(13 320 253)"><rect x="228" y="106" width="184" height="276" rx="22" fill="url(#card)" stroke="#fff" stroke-width="8"/><text x="252" y="169" fill="#242b37" font-family="Georgia,serif" font-size="52" font-weight="700">Q</text><path d="M320 202c-21-26-59-5 0 52 59-57 21-78 0-52zm0 49-25 34h50z" fill="#242b37"/></g>
+  </g>
+  <path d="M256 416c-24-25-67-61-67-96a39 39 0 0 1 67-27 39 39 0 0 1 67 27c0 35-43 71-67 96z" fill="#ffe17a" stroke="#fff0b5" stroke-width="7"/>
+</svg>

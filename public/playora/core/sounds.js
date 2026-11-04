@@ -144,6 +144,112 @@
       roll: [{ frequency: 620, duration: 0.11, type: "sine", volume: 0.045, slide: -240 }],
       win: [523, 659, 784].map((frequency) => ({ frequency, duration: 0.12, type: "sine", volume: 0.045 })),
     },
+    arrows: {
+      start: [
+        { frequency: 440, duration: 0.07, type: "triangle", volume: 0.04, slide: 100 },
+        { frequency: 660, duration: 0.09, type: "triangle", volume: 0.04, slide: 120 },
+      ],
+      move: [
+        { frequency: 540, duration: 0.055, type: "triangle", volume: 0.04, slide: 180 },
+        { frequency: 760, duration: 0.07, type: "sine", volume: 0.035, slide: -90 },
+      ],
+      error: [
+        { frequency: 180, duration: 0.09, type: "square", volume: 0.035, slide: -70 },
+        { frequency: 120, duration: 0.1, type: "triangle", volume: 0.03, slide: -45 },
+      ],
+      win: [523, 659, 784, 1047].map((frequency) => ({ frequency, duration: 0.13, type: "triangle", volume: 0.045 })),
+      loss: [
+        { frequency: 330, duration: 0.12, type: "triangle", volume: 0.04, slide: -70 },
+        { frequency: 220, duration: 0.16, type: "triangle", volume: 0.04, slide: -50 },
+      ],
+    },
+    bluff: {
+      start: [
+        { frequency: 620, duration: 0.045, type: "triangle", volume: 0.035, slide: -110 },
+        { frequency: 390, duration: 0.06, type: "triangle", volume: 0.03, slide: 80 },
+      ],
+      move: [
+        { frequency: 510, duration: 0.045, type: "triangle", volume: 0.035, slide: -80 },
+        { frequency: 370, duration: 0.055, type: "triangle", volume: 0.03, slide: 45 },
+      ],
+      challenge: [
+        { frequency: 210, duration: 0.08, type: "square", volume: 0.035, slide: -55 },
+        { frequency: 310, duration: 0.07, type: "triangle", volume: 0.03, slide: 90 },
+      ],
+      capture: [
+        { frequency: 300, duration: 0.07, type: "triangle", volume: 0.035, slide: -95 },
+        { frequency: 180, duration: 0.1, type: "triangle", volume: 0.03, slide: -65 },
+      ],
+      win: [523, 659, 784, 1047].map((frequency) => ({ frequency, duration: 0.12, type: "triangle", volume: 0.045 })),
+      loss: [392, 330, 220].map((frequency) => ({ frequency, duration: 0.13, type: "triangle", volume: 0.04 })),
+    },
+    callbreak: {
+      start: [
+        { frequency: 440, duration: 0.065, type: "triangle", volume: 0.035, slide: 75 },
+        { frequency: 587, duration: 0.08, type: "triangle", volume: 0.035, slide: 90 },
+      ],
+      bid: [{ frequency: 520, duration: 0.075, type: "triangle", volume: 0.04, slide: 115 }],
+      move: [
+        { frequency: 470, duration: 0.05, type: "triangle", volume: 0.035, slide: -100 },
+        { frequency: 310, duration: 0.045, type: "sine", volume: 0.025, slide: -40 },
+      ],
+      capture: [
+        { frequency: 330, duration: 0.07, type: "triangle", volume: 0.04, slide: 75 },
+        { frequency: 494, duration: 0.085, type: "triangle", volume: 0.035, slide: 95 },
+      ],
+      win: [392, 494, 659, 784].map((frequency) => ({ frequency, duration: 0.12, type: "triangle", volume: 0.045 })),
+      loss: [392, 330, 247].map((frequency) => ({ frequency, duration: 0.13, type: "triangle", volume: 0.04 })),
+    },
+    crazyeights: {
+      start: [
+        { frequency: 440, duration: 0.06, type: "triangle", volume: 0.035, slide: 65 },
+        { frequency: 659, duration: 0.08, type: "triangle", volume: 0.035, slide: 90 },
+      ],
+      move: [
+        { frequency: 560, duration: 0.045, type: "triangle", volume: 0.035, slide: -105 },
+        { frequency: 420, duration: 0.055, type: "triangle", volume: 0.03, slide: 60 },
+      ],
+      draw: [
+        { frequency: 310, duration: 0.065, type: "sine", volume: 0.035, slide: 95 },
+        { frequency: 430, duration: 0.07, type: "triangle", volume: 0.03, slide: 80 },
+      ],
+      win: [523, 659, 784, 1047].map((frequency) => ({ frequency, duration: 0.12, type: "triangle", volume: 0.045 })),
+      loss: [392, 330, 220].map((frequency) => ({ frequency, duration: 0.13, type: "triangle", volume: 0.04 })),
+    },
+    hearts: {
+      start: [
+        { frequency: 392, duration: 0.07, type: "triangle", volume: 0.035, slide: 55 },
+        { frequency: 523, duration: 0.08, type: "triangle", volume: 0.035, slide: 65 },
+      ],
+      bid: [{ frequency: 520, duration: 0.075, type: "triangle", volume: 0.04, slide: 115 }],
+      move: [
+        { frequency: 430, duration: 0.05, type: "triangle", volume: 0.035, slide: -85 },
+        { frequency: 295, duration: 0.05, type: "sine", volume: 0.025, slide: -35 },
+      ],
+      capture: [
+        { frequency: 260, duration: 0.075, type: "sine", volume: 0.035, slide: 100 },
+        { frequency: 390, duration: 0.085, type: "triangle", volume: 0.03, slide: 90 },
+      ],
+      win: [392, 523, 659, 784].map((frequency) => ({ frequency, duration: 0.12, type: "triangle", volume: 0.045 })),
+      loss: [440, 349, 262].map((frequency) => ({ frequency, duration: 0.13, type: "triangle", volume: 0.04 })),
+    },
+    spades: {
+      start: [
+        { frequency: 392, duration: 0.07, type: "triangle", volume: 0.035, slide: 55 },
+        { frequency: 587, duration: 0.08, type: "triangle", volume: 0.035, slide: 80 },
+      ],
+      bid: [{ frequency: 520, duration: 0.075, type: "triangle", volume: 0.04, slide: 115 }],
+      move: [
+        { frequency: 455, duration: 0.05, type: "triangle", volume: 0.035, slide: -95 },
+        { frequency: 300, duration: 0.05, type: "sine", volume: 0.025, slide: -35 },
+      ],
+      capture: [
+        { frequency: 349, duration: 0.07, type: "triangle", volume: 0.035, slide: 70 },
+        { frequency: 523, duration: 0.085, type: "triangle", volume: 0.035, slide: 90 },
+      ],
+      win: [392, 494, 659, 784].map((frequency) => ({ frequency, duration: 0.12, type: "triangle", volume: 0.045 })),
+      loss: [392, 330, 247].map((frequency) => ({ frequency, duration: 0.13, type: "triangle", volume: 0.04 })),
+    },
     ludo: {
       move: [{ frequency: 390, duration: 0.07, type: "triangle", volume: 0.045, slide: 90 }],
       roll: [

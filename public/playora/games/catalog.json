@@ -27,6 +27,62 @@
     "standalone": true
   },
   {
+    "file": "arrows-game.js",
+    "id": "arrows",
+    "i": "↗️",
+    "t": "Arrows",
+    "d": "Clear the board by sliding arrows off in the direction they point. Plan around blocked paths, use hints wisely, and keep your lives.",
+    "max": 1,
+    "cat": "puzzle",
+    "tag": "Slide & clear",
+    "diff": "Easy to learn",
+    "art": "art-puzzle",
+    "logo": "arrows.svg",
+    "standalone": true
+  },
+  {
+    "file": "bluff.js",
+    "id": "bluff",
+    "i": "🃏",
+    "t": "Bluff",
+    "d": "Play cards face down, call bluffs, and be the first to empty your hand against three opponents.",
+    "min": 2,
+    "max": 4,
+    "cat": "classic casual",
+    "tag": "Bluff & call",
+    "diff": "Easy to learn",
+    "art": "art-cards",
+    "logo": "bluff.svg"
+  },
+  {
+    "file": "callbreak.js",
+    "id": "callbreak",
+    "i": "♠️",
+    "t": "Call Break",
+    "d": "Bid for tricks, follow suit, and use spades as trump in this four-player card game.",
+    "min": 2,
+    "max": 4,
+    "cat": "classic strategy",
+    "tag": "Bid & trump",
+    "diff": "Medium",
+    "art": "art-cards",
+    "logo": "callbreak.svg"
+  },
+  {
+    "file": "crazyeights.js",
+    "id": "crazyeights",
+    "i": "8️⃣",
+    "t": "Crazy Eights",
+    "d": "Match the discard pile by suit or rank, play wild eights, and race to empty your hand.",
+    "min": 2,
+    "max": 4,
+    "cat": "classic casual",
+    "tag": "Wild card classic",
+    "diff": "Easy to learn",
+    "art": "art-cards",
+    "logo": "crazy-eights.svg"
+  },
+  {
     "file": "chess.js",
     "id": "chess",
     "i": "♟️",
@@ -51,6 +107,20 @@
     "diff": "Easy to learn",
     "art": "art-chess",
     "logo": "checkers.svg"
+  },
+  {
+    "file": "hearts.js",
+    "id": "hearts",
+    "i": "♥️",
+    "t": "Hearts",
+    "d": "Avoid hearts and the Queen of Spades, pass cards each round, and finish with the lowest score.",
+    "min": 2,
+    "max": 4,
+    "cat": "classic strategy",
+    "tag": "Avoid the points",
+    "diff": "Medium",
+    "art": "art-cards",
+    "logo": "hearts.svg"
   },
   {
     "file": "connect-four.js",
@@ -145,6 +215,20 @@
     "diff": "Easy",
     "art": "art-snl",
     "logo": "snl.svg"
+  },
+  {
+    "file": "spades.js",
+    "id": "spades",
+    "i": "♠️",
+    "t": "Spades",
+    "d": "Bid tricks with your partner, follow suit, and win the contract with spades as trump.",
+    "min": 2,
+    "max": 4,
+    "cat": "classic strategy",
+    "tag": "Bid & team up",
+    "diff": "Medium",
+    "art": "art-cards",
+    "logo": "spades.svg"
   },
   {
     "file": "sudoku.js",

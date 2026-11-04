@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Crazy Eights</title>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#42b9c3"/><stop offset="1" stop-color="#15506b"/></linearGradient>
+    <linearGradient id="card" x2="0" y2="1"><stop stop-color="#fffef7"/><stop offset="1" stop-color="#e8eef0"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="14" stdDeviation="11" flood-color="#0b3342" flood-opacity=".5"/></filter>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="#103b50"/>
+  <rect x="42" y="42" width="428" height="428" rx="100" fill="url(#bg)"/>
+  <g filter="url(#shadow)" stroke="#fffef7" stroke-width="9">
+    <g transform="rotate(-17 187 258)"><rect x="102" y="122" width="174" height="270" rx="22" fill="#e44b49"/><text x="189" y="311" text-anchor="middle" fill="#fff" stroke="none" font-family="system-ui,sans-serif" font-size="174" font-weight="950">8</text></g>
+    <g transform="rotate(15 326 250)"><rect x="238" y="106" width="174" height="270" rx="22" fill="#354fc0"/><text x="325" y="294" text-anchor="middle" fill="#fff" stroke="none" font-family="system-ui,sans-serif" font-size="174" font-weight="950">8</text></g>
+  </g>
+  <path d="M202 425h108" stroke="#ffd45c" stroke-width="16" stroke-linecap="round"/>
+</svg>

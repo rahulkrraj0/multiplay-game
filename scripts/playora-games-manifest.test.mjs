@@ -84,14 +84,14 @@ test("the lazy-load catalog maps every game script exactly once", () => {
     if (game.logo) assert.ok(existsSync(join(root, "public", "playora", "game-logos", game.logo)));
   }
 
-  for (const id of ["2048", "checkers", "sudoku", "uno"]) {
+  for (const id of ["2048", "arrows", "checkers", "sudoku", "uno"]) {
     const game = catalog.find((entry) => entry.id === id);
     assert.ok(game, `missing catalog entry for ${id}`);
     const source = readFileSync(join(root, "public", "playora", "games", game.file), "utf8");
     if (id === "checkers" || id === "uno") {
       assert.match(source, new RegExp(`max:\\s*${game.max}\\b`));
     }
-    if (id === "2048" || id === "sudoku") {
+    if (id === "2048" || id === "arrows" || id === "sudoku") {
       assert.equal(game.standalone, true);
       assert.match(source, /standalone\s*:\s*true/);
     } else {
@@ -100,6 +100,113 @@ test("the lazy-load catalog maps every game script exactly once", () => {
       assert.match(source, /apply\(|apply:\s*roomApply/);
       assert.match(source, /click\(|click:\s*roomClick/);
     }
+  }
+});
+
+test("Arrows is cataloged as a standalone puzzle with a matching logo", () => {
+  const catalog = JSON.parse(readFileSync(new URL("../public/playora/games/catalog.json", import.meta.url), "utf8"));
+  const entry = catalog.find((game) => game.id === "arrows");
+  assert.ok(entry);
+  assert.equal(entry.file, "arrows-game.js");
+  assert.equal(entry.t, "Arrows");
+  assert.equal(entry.max, 1);
+  assert.equal(entry.standalone, true);
+  assert.equal(entry.logo, "arrows.svg");
+  assert.ok(existsSync(new URL("../public/playora/game-logos/arrows.svg", import.meta.url)));
+
+  const { game } = createGame(entry.file);
+  assert.equal(game.id, entry.id);
+  assert.equal(game.standalone, true);
+  assert.equal(game.t, entry.t);
+  const gameSource = readFileSync(new URL("../public/playora/games/arrows-game.js", import.meta.url), "utf8");
+  assert.match(gameSource, /type: 'out'/);
+  assert.match(gameSource, /type: 'shake'/);
+  assert.match(gameSource, /type: 'flash'/);
+  for (const event of ["start", "move", "error", "win", "loss", "menu"])
+    assert.ok(gameSource.includes("playSound('" + event + "')"), `missing Arrows ${event} feedback`);
+  assert.match(gameSource, /prefers-reduced-motion: reduce/);
+  const soundsSource = readFileSync(new URL("../public/playora/core/sounds.js", import.meta.url), "utf8");
+  assert.match(soundsSource, /arrows:\s*\{[\s\S]*?move:[\s\S]*?error:[\s\S]*?win:/);
+});
+
+test("previously unlisted card games support rooms, bots, and game feedback", () => {
+  const catalog = JSON.parse(readFileSync(new URL("../public/playora/games/catalog.json", import.meta.url), "utf8"));
+  const soundsSource = readFileSync(new URL("../public/playora/core/sounds.js", import.meta.url), "utf8");
+  const games = [
+    ["bluff", "bluff.js", "Bluff", "bluff.svg", "card-reveal"],
+    ["callbreak", "callbreak.js", "Call Break", "callbreak.svg", "card-land"],
+    ["crazyeights", "crazyeights.js", "Crazy Eights", "crazy-eights.svg", "card-land"],
+    ["hearts", "hearts.js", "Hearts", "hearts.svg", "card-land"],
+    ["spades", "spades.js", "Spades", "spades.svg", "card-land"],
+  ];
+
+  for (const [id, file, title, logo, animation] of games) {
+    const entry = catalog.find((game) => game.id === id);
+    assert.ok(entry, `missing catalog entry for ${id}`);
+    assert.equal(entry.file, file);
+    assert.equal(entry.t, title);
+    assert.equal(entry.min, 2);
+    assert.equal(entry.max, 4);
+    assert.equal(entry.standalone, undefined);
+    assert.equal(entry.logo, logo);
+    assert.ok(existsSync(new URL("../public/playora/game-logos/" + logo, import.meta.url)));
+
+    const { game } = createGame(file);
+    assert.equal(game.id, id);
+    assert.equal(game.minPlayers, 2);
+    assert.equal(game.maxPlayers, 4);
+    assert.equal(game.max, 4);
+    assert.equal(game.standalone, undefined);
+    for (const method of ["init", "valid", "apply", "bot", "draw", "click"])
+      assert.equal(typeof game[method], "function", `${id} must provide ${method}()`);
+
+    const source = readFileSync(new URL("../public/playora/games/" + file, import.meta.url), "utf8");
+    assert.match(source, new RegExp(`playGame\\('${id}', event\\)`));
+    assert.ok(source.includes("@keyframes " + animation), `${id} is missing card movement animation`);
+    assert.match(source, /prefers-reduced-motion:reduce/);
+    assert.ok(soundsSource.includes(id + ": {"), `${id} is missing a custom sound profile`);
+  }
+});
+
+test("previously unlisted card games complete multiplayer bot matches", async (t) => {
+  const games = ["bluff.js", "callbreak.js", "crazyeights.js", "hearts.js", "spades.js"];
+
+  for (const file of games) {
+    await t.test(file, () => {
+      const { game, context } = createGame(file, {
+        np: 2,
+        seat: 0,
+        ids: ["player-1", "player-2"],
+      });
+      const state = game.init();
+      context.S = state;
+
+      assert.equal(state.players.length, 4, "online rooms should fill four seats");
+      assert.deepEqual(
+        Array.from(state.players, (player) => player.bot),
+        [false, false, true, true],
+        "unoccupied room seats should be filled with bots",
+      );
+      assert.equal(game.valid({ type: "invalid", player: state.t }), false);
+      assert.equal(typeof game.draw()[0], "string", "room games should render markup");
+
+      state.players.forEach((player) => { player.bot = true; });
+      let actions = 0;
+      while (!state.over && actions < 3000) {
+        const before = JSON.stringify(state);
+        const action = game.bot();
+        assert.ok(action, `bot should act during ${state.phase}`);
+        assert.equal(game.valid(action), true, `bot action should be valid: ${JSON.stringify(action)}`);
+        game.apply(action);
+        assert.notEqual(JSON.stringify(state), before, "valid actions should update shared state");
+        assert.ok(Number.isInteger(state.t) && state.t >= 0 && state.t < state.players.length,
+          "shared state should retain a valid current-player index");
+        assert.doesNotThrow(() => JSON.stringify(state), "shared state should remain serializable");
+        actions++;
+      }
+
+      assert.equal(state.over, true, `the bot match should finish within ${actions} actions`);
+    });
   }
 });
 

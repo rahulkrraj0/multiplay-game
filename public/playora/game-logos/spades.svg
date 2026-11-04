@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Spades</title>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#627da9"/><stop offset="1" stop-color="#18243e"/></linearGradient>
+    <linearGradient id="card" x2="0" y2="1"><stop stop-color="#fffef8"/><stop offset="1" stop-color="#e7eaf0"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="14" stdDeviation="11" flood-color="#10192a" flood-opacity=".5"/></filter>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="#1a243a"/>
+  <rect x="42" y="42" width="428" height="428" rx="100" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <g transform="rotate(-13 200 254)"><rect x="110" y="108" width="184" height="276" rx="22" fill="url(#card)" stroke="#fff" stroke-width="8"/><text x="134" y="171" fill="#202c43" font-family="Georgia,serif" font-size="52" font-weight="700">A</text><path d="M202 207c-25-32-66-7 0 58 66-65 25-90 0-58zm0 51-26 35h52z" fill="#202c43"/></g>
+    <g transform="rotate(13 318 254)"><rect x="228" y="108" width="184" height="276" rx="22" fill="url(#card)" stroke="#fff" stroke-width="8"/><text x="252" y="171" fill="#c4464f" font-family="Georgia,serif" font-size="52" font-weight="700">K</text><path d="M320 206c-19-26-56-4 0 50 56-54 19-76 0-50z" fill="#c4464f"/></g>
+  </g>
+  <path d="m256 418 34-48c25-18 40-36 40-59a44 44 0 0 0-74-31 44 44 0 0 0-74 31c0 23 15 41 40 59z" fill="#f3cc6d" stroke="#fff0b5" stroke-width="7" stroke-linejoin="round"/>
+</svg>

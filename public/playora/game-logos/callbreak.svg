@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Call Break</title>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#38a47b"/><stop offset="1" stop-color="#0b4435"/></linearGradient>
+    <linearGradient id="card" x2="0" y2="1"><stop stop-color="#fffef8"/><stop offset="1" stop-color="#e6eee8"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="14" stdDeviation="11" flood-color="#082c22" flood-opacity=".5"/></filter>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="#10382d"/>
+  <rect x="42" y="42" width="428" height="428" rx="100" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <g transform="rotate(-12 196 252)"><rect x="108" y="108" width="176" height="272" rx="22" fill="url(#card)" stroke="#fff" stroke-width="8"/><text x="131" y="169" fill="#153d32" font-family="Georgia,serif" font-size="48" font-weight="700">A</text><path d="M198 205c-21-26-59-5 0 52 59-57 21-78 0-52zm0 48-25 34h50z" fill="#153d32"/></g>
+    <g transform="rotate(12 319 252)"><rect x="231" y="108" width="176" height="272" rx="22" fill="url(#card)" stroke="#fff" stroke-width="8"/><text x="254" y="169" fill="#c3424b" font-family="Georgia,serif" font-size="48" font-weight="700">K</text><path d="M320 202c-15-20-45-3 0 42 45-46 15-62 0-42zm0 39-20 27h40z" fill="#c3424b"/></g>
+  </g>
+  <circle cx="256" cy="389" r="44" fill="#f3cb68" stroke="#fff2c3" stroke-width="7"/><text x="256" y="405" text-anchor="middle" fill="#174735" font-family="system-ui,sans-serif" font-size="46" font-weight="900">♠</text>
+</svg>

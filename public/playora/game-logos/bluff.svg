@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Bluff</title>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#8056c7"/><stop offset="1" stop-color="#321c5c"/></linearGradient>
+    <linearGradient id="card" x2="0" y2="1"><stop stop-color="#fffdf7"/><stop offset="1" stop-color="#e8e5f1"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="14" stdDeviation="11" flood-color="#170d2a" flood-opacity=".5"/></filter>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="#281845"/>
+  <rect x="42" y="42" width="428" height="428" rx="100" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <g transform="rotate(-16 204 254)"><rect x="112" y="114" width="184" height="272" rx="22" fill="url(#card)" stroke="#fff" stroke-width="8"/><path d="M142 146h124v208H142z" fill="#59408b"/><path d="M154 158h100v184H154z" fill="none" stroke="#dacbff" stroke-width="7"/><path d="m204 180 56 56-56 56-56-56z" fill="none" stroke="#dacbff" stroke-width="8"/></g>
+    <g transform="rotate(13 318 242)"><rect x="226" y="104" width="184" height="272" rx="22" fill="url(#card)" stroke="#fff" stroke-width="8"/><text x="318" y="302" text-anchor="middle" fill="#5b3e90" font-family="Georgia,serif" font-size="168" font-weight="700">?</text><text x="246" y="157" fill="#c33354" font-family="Georgia,serif" font-size="42" font-weight="700">Q</text></g>
+  </g>
+  <path d="M179 416h154" stroke="#f8d36b" stroke-width="15" stroke-linecap="round"/>
+</svg>
