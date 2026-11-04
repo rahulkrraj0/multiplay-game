@@ -44,7 +44,7 @@
     "id": "checkers",
     "i": "🔴",
     "t": "Checkers",
-    "d": "Jump opposing pieces, chain captures, and crown kings. Play against the computer or take turns with another player.",
+    "d": "Choose American Checkers with mandatory captures or Indian Checkers with optional captures. Chain jumps and crown kings.",
     "max": 2,
     "cat": "classic strategy",
     "tag": "Jump & capture",
