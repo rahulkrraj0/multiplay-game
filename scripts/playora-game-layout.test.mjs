@@ -104,6 +104,18 @@ test("Call Break mobile hand centers its final row", () => {
   assert.match(gameStyles, /#room #bd \.cb \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2;translate:calc\(var\(--w\)\*\.3\) 0\}/);
 });
 
+test("Hearts and Spades mobile hands center the incomplete row", () => {
+  for (const source of [heartsSource, spadesSource]) {
+    const helper = source.match(/function roomHandGridPosition\(index, count\)\s*\{[\s\S]*?\n  \}/)?.[0];
+    assert.ok(helper, "the game exposes mobile card row positioning");
+    const position = vm.runInNewContext("(" + helper + ")");
+    assert.equal(position(8, 13), 'style="--hand-row:2;--hand-column:4"');
+    assert.equal(position(12, 13), 'style="--hand-row:2;--hand-column:12"');
+  }
+  assert.match(gameStyles, /#room #bd \.hr \.hand,#room #bd \.sp-room \.hand\{grid-template-columns:repeat\(16,minmax\(0,1fr\)\)\}/);
+  assert.match(gameStyles, /#room #bd \.hr \.hand button\.card\[style\*="--hand-row"\],#room #bd \.sp-room \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2\}/);
+});
+
 test("Bluff selected cards lift above neighboring cards", () => {
   assert.match(bluffSource, /'\.hand\{[^']*grid-template-columns:repeat\(30,minmax\(0,1fr\)\);grid-auto-rows:calc\(var\(--w\)\*\.95\)/);
   assert.match(bluffSource, /\.hand \.card\{grid-column:span 2;width:var\(--w\);height:calc\(var\(--w\)\*1\.45\);justify-self:center;cursor:default\}/);
@@ -188,9 +200,9 @@ test("Bluff centers each desktop and mobile row while increasing overlap", () =>
   assert.match(gameStyles, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}#room #bd \.bl-room \.bl \.setup-choice\{width:3\.6rem;font-size:1\.35rem\}#room #bd \.bl-room \.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\);grid-template-rows:none;grid-auto-rows:calc\(var\(--w\)\*\.95\)\}#room #bd \.bl-room \.hand button\.card\{grid-column:span 2\}#room #bd \.bl-room \.hand button\.card\[style\*="--mobile-row"\]\{grid-row:var\(--mobile-row\);grid-column:var\(--mobile-column\) \/ span 2\}\}/);
 });
 
-test("Bluff mobile status follows the cards with five-percent bottom spacing", () => {
-  assert.match(bluffSource, /@media\(max-width:600px\)\{\.bl\{[^}]*padding-bottom:5vh\}\.setup-choice\{width:3\.6rem;font-size:1\.35rem\}\.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\)\}\.hand \.card\[style\*="--mobile-row"\]\{[^}]*\}\.acts\{order:1\}\.hand\{order:2\}\.msg\{order:3;margin-top:8px\}/);
-  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.bl-room \.bl\{box-sizing:border-box;padding-bottom:5vh\}\s*#room #bd \.bl-room \.acts\{order:1\}\s*#room #bd \.bl-room \.hand\{order:2\}\s*#room #bd \.bl-room \.msg\{order:3;margin-top:8px\}\s*\}/);
+test("Bluff mobile cards stay above status and actions with five-percent bottom spacing", () => {
+  assert.match(bluffSource, /@media\(max-width:600px\)\{\.bl\{[^}]*padding-bottom:5vh\}\.setup-choice\{width:3\.6rem;font-size:1\.35rem\}\.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\);order:1\}\.hand \.card\[style\*="--mobile-row"\]\{[^}]*\}\.msg\{order:2;margin-top:8px\}\.acts\{order:3\}/);
+  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.bl-room \.bl\{box-sizing:border-box;padding-bottom:5vh\}\s*#room #bd \.bl-room \.hand\{order:1\}\s*#room #bd \.bl-room \.msg\{order:2;margin-top:8px\}\s*#room #bd \.bl-room \.acts\{order:3\}\s*\}/);
 });
 
 test("Bluff cards overlap on narrow mobile and wide desktop viewports", () => {

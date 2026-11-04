@@ -169,7 +169,8 @@
 
   /* ---------- UI ---------- */
   function cardHTML(c, cls, attrs) {
-    var tag = attrs ? 'button type="button"' : 'div', col = c.s === 'H' || c.s === 'D' ? ' r' : ' b';
+    var tag = attrs && /data-(?:a|m)=/.test(attrs) ? 'button type="button"' : 'div';
+    var col = c.s === 'H' || c.s === 'D' ? ' r' : ' b';
     return '<' + tag + ' class="card' + col + (cls || '') + '" ' + (attrs || '') + ' aria-label="' + cname(c) + '"><i class="rk">' +
       rk(c.r) + '<br>' + SYM[c.s] + '</i><span class="su">' + SYM[c.s] + '</span></' + tag.split(' ')[0] + '>';
   }
@@ -461,6 +462,14 @@
       '</div><span class="nm">' + roomEsc(player.name) + '</span><span class="st">' + (player.bot ? 'Computer' : 'Player') +
       (G.phase === 'play' ? ' · taken ' + taken(player) + ' pts' : '') + '</span></div>';
   }
+  function roomHandGridPosition(index, count) {
+    var columns = 8, row = Math.ceil(count / columns), remainder = count % columns || columns;
+    var lastRowStart = count - remainder;
+    if (index < lastRowStart) return '';
+    var startColumn = Math.floor((columns * 2 - remainder * 2) / 2) + 1;
+    return 'style="--hand-row:' + row + ';--hand-column:' +
+      (startColumn + (index - lastRowStart) * 2) + '"';
+  }
   function roomDraw() {
     injectRoomStyles();
     var online = typeof ids !== 'undefined' && Array.isArray(ids) && ids.length > 0;
@@ -493,13 +502,14 @@
     html += '</div><div class="hand">';
     if (current) current.hand.slice().sort(function (a, b) {
       return ORDER.indexOf(a.s) - ORDER.indexOf(b.s) || b.r - a.r;
-    }).forEach(function (card) {
+    }).forEach(function (card, index, hand) {
       var allowed = passing ? active : myTurn && legalCards.some(function (c) { return c.id === card.id; });
       var selectedOrder = selected.indexOf(card.id), isSelected = selectedOrder > -1;
       var classes = (allowed ? ' ok' : ' no') + (isSelected ? ' sel' : '') +
         (current.recv.indexOf(card.id) > -1 ? ' new' : '');
       var command = allowed ? ' data-m="' + (passing ? 'select:' : 'play:') + card.id + '"' : '';
-      html += cardHTML(card, classes, command + (isSelected ? ' data-selected-order="' + selectedOrder + '"' : ''));
+      html += cardHTML(card, classes, command + (isSelected ? ' data-selected-order="' + selectedOrder + '"' : '') +
+        ' ' + roomHandGridPosition(index, hand.length));
     });
     html += '</div>';
     if (G.phase === 'roundend') {

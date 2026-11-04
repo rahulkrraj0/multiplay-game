@@ -174,7 +174,8 @@
 
   /* ---------- UI ---------- */
   function cardHTML(c, cls, attrs) {
-    var tag = attrs ? 'button type="button"' : 'div', col = c.s === 'H' || c.s === 'D' ? ' r' : ' b';
+    var tag = attrs && /data-(?:a|m)=/.test(attrs) ? 'button type="button"' : 'div';
+    var col = c.s === 'H' || c.s === 'D' ? ' r' : ' b';
     return '<' + tag + ' class="card' + col + (cls || '') + '" ' + (attrs || '') + ' aria-label="' + cname(c) + '"><i class="rk">' +
       rk(c.r) + '<br>' + SYM[c.s] + '</i><span class="su">' + SYM[c.s] + '</span></' + tag.split(' ')[0] + '>';
   }
@@ -506,6 +507,14 @@
       player.hand.length + '</div><span class="nm">' + roomEscape(player.name) + (player.bot ? ' 🤖' : '') +
       '</span><span class="st">' + roomEscape(status) + '</span></div>';
   }
+  function roomHandGridPosition(index, count) {
+    var columns = 8, row = Math.ceil(count / columns), remainder = count % columns || columns;
+    var lastRowStart = count - remainder;
+    if (index < lastRowStart) return '';
+    var startColumn = Math.floor((columns * 2 - remainder * 2) / 2) + 1;
+    return 'style="--hand-row:' + row + ';--hand-column:' +
+      (startColumn + (index - lastRowStart) * 2) + '"';
+  }
   function roomDraw() {
     if (!roomStyleNode && typeof document !== 'undefined') {
       roomStyleNode = document.createElement('style');
@@ -558,11 +567,11 @@
       '</small></div><div class="mine">' + (player ? roomEscape(player.name) + ': ' +
         (player.bid === null ? 'no bid yet' : bidTxt(player)) : 'Waiting for your turn') + '</div><div class="hand">';
     if (player) player.hand.slice().sort(function (a, b) { return SUITS.indexOf(a.s) - SUITS.indexOf(b.s) || b.r - a.r; })
-      .forEach(function (card) {
+      .forEach(function (card, index, hand) {
         var allowed = active && S.phase === 'play' && !S.collect &&
           roomLegal(player.hand, S.trick, S.broken).some(function (item) { return item.id === card.id; });
         html += cardHTML(card, allowed ? ' ok' : ' no',
-          allowed ? 'data-m="card:' + card.id + '"' : '');
+          (allowed ? 'data-m="card:' + card.id + '"' : '') + ' ' + roomHandGridPosition(index, hand.length));
       });
     html += '</div>';
     if (active && S.collect) html += '<div class="acts"><button class="btn" data-m="collect">Collect trick</button></div>';

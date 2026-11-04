@@ -228,6 +228,11 @@
   #room #bd .sp-room .mine{order:3}
 }
 @media(max-width:600px){
+  #room #bd .hr .hand,#room #bd .sp-room .hand{grid-template-columns:repeat(16,minmax(0,1fr))}
+  #room #bd .hr .hand button.card,#room #bd .sp-room .hand button.card{grid-column:span 2}
+  #room #bd .hr .hand button.card[style*="--hand-row"],#room #bd .sp-room .hand button.card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column) / span 2}
+}
+@media(max-width:600px){
   #room #bd .ce-room .ce{box-sizing:border-box;padding-bottom:5vh}
   #room #bd .ce-room .hand{order:1}
   #room #bd .ce-room .msg{order:2;margin-top:8px}
@@ -248,9 +253,9 @@
 }
 @media(max-width:600px){
   #room #bd .bl-room .bl{box-sizing:border-box;padding-bottom:5vh}
-  #room #bd .bl-room .acts{order:1}
-  #room #bd .bl-room .hand{order:2}
-  #room #bd .bl-room .msg{order:3;margin-top:8px}
+  #room #bd .bl-room .hand{order:1}
+  #room #bd .bl-room .msg{order:2;margin-top:8px}
+  #room #bd .bl-room .acts{order:3}
 }
 .display-name-backdrop[hidden]{display:none}
 .display-name-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:rgba(5,9,20,.82);backdrop-filter:blur(8px)}
