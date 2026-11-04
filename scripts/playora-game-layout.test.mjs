@@ -6,6 +6,7 @@ import vm from "node:vm";
 
 const engineSource = readFileSync(fileURLToPath(new URL("../public/playora/core/engine.js", import.meta.url)), "utf8");
 const networkSource = readFileSync(fileURLToPath(new URL("../public/playora/core/net.js", import.meta.url)), "utf8");
+const spadesSource = readFileSync(fileURLToPath(new URL("../public/playora/games/spades.js", import.meta.url)), "utf8");
 const markup = readFileSync(fileURLToPath(new URL("../src/playora/markup.html", import.meta.url)), "utf8");
 const gameStyles = readFileSync(fileURLToPath(new URL("../src/playora/game.css", import.meta.url)), "utf8");
 
@@ -27,6 +28,54 @@ test("guests see available games without controls to change the host selection",
 
 test("the game board stays hidden until the room enters active-game mode", () => {
   assert.match(gameStyles, /#room:not\(\.game-active\) #gm\{display:none!important\}/);
+});
+
+test("the game board contains full-screen games below the room toolbar", () => {
+  assert.match(
+    gameStyles,
+    /#room\.game-active:not\(\.ludo-game\) #bd\{position:relative;min-height:calc\(100dvh - 68px - env\(safe-area-inset-top,0px\) - env\(safe-area-inset-bottom,0px\)\)\}/,
+  );
+});
+
+test("Spades table cards render above overlapping game messages", () => {
+  assert.match(spadesSource, /'\.table\{position:relative;z-index:1;flex:1;min-height:0;/);
+});
+
+test("entering a game resets the room scroll position", () => {
+  const showAssignment = engineSource.match(/show=id=>\{[^\n]+\}/)?.[0];
+  assert.ok(showAssignment, "the engine exposes its shared screen transition helper");
+
+  const roomClasses = new Set();
+  const screens = new Map();
+  const room = {
+    scrollTop: 480,
+    classList: {
+      toggle(name, enabled) {
+        if (enabled) roomClasses.add(name);
+        else roomClasses.delete(name);
+      },
+    },
+  };
+  const context = {
+    $: (id) => {
+      if (id === "room") return room;
+      if (!screens.has(id)) screens.set(id, new Set());
+      const classes = screens.get(id);
+      return {
+        classList: {
+          toggle(name, enabled) {
+            if (enabled) classes.add(name);
+            else classes.delete(name);
+          },
+        },
+      };
+    },
+  };
+
+  vm.runInNewContext(`const SC=["mode","net","lobby","gm"]; const ${showAssignment}; show("gm");`, context);
+
+  assert.equal(room.scrollTop, 0);
+  assert.ok(roomClasses.has("game-active"));
 });
 
 test("restored Ludo and Snakes and Ladders states apply their own dice layout", () => {
