@@ -6,6 +6,7 @@ import vm from "node:vm";
 
 const engineSource = readFileSync(fileURLToPath(new URL("../public/playora/core/engine.js", import.meta.url)), "utf8");
 const networkSource = readFileSync(fileURLToPath(new URL("../public/playora/core/net.js", import.meta.url)), "utf8");
+const bluffSource = readFileSync(fileURLToPath(new URL("../public/playora/games/bluff.js", import.meta.url)), "utf8");
 const spadesSource = readFileSync(fileURLToPath(new URL("../public/playora/games/spades.js", import.meta.url)), "utf8");
 const markup = readFileSync(fileURLToPath(new URL("../src/playora/markup.html", import.meta.url)), "utf8");
 const gameStyles = readFileSync(fileURLToPath(new URL("../src/playora/game.css", import.meta.url)), "utf8");
@@ -53,6 +54,24 @@ test("Spades hides duplicate engine status outside the game board", () => {
 
 test("Spades unplayable cards stay legible while remaining visually muted", () => {
   assert.match(spadesSource, /'\.hand \.card\.no\{filter:brightness\(\.82\)\}'/);
+});
+
+test("Bluff cards overlap vertically at all screen sizes", () => {
+  assert.match(gameStyles, /#room #bd \.bl-room \.hand\{grid-template-rows:repeat\(2,calc\(var\(--w\)\*1\.05\)\)\}/);
+});
+
+test("Bluff claim and pile are arranged side by side", () => {
+  assert.match(bluffSource, /'\.table\{[^']*grid-template-columns:minmax\(0,1fr\) minmax\(0,2fr\) minmax\(0,1fr\);/);
+  assert.match(bluffSource, /'\.mid\{[^']*grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\);grid-template-areas:"need pile" "claim pile" "rev rev";/);
+  assert.match(bluffSource, /'\.need\{grid-area:need\}\.pilebox\{grid-area:pile;justify-self:center\}\.claim\{grid-area:claim\}/);
+});
+
+test("Bluff claim label and rank are inline on mobile", () => {
+  assert.match(bluffSource, /@media\(max-width:600px\)\{\.mid\{grid-template-columns:minmax\(0,1fr\);grid-template-areas:"need" "pile" "claim" "rev"\}\.need\{display:flex;align-items:center;justify-content:center;gap:4px\}\.need b\{display:inline-block;margin:0;font-size:calc\(var\(--w\)\*\.55\)\}\}/);
+});
+
+test("Bluff call and pass buttons fit within the mobile action row", () => {
+  assert.match(gameStyles, /@media\(max-width:600px\)\{#room #bd \.bl-room \.acts\{gap:6px;padding:0 8px\}#room #bd \.bl-room \.acts button\.btn\{width:auto;min-width:0;max-width:100%;flex:1 1 0;margin:0;padding:10px 6px;font-size:clamp\(12px,3\.5vw,14px\);white-space:normal\}\}/);
 });
 
 test("entering a game resets the room scroll position", () => {

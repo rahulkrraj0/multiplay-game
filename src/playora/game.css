@@ -207,6 +207,8 @@
 .standalone-game-host .ar-ov{background:rgba(22,25,34,.9);color:#f5f6fa}
 @media(max-width:520px){#room #bd .sp-room .sp{--w:clamp(32px,11vw,44px)}}
 @media(max-height:520px){#room #bd .sp-room .sp{--w:clamp(32px,13vh,56px)}}
+#room #bd .bl-room .hand{grid-template-rows:repeat(2,calc(var(--w)*1.05))}
+@media(max-width:600px){#room #bd .bl-room .acts{gap:6px;padding:0 8px}#room #bd .bl-room .acts button.btn{width:auto;min-width:0;max-width:100%;flex:1 1 0;margin:0;padding:10px 6px;font-size:clamp(12px,3.5vw,14px);white-space:normal}}
 .display-name-backdrop[hidden]{display:none}
 .display-name-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:rgba(5,9,20,.82);backdrop-filter:blur(8px)}
 .display-name-card{width:min(100%,440px);padding:clamp(22px,6vw,34px);border:1px solid rgba(196,181,253,.28);border-radius:22px;background:linear-gradient(150deg,#252a4d,#11192e);box-shadow:0 24px 80px #0009;color:#f6f7fb}
