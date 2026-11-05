@@ -223,7 +223,7 @@
     '.uno .opp{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 10px;border-radius:12px;font-size:13px;border:2px solid transparent}' +
     '.uno .opp.on{border-color:#f2c230;background:rgba(242,194,48,.12)}.uno .opp .n{font-size:11px;opacity:.8}' +
     '.uno .fan{display:flex;height:calc(var(--w)*.63)}.uno .fan .card+.card{margin-left:calc(var(--w)*-.22)}' +
-    '.uno .table{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:calc(var(--w)*.6)}' +
+    '.uno .table{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:calc(var(--w)*2.4)}' +
     '.uno .pile{background:none;border:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;font:inherit;font-size:12px}' +
     '.uno .pile.ok{cursor:pointer}.uno .pile.ok .card{box-shadow:0 0 0 4px #f2c230,0 6px 14px rgba(0,0,0,.5)}' +
     '.uno .cur{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px}.uno .disc .card{box-shadow:0 0 0 calc(var(--w)*.09) var(--cur)}' +
@@ -266,7 +266,7 @@
     '#room #bd .uno .hand .card:first-child{margin-left:0}#room #bd .uno .hand .card:last-child{margin-right:0}' +
     '#room #bd .uno{box-sizing:border-box;padding-bottom:calc(5vh + env(safe-area-inset-bottom,0px))}' +
     '#room #bd .uno .acts{order:1}#room #bd .uno .hand{order:2}#room #bd .uno .msg{order:3;margin-top:8px}' +
-    '@media(max-height:520px) and (orientation:landscape){#room #bd .uno{--w:clamp(18px,min(8vh,calc((100vw - 32px)/20)),42px);padding-bottom:0}#room #bd .uno .bar{gap:6px;padding:2px 8px}#room #bd .uno .logo{font-size:20px}#room #bd .uno .opps{gap:4px;padding:0 6px}#room #bd .uno .opp{gap:2px;padding:3px 6px;font-size:11px}#room #bd .uno .table{min-height:0;gap:8px}#room #bd .uno .hand{flex-wrap:nowrap;overflow:hidden;padding:4px 8px}#room #bd .uno .acts{min-height:36px;gap:6px}#room #bd .uno .btn{padding:.35em .8em}#room #bd .uno .msg{min-height:1.6em;margin-top:0;padding:2px 8px;font-size:12px}}';
+    '@media(max-height:520px) and (orientation:landscape){#room #bd .uno{--w:clamp(18px,min(8vh,calc((100vw - 32px)/20)),42px);padding-bottom:0}#room #bd .uno .bar{gap:6px;padding:2px 8px}#room #bd .uno .logo{font-size:20px}#room #bd .uno .opps{gap:4px;padding:0 6px}#room #bd .uno .opp{gap:2px;padding:3px 6px;font-size:11px}#room #bd .uno .table{min-height:0;gap:calc(var(--w)*1.6)}#room #bd .uno .hand{flex-wrap:nowrap;overflow:hidden;padding:4px 8px}#room #bd .uno .acts{min-height:36px;gap:6px}#room #bd .uno .btn{padding:.35em .8em}#room #bd .uno .msg{min-height:1.6em;margin-top:0;padding:2px 8px;font-size:12px}}';
 
   function injectStyles() {
     if (typeof document === 'undefined') return;
