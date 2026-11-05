@@ -12,7 +12,6 @@
 /* constants + rules                                                   */
 /* ------------------------------------------------------------------ */
 const CAP = 8, BH = 0.62, MAXL = 500, EASY = 5, KEY = "waterSortSave_v4";   // CAP = blocks per tube, BH = block height / tube width
-let CHROME = 230;                      // px of host page (header, status line, margins) around the board; tune for your layout
 const NMS = ["Player"];
 const COL = ["#ef4444", "#3b82f6", "#22c55e", "#facc15", "#a855f7", "#f97316",
   "#06b6d4", "#ec4899", "#92400e", "#a3e635", "#e2e8f0", "#64748b"];
@@ -143,7 +142,7 @@ function initState() {
 /* ------------------------------------------------------------------ */
 const CSS = `
 .art-watersort{background:linear-gradient(160deg,#5a2d9c,#1a0b3b)}
-.ws-wrap{--w:min(94vw,760px);width:var(--w);margin:0 auto;box-sizing:border-box;padding:6px 10px 14px;border-radius:16px;color:#fff;
+.ws-wrap{--w:min(98%,1200px);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:var(--w);margin:0;box-sizing:border-box;padding:6px 10px 14px;border-radius:16px;color:#fff;
   background:radial-gradient(120% 90% at 50% 0%,#5a2d9c 0%,#2a1458 60%,#1a0b3b 100%);box-shadow:0 18px 44px rgba(20,8,50,.45);
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .ws-wrap *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -199,11 +198,17 @@ const btn = (a, ch, title, dis) => '<button type="button" class="ws-b" data-a="'
 
 // picks the number of rows that gives the biggest tubes for the current window (portrait or landscape)
 function layout(wrap) {
-  const n = S.tubes.length, W = Math.min(innerWidth * 0.94, 760) - 24, H = Math.max(220, innerHeight - CHROME);
+  const area = wrap.closest("#bd, #ws-root") || wrap.parentElement;
+  const board = wrap.querySelector(".ws-board");
+  const boardRect = board && board.getBoundingClientRect();
+  const fixedHeight = boardRect ? wrap.getBoundingClientRect().height - boardRect.height : 0;
+  const n = S.tubes.length;
+  const W = Math.min((area && area.clientWidth || innerWidth) * 0.98, 1200) - 24;
+  const H = Math.max(80, (area && area.clientHeight || innerHeight) - fixedHeight - 16);
   let best = 0, bc = n;
   for (let r = 1; r <= 5; r++) {
     const c = Math.ceil(n / r),
-      u = Math.min((W - (c - 1) * 10) / (1.15 * c), (H - 8 * r) / (CAP * BH * r + 0.75 * (r - 1) + 0.7), 64);
+      u = Math.min((W - (c - 1) * 10) / (1.15 * c),       (H - 8 * r) / (CAP * BH * r + 0.75 * (r - 1) + 0.7));
     if (u > best) { best = u; bc = c; }
   }
   const u = Math.max(best, 10), el = wrap.querySelector(".ws-tubes");
@@ -462,11 +467,10 @@ const game = {
 /* standalone mode: no host on the page, so this file runs the game itself */
 /* ------------------------------------------------------------------ */
 function standalone() {
-  CHROME = 150;
   const go = () => {
     const st = document.createElement("style");
-    st.textContent = "html,body{margin:0;height:100%;background:#1a0b3b}" +
-      "#ws-root{position:fixed;inset:0;overflow:auto;display:flex;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}" +
+    st.textContent = "html,body{margin:0;height:100%;overflow:hidden;background:#1a0b3b}" +
+      "#ws-root{position:fixed;inset:0;overflow:hidden;display:flex;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}" +
       "#ws-root>.ws-wrap{margin:auto}";
     document.head.appendChild(st);
     if (!document.title) document.title = "Water Sort Puzzle";

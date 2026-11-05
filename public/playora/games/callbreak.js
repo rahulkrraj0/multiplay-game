@@ -412,6 +412,17 @@
       roomStyleNode = document.createElement('style');
       roomStyleNode.id = 'callbreak-room-style';
       roomStyleNode.textContent = scopeCSS(CSS, '.cb') +
+        `#room #bd .cb button.card{width:var(--cw);height:calc(var(--cw)*1.45);flex:0 0 var(--cw);margin:0;padding:0;border:1px solid #c9ccd6;border-radius:calc(var(--cw)*.1);background:#fff;color:var(--k);font:inherit;text-align:left;box-shadow:0 3px 8px rgba(0,0,0,.4);appearance:none;-webkit-appearance:none;overflow:hidden}
+#room #bd .cb .hand button.card:first-child{margin-left:auto}#room #bd .cb .hand button.card:last-child{margin-right:auto}
+#room #bd .cb .hand{padding-top:28px;padding-bottom:20px;margin-top:5px}
+#room #bd .cb .hand button.card+button.card{margin-left:calc(var(--w)*-.45)}
+#room #bd .cb .hand{max-width:1160px;margin-left:auto;margin-right:auto}
+#room #bd .cb .room-action{order:1}#room #bd .cb .hand{order:2}#room #bd .cb .msg{order:3;margin-top:8px}#room #bd .cb .mine{order:4}
+#room #bd .cb{box-sizing:border-box;padding-bottom:calc(5vh + env(safe-area-inset-bottom,0px))}
+@media(min-width:601px){#room #bd .cb .hand{flex-wrap:wrap;justify-content:center;overflow-x:hidden;overflow-y:hidden}#room #bd .cb .hand .card:first-child{margin-left:0}#room #bd .cb .hand .card:last-child{margin-right:0}}
+@media(max-width:600px){#room #bd .cb{--w:clamp(36px,min(18vw,calc((100vw - 40px)/7)),76px)}#room #bd .cb .hand{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:calc(var(--w)*.95);align-content:center;justify-items:center;gap:0;overflow:visible;padding:20px 8px calc(10px + var(--w)*.5 + env(safe-area-inset-bottom,0px))}#room #bd .cb .hand button.card{margin:0}#room #bd .cb{padding-bottom:5vh}#room #bd .cb .hand{grid-template-columns:repeat(16,minmax(0,1fr))}#room #bd .cb .hand button.card{grid-column:span 2}#room #bd .cb .hand button.card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column) / span 2;translate:calc(var(--w)*.3) 0}}
+@media(max-width:520px){#room #bd .cb .hand{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}}
+@media(max-width:520px) and (max-height:700px){#room #bd .cb{--w:clamp(36px,min(12vw,12vh),46px)}#room #bd .cb .hand{padding-top:24px}}` +
         '#bd .cb button{width:auto;margin:0}#bd .cb .btn{font:inherit;font-weight:800;padding:.55em 1.1em;border:0;border-radius:999px;background:#ffd45c;color:#16251d;cursor:pointer}' +
         '#bd .cb .bids .btn{box-sizing:border-box;width:100%;min-width:0;padding:.6em 0}' +
         '@media(max-width:520px){#bd .cb .table{padding-top:12px}}';

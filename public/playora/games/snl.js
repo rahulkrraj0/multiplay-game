@@ -142,7 +142,7 @@ function artCss() {
 const PIPS = { 1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] };
 const pipCss = Object.keys(PIPS).map(v => PIPS[v].map(k => '.snl-die[data-v="' + v + '"] i:nth-child(' + k + ")").join(",") + "{opacity:1}").join("\n");
 const CSS = `
-.snl{--bs:min(94vw,82vh,680px);--tw:calc(var(--bs)*.062);display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;margin:0 auto;
+.snl{--bs:min(94vw,82vh,calc(100dvh - 242px),680px);--tw:calc(var(--bs)*.062);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;width:100%;min-height:100%;margin:0 auto;
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .snl *{box-sizing:border-box}
 .snl-frame{width:var(--bs);height:var(--bs);padding:calc(var(--bs)*.022);border-radius:calc(var(--bs)*.035);
@@ -198,7 +198,7 @@ ${pipCss}
 /* wide screens: board on the left, players + dice + Roll button on the right (same as Ludo) */
 @media (min-width:900px) and (min-aspect-ratio:5/4){
   .snl{--bs:min(84vh,760px,calc(100vw - 340px));display:grid;grid-template-columns:var(--bs) minmax(180px,300px);
-    column-gap:clamp(12px,2vw,32px);justify-content:center;justify-content:safe center;align-items:center}
+    column-gap:clamp(12px,2vw,32px);justify-content:center;justify-content:safe center;align-items:center;align-content:center;min-height:100%}
   .snl-frame{grid-column:1;grid-row:1}
   .snl-bar{grid-column:2;grid-row:1;width:auto;max-width:100%;align-items:stretch}
   .snl-act{flex-direction:column}
@@ -206,7 +206,7 @@ ${pipCss}
 }
 @media (max-height:520px) and (orientation:landscape){
   .snl{--bs:min(60vh,calc(100vw - 600px),240px);display:grid;grid-template-columns:var(--bs) minmax(160px,220px);
-    grid-template-rows:auto auto;column-gap:12px;row-gap:4px;justify-content:center;align-items:center}
+    grid-template-rows:auto auto;column-gap:12px;row-gap:4px;justify-content:center;align-items:center;align-content:center;min-height:100%}
   .snl-frame{grid-column:1;grid-row:1}
   .snl-bar{grid-column:2;grid-row:1;width:auto;align-items:stretch;gap:4px}
   .snl-act{flex-direction:column;gap:4px}

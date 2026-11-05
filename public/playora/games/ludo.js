@@ -130,6 +130,7 @@
       /* local view rotation (individual 'rotate' property, so it never fights the entrance animation) */
       "  rotate:var(--lui-rot,0deg);transition:rotate .35s ease;",
       "}",
+      "#room .g.c15.lui{width:var(--lui-size,min(94vw,82vh,680px))}",
       "#room .g.c15.lui{grid-template-columns:repeat(15,minmax(0,1fr))!important;grid-template-rows:repeat(15,minmax(0,1fr))!important}",
       ".g.c15.lui.lui-enter{animation:lui-board-in .55s cubic-bezier(.2,.8,.2,1) both}",
 
@@ -218,7 +219,7 @@
       /* wide screens: board on the left, dice + roll button on the right */
       "@media (min-width:900px) and (min-aspect-ratio:5/4){",
       /* board gets an explicit square size (as large as the screen allows, leaving room for the side column) */
-      "  #room.ludo-game .lui-wide{--lui-size:min(84vh,760px,calc(100vw - 340px));",
+      "  #room.ludo-game .lui-wide{--lui-size:min(calc(100dvh - 76px),calc(100vw - 340px));",
       "    display:grid!important;grid-template-columns:var(--lui-size) minmax(160px,280px);grid-template-rows:var(--lui-rows,auto);",
       "    column-gap:clamp(12px,2vw,32px);justify-content:center;justify-content:safe center;align-items:center;",
       "    width:100%;max-width:none;box-sizing:border-box}",
@@ -229,8 +230,15 @@
       "    margin:0 0 14px!important;max-width:100%}",
       "  #room.ludo-game .lui-wide>.lui-full{grid-column:1/-1;grid-row:var(--lui-row)}",
       "}",
+      "@media (max-aspect-ratio:5/4){",
+      "  #room.ludo-game .lui-board{--lui-size:min(100vw,calc(100dvh - 270px),680px);display:flex;align-items:center;justify-content:center;flex:0 0 var(--lui-size)!important}",
+      "  #room.ludo-game #rl{width:min(60%,216px)}",
+      "}",
+      "@media (max-width:599px) and (max-height:520px) and (orientation:landscape){",
+      "  #room.ludo-game .lui-board{--lui-size:min(68vh,calc(100dvh - 220px),680px)}",
+      "}",
       "@media (max-height:520px) and (orientation:landscape) and (min-width:600px){",
-      "  #room.ludo-game .lui-wide{--lui-size:min(68vh,calc(100dvh - 150px),680px);",
+      "  #room.ludo-game .lui-wide{--lui-size:min(calc(100dvh - 76px),680px);",
       "    display:grid!important;grid-template-columns:var(--lui-size) minmax(160px,280px);grid-template-rows:var(--lui-rows,auto);",
       "    column-gap:clamp(8px,2vw,16px);justify-content:center;align-content:center;align-items:center;",
       "    width:100%;max-width:none;box-sizing:border-box}",
@@ -305,7 +313,17 @@
 
       "@media (max-width:480px){.g.c15.lui{border-width:2px;border-radius:9px}}",
       "@media (prefers-reduced-motion:reduce){",
-      "  .g.c15.lui,.g.c15.lui *,.lui-win *,.lui-rot,.lui-rot *{animation:none!important;transition:none!important}}"
+      "  .g.c15.lui,.g.c15.lui *,.lui-win *,.lui-rot,.lui-rot *{animation:none!important;transition:none!important}}",
+      "#room.ludo-game #lg:empty{display:none}",
+      "#room.ludo-game #st{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;",
+      "  clip:rect(0,0,0,0);clip-path:inset(50%);white-space:nowrap;border:0}",
+      "#room .ludo-placements{width:min(100%,520px);margin:14px auto;padding:12px 16px 12px 38px;border:1px solid var(--bd);border-radius:12px;background:#111a2e;color:var(--fg);line-height:1.6}",
+      "#room.ludo-game #dice{width:72px;height:72px;margin:14px auto 6px;display:flex;align-items:center;justify-content:center;font:800 40px system-ui,sans-serif;background:#fff;color:#111;border-radius:14px;box-shadow:0 4px 14px #0006;user-select:none}",
+      "#room.ludo-game #rl{display:block;width:min(100%,360px);min-height:48px;margin:6px auto 0}",
+      "#room.ludo-game #rl.hide{display:block!important;visibility:hidden}",
+      "#room.ludo-game #dice.roll{animation:tumble .4s linear infinite}@keyframes tumble{to{transform:rotate(360deg)}}",
+      "#room.ludo-game.game-active .rin{min-height:0;flex:1;display:flex;flex-direction:column}",
+      "#room.ludo-game.game-active #gm{flex:1;display:flex;flex-direction:column;justify-content:center}"
     ].join("\n");
     document.head.appendChild(s);
   }

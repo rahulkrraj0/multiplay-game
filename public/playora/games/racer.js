@@ -13,6 +13,16 @@
   const LAPS_TO_WIN = 3;
   const SNAPSHOT_MS = 33;
   const INPUT_MS = 33;
+  const STYLE_ID = "racer-game-style";
+  const CSS = `.race{width:min(100%,1100px);margin:0 auto;padding:10px 12px 18px}
+.race-canvas{display:block;width:100%;aspect-ratio:8/5;border:2px solid rgba(255,255,255,.16);border-radius:18px;background:#183b2d;box-shadow:0 18px 50px #0005}
+.race-help{margin:10px 0;color:#cbd5e1;font-size:14px}
+.race-controls{display:none;grid-template-columns:repeat(4,minmax(56px,76px));justify-content:center;gap:12px}
+.race-control{min-height:58px;border:1px solid rgba(255,255,255,.2);border-radius:16px;background:#1e293b;color:#fff;font-size:24px;font-weight:800;touch-action:none;user-select:none}
+.race-control:active{background:#475569;transform:scale(.97)}
+.race-throttle{background:#146c55}
+.race-brake{background:#8c2934}
+@media(max-width:700px){.race{padding:6px 8px 14px}.race-controls{display:grid}.race-control{min-height:54px}.race-help{font-size:12px}}`;
   const COLORS = ["#4cc9f0", "#ffbe0b"];
   const names = ["Cyan", "Gold"];
   const carName = (player) => typeof nm === "function" ? nm(player) : names[player];
@@ -44,6 +54,14 @@
   let onResize;
   let resizeObserver = null;
   let lastStatusUpdate = 0;
+
+  function injectStyles() {
+    if (document.getElementById(STYLE_ID)) return;
+    const style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = CSS;
+    document.head.appendChild(style);
+  }
 
   function newCar(offset) {
     const angle = -Math.PI / 2 - offset;
@@ -177,13 +195,12 @@
     if (!canvas) return;
     const race = canvas.closest(".race");
     if (!race) return;
-    const toolbar = document.querySelector("#room .rbar");
     const board = document.querySelector("#room #bd");
-    const availableHeight = window.innerHeight - (toolbar?.getBoundingClientRect().height || 0);
-    const controlHeight = window.matchMedia("(max-width: 700px)").matches ? 82 : 0;
-    const canvasHeight = Math.max(120, availableHeight - 76 - controlHeight);
+    const availableHeight = board?.clientHeight || window.innerHeight;
+    const controlHeight = window.matchMedia("(max-width: 700px), (max-height: 520px)").matches ? 82 : 0;
+    const canvasHeight = Math.max(1, availableHeight - controlHeight - 12);
     const availableWidth = (board?.clientWidth || window.innerWidth) - 24;
-    race.style.maxWidth = `${Math.max(200, Math.min(1100, availableWidth, canvasHeight * 1.6))}px`;
+    race.style.maxWidth = `${Math.max(1, Math.min(1100, availableWidth, canvasHeight * 1.6))}px`;
   }
 
   function validControls(value) {
@@ -480,6 +497,7 @@
   }
 
   function start() {
+    injectStyles();
     canvas = document.querySelector(".race-canvas");
     context = canvas?.getContext("2d");
     if (!canvas || !context) return;

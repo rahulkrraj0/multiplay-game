@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { initializeStaticAdSenseSlots } from "@/lib/adsense";
 import markup from "../playora/markup.html?raw";
 import "../playora/site.css";
-import "../playora/game.css";
 import { canonicalUrl } from "../playora/seo-config";
 
 const rootCanonical = canonicalUrl("/");

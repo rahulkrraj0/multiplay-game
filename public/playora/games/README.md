@@ -110,9 +110,10 @@ implementation private, and register one game object.
   lobbies. Games with `max` greater than `1` offer local and online multiplayer;
   the computer-play option appears only when `bot()` is implemented or a
   realtime game sets `computer: true`.
-- Keep the game self-contained and responsive. Add game-specific styles to
-  `src/playora/game.css`, scoped under a unique class such as `.newgame`.
-  Avoid global CSS changes, external runtime dependencies, and network calls.
+- Keep the game self-contained and responsive. Inject game-specific styles
+  from its script, scoped under a unique class such as `.newgame`. Keep shared
+  room and reusable board styles in `src/playora/site.css`. Avoid unrelated
+  global CSS changes, external runtime dependencies, and network calls.
 - The shared sound runtime generates lightweight Web Audio cues for supported
   games and uses a generic synthesized cue for games without a dedicated
   profile. It tries a matching file under `public/playora/sounds/` first and
@@ -181,7 +182,7 @@ For an example turn-based game and a prompt to give another coding LLM, see
 [`examples/playora-countdown-demo.css`](../../../examples/playora-countdown-demo.css),
 and [`examples/PROMPT-FOR-GAME-LLM.md`](../../../examples/PROMPT-FOR-GAME-LLM.md).
 The examples folder is not auto-discovered; copy a finished game script into
-this folder and move its scoped styles into `src/playora/game.css`.
+this folder and move its scoped styles into that game script.
 
 ## Check your game
 

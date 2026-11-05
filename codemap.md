@@ -11,7 +11,7 @@
 ## Playora homepage and browser runtime
 
 - `src/playora/markup.html` is the homepage, game modal, lobby, and call-panel markup.
-- `src/playora/site.css` styles the homepage and lobby. `src/playora/game.css` contains game-board styles.
+- `src/playora/site.css` styles the homepage, shared room/lobby UI, and reusable board elements. Game-specific room styles are injected by each script under `public/playora/games/`.
 - `src/playora/seo-pages.tsx` and `src/playora/seo-pages.css` provide shared game-guide content and presentation.
 - `src/routes/index.tsx` loads scripts in runtime order: `config.js`, `engine.js`, discovered scripts in `public/playora/games/`, then `net.js`, `room.js`, and `site.js`.
 - `public/playora/core/config.js` provides runtime configuration.

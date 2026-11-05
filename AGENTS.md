@@ -31,8 +31,9 @@ the working local and online game flows.
 - TanStack routes live in `src/routes/`; the router is configured in
   `src/router.tsx`. Preserve the preview-path rewrite and the existing error
   component when editing router setup.
-- The Playora game shell and styles are in `src/playora/markup.html`,
-  `src/playora/site.css`, and `src/playora/game.css`.
+- The Playora game shell and shared room styles are in
+  `src/playora/markup.html` and `src/playora/site.css`. Game-specific styles
+  are injected by their scripts in `public/playora/games/`.
 - The browser game runtime is in `public/playora/core/`. Game scripts are
   loaded by `src/routes/index.tsx` in this order: `config.js`, `engine.js`,
   discovered game scripts, then `net.js`, `room.js`, and `site.js`. Check this
@@ -57,7 +58,8 @@ checklist and update the README if the contract changes.
 
 - Add one self-contained classic browser script named with letters, numbers,
   `_`, or `-` under `public/playora/games/`. The Vite manifest discovers game
-  files automatically; never add a second hand-maintained game list.
+  files automatically; never add a second   hand-maintained game list. Inject game-specific styles from the game script;
+  keep shared room and board styles in `src/playora/site.css`.
 - Wrap the script in an IIFE and register exactly one game with
   `registerGame(game)`. Use a unique, stable lowercase `id`; required metadata
   and methods are `t`, `i`, `d`, `n`, `init`, `apply`, `draw`, and `click`.
@@ -72,7 +74,7 @@ checklist and update the README if the contract changes.
   them independently on each peer.
 - `draw()` returns `[boardHTML, statusText]`. Render accessible,
   keyboard- and touch-friendly controls. Escape or avoid untrusted HTML, and
-  keep all game styles scoped to a unique class in `src/playora/game.css`.
+  keep game-specific styles in the script and scoped to a unique game class.
 - Set `max` to the number of active players supported (default 2); extra room
   attendees spectate. `bot()` is optional and only used for local computer
   play; it must return an action accepted by the same validation and apply

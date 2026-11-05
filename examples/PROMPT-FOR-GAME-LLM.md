@@ -49,9 +49,9 @@ If these details leave important rules ambiguous, ask me before implementing.
 - Only for continuous games, follow the README's `realtime: true` lifecycle
   and lossy input/state channel contract. Validate host inputs, keep the host
   authoritative, and clean up timers and listeners on stop.
-- Make controls keyboard and touch accessible. Escape untrusted text, scope
-  styles under a unique game class in `src/playora/game.css`, and support
-  narrow screens.
+- Make controls keyboard and touch accessible. Escape untrusted text, keep
+  game-specific styles in the game script scoped under a unique game class,
+  and support narrow screens.
 - Add `bot()` only if it returns legal actions for local computer play. Never
   let a bot act for an online player.
 - Do not add runtime dependencies, network calls, a hand-maintained game list,
@@ -67,6 +67,7 @@ If these details leave important rules ambiguous, ask me before implementing.
 turn-based two-player game with validation, a local bot, and accessible
 controls. `examples/playora-countdown-demo.css` contains its scoped styles.
 These are examples, not discovered game scripts. When adapting them, use a new
-game ID and copy only the relevant CSS into `src/playora/game.css`.
+game ID and copy only the relevant CSS into the new game script. Shared room
+and reusable board styles belong in `src/playora/site.css`.
 
 ---

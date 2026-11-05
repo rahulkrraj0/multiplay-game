@@ -162,6 +162,9 @@
 .ar-ov{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(255,255,255,.9);color:#1f2937;font-size:22px;font-weight:700;text-align:center;cursor:pointer}
 .ar-ov.on{display:flex}
 .ar-ov button{font:inherit;font-size:16px;padding:8px 18px}
+.standalone-game-host .ar-wrap{box-sizing:border-box;width:min(100%,560px);max-width:560px;padding:0 12px;color:#f3f5fa}
+.standalone-game-host .ar-board{box-sizing:border-box;width:fit-content;max-width:100%;margin:0 auto;background:#20232c!important;border-radius:18px;box-shadow:0 16px 38px rgba(0,0,0,.4)}
+.standalone-game-host .ar-ov{background:rgba(22,25,34,.9);color:#f5f6fa}
 `;
 
   function injectStyles() {
@@ -214,8 +217,8 @@
       const W = Math.max(0, wrap.clientWidth - 24);
       const barH = $('.ar-bar').getBoundingClientRect().height;
       const hostH = host && host.clientHeight || window.innerHeight || 700;
-      const maxH = Math.max(160, Math.min((window.innerHeight || 700) * 0.82, hostH - barH - 24));
-      cell = Math.max(8, Math.floor(Math.min(64, W / s.cols, maxH / s.rows)));
+      const maxH = Math.max(1, Math.min((window.innerHeight || 700) * 0.82, hostH - barH - 24));
+      cell = Math.max(1, Math.floor(Math.min(64, W / s.cols, maxH / s.rows)));
       dpr = window.devicePixelRatio || 1;
       cv.width = s.cols * cell * dpr; cv.height = s.rows * cell * dpr;
       cv.style.width = s.cols * cell + 'px'; cv.style.height = s.rows * cell + 'px';

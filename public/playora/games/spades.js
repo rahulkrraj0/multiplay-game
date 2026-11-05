@@ -507,19 +507,28 @@
       player.hand.length + '</div><span class="nm">' + roomEscape(player.name) + (player.bot ? ' 🤖' : '') +
       '</span><span class="st">' + roomEscape(status) + '</span></div>';
   }
-  function roomHandGridPosition(index, count) {
-    var columns = 8, row = Math.ceil(count / columns), remainder = count % columns || columns;
-    var lastRowStart = count - remainder;
-    if (index < lastRowStart) return '';
-    var startColumn = Math.floor((columns * 2 - remainder * 2) / 2) + 1;
-    return 'style="--hand-row:' + row + ';--hand-column:' +
-      (startColumn + (index - lastRowStart) * 2) + '"';
-  }
   function roomDraw() {
     if (!roomStyleNode && typeof document !== 'undefined') {
       roomStyleNode = document.createElement('style');
       roomStyleNode.id = 'spades-room-style';
       roomStyleNode.textContent = scopeRoomStyles(CSS, '.sp-room') +
+        `#room #bd .sp-room button.card{width:var(--cw);height:calc(var(--cw)*1.45);flex:0 0 var(--cw);margin:0;padding:0;border:1px solid #c9ccd6;border-radius:calc(var(--cw)*.1);background:#fff;color:var(--k);font:inherit;text-align:left;box-shadow:0 3px 8px rgba(0,0,0,.4);appearance:none;-webkit-appearance:none;overflow:hidden}
+#room #bd .sp-room .hand button.card:first-child{margin-left:auto}#room #bd .sp-room .hand button.card:last-child{margin-right:auto}
+#room #bd .sp-room .hand{padding-top:28px;padding-bottom:20px;margin-top:5px}
+#room #bd .sp-room .hand button.card+button.card{margin-left:calc(var(--w)*-.45)}
+#room #bd .sp-room .hand{max-width:1160px;margin-left:auto;margin-right:auto}
+#room #bd .sp-room .acts{order:1}#room #bd .sp-room .hand{order:2}#room #bd .sp-room .msg{order:3;margin-top:8px}#room #bd .sp-room .mine{order:4}
+#room #bd .sp-room .sp{box-sizing:border-box;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+#room #bd .sp-room .sp{box-sizing:border-box;padding-bottom:calc(5vh + env(safe-area-inset-bottom,0px))}
+@media(max-width:600px){#room #bd .sp-room .sp{--w:clamp(36px,min(18vw,calc((100vw - 40px)/7)),76px);box-sizing:border-box;padding-bottom:5vh}#room #bd .sp-room .sp .hand{padding:20px 8px calc(10px + var(--w)*.5 + env(safe-area-inset-bottom,0px))}#room #bd .sp-room .msg{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}}
+@media(max-width:520px){#room #bd .sp-room .sp{--w:clamp(32px,11vw,44px)}#room #bd .sp-room .sp .hand{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}}
+@media(max-height:520px){#room #bd .sp-room .sp{--w:clamp(32px,13vh,56px)}}
+@media(max-height:520px){#room #bd .sp-room .sp{--w:clamp(24px,8vh,36px);padding-bottom:calc(4px + env(safe-area-inset-bottom,0px))}#room #bd .sp-room .sp .hand{padding:12px 8px 8px}#room #bd .sp-room .sp .msg{padding:2px 8px;min-height:2.2em}}
+@media(max-width:520px) and (max-height:700px){#room #bd .sp-room .sp{--w:clamp(36px,min(12vw,12vh),46px)}#room #bd .sp-room .hand{padding-top:24px}}
+#room #bd .sp-room .sp .hand{display:flex;flex-wrap:nowrap;justify-content:center;overflow:hidden;padding-left:calc(var(--w)*.275);padding-right:calc(var(--w)*.275)}
+#room #bd .sp-room .sp .hand button.card{grid-column:auto;margin-left:calc(var(--w)*-.45)}
+#room #bd .sp-room .sp .hand button.card:first-child{margin-left:0}
+#room #bd .sp-room .sp .hand button.card:last-child{margin-right:0}` +
         '#bd .sp-room .sp button{width:auto;margin:0}#bd .sp-room .sp .btn{font:inherit;font-weight:800;padding:.6em 1.2em;border:0;border-radius:999px;background:#ffd45c;color:#121a2c;cursor:pointer}' +
         '@media(prefers-reduced-motion:reduce){.sp-room *,.sp-room *::before,.sp-room *::after{animation:none!important;transition:none!important}}';
       document.head.appendChild(roomStyleNode);
@@ -567,11 +576,10 @@
       '</small></div><div class="mine">' + (player ? roomEscape(player.name) + ': ' +
         (player.bid === null ? 'no bid yet' : bidTxt(player)) : 'Waiting for your turn') + '</div><div class="hand">';
     if (player) player.hand.slice().sort(function (a, b) { return SUITS.indexOf(a.s) - SUITS.indexOf(b.s) || b.r - a.r; })
-      .forEach(function (card, index, hand) {
+      .forEach(function (card) {
         var allowed = active && S.phase === 'play' && !S.collect &&
           roomLegal(player.hand, S.trick, S.broken).some(function (item) { return item.id === card.id; });
-        html += cardHTML(card, allowed ? ' ok' : ' no',
-          (allowed ? 'data-m="card:' + card.id + '"' : '') + ' ' + roomHandGridPosition(index, hand.length));
+        html += cardHTML(card, allowed ? ' ok' : ' no', allowed ? 'data-m="card:' + card.id + '"' : '');
       });
     html += '</div>';
     if (active && S.collect) html += '<div class="acts"><button class="btn" data-m="collect">Collect trick</button></div>';

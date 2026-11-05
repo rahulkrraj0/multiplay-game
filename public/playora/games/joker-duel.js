@@ -19,7 +19,7 @@
 
   const STYLE_ID = "joker-duel-styles";
   const CSS = `
-/* ===== Joker Duel (append to src/playora/game.css) ===== */
+/* ===== Joker Duel styles (injected by this script) ===== */
 
 .art-joker-duel {
   background:
@@ -42,8 +42,8 @@
   flex-direction: column;
   box-sizing: border-box;
   width: min(100%, 68rem);
-  min-height: calc(100vh - 4.25rem);
-  min-height: calc(100dvh - 4.25rem);
+  height: 100%;
+  min-height: 0;
   margin: 0 auto;
   padding: clamp(0.6rem, 3vw, 1.25rem);
   overflow: hidden;
@@ -491,8 +491,8 @@
 
 @media (max-width: 30rem) {
   .joker-duel {
-    min-height: calc(100vh - 4.625rem);
-    min-height: calc(100dvh - 4.625rem);
+    height: 100%;
+    min-height: 0;
   }
   .joker-duel .jd-actions { gap: 0.5rem; }
   .joker-duel button.jd-btn[data-i]:not(.jd-btn--deal) {

@@ -19,8 +19,8 @@ const ghost = (v) => "url(\"data:image/svg+xml," + encodeURIComponent(v === "X"
   : `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='27' stroke='${INK.O}' stroke-width='11' fill='none'/></svg>`) + "\")";
 
 const CSS = `
-.g.c3.tt{--bs:min(88vw,70vh,420px);position:relative;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr)!important;
-  width:var(--bs)!important;height:var(--bs)!important;max-width:none!important;aspect-ratio:1/1!important;margin:0 auto;padding:10px;gap:0!important;box-sizing:border-box;
+.g.c3.tt{--bs:min(88vw,70vh,420px);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr)!important;
+  width:var(--bs)!important;height:var(--bs)!important;max-width:none!important;aspect-ratio:1/1!important;margin:0;padding:10px;gap:0!important;box-sizing:border-box;
   border:0;border-radius:22px;background:#f6efe0;
   background-image:radial-gradient(circle at 20% 15%,rgba(255,255,255,.7),transparent 55%),radial-gradient(circle at 85% 90%,rgba(190,160,110,.18),transparent 60%);
   box-shadow:0 16px 40px rgba(60,40,10,.22),0 2px 6px rgba(60,40,10,.15),inset 0 0 0 1px rgba(120,90,40,.18);isolation:isolate}

@@ -43,8 +43,8 @@
   gap: 0.55rem;
   box-sizing: border-box;
   width: min(100%, 72rem);
-  min-height: calc(100vh - 4.25rem);
-  min-height: calc(100dvh - 4.25rem);
+  height: 100%;
+  min-height: 0;
   margin: 0 auto;
   padding: clamp(0.6rem, 2.5vw, 1.25rem);
   overflow: hidden;
@@ -462,7 +462,7 @@
 }
 
 @media (max-width: 30rem) {
-  .rummy { min-height: calc(100vh - 4.625rem); min-height: calc(100dvh - 4.625rem); }
+  .rummy { height: 100%; min-height: 0; }
   .rummy button.rm-btn[data-i] { min-width: 0 !important; flex: 1 1 6rem !important; padding: 0.55rem 0.4rem !important; font-size: 0.9rem !important; }
 }
 

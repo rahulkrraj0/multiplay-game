@@ -7,6 +7,7 @@ import vm from "node:vm";
 const engineSource = readFileSync(fileURLToPath(new URL("../public/playora/core/engine.js", import.meta.url)), "utf8");
 const game2048Source = readFileSync(fileURLToPath(new URL("../public/playora/games/2048-game.js", import.meta.url)), "utf8");
 const arrowsSource = readFileSync(fileURLToPath(new URL("../public/playora/games/arrows-game.js", import.meta.url)), "utf8");
+const carromSource = readFileSync(fileURLToPath(new URL("../public/playora/games/carrom.js", import.meta.url)), "utf8");
 const networkSource = readFileSync(fileURLToPath(new URL("../public/playora/core/net.js", import.meta.url)), "utf8");
 const bluffSource = readFileSync(fileURLToPath(new URL("../public/playora/games/bluff.js", import.meta.url)), "utf8");
 const callBreakSource = readFileSync(fileURLToPath(new URL("../public/playora/games/callbreak.js", import.meta.url)), "utf8");
@@ -15,8 +16,13 @@ const heartsSource = readFileSync(fileURLToPath(new URL("../public/playora/games
 const spadesSource = readFileSync(fileURLToPath(new URL("../public/playora/games/spades.js", import.meta.url)), "utf8");
 const unoSource = readFileSync(fileURLToPath(new URL("../public/playora/games/uno.js", import.meta.url)), "utf8");
 const ludoSource = readFileSync(fileURLToPath(new URL("../public/playora/games/ludo.js", import.meta.url)), "utf8");
+const snlSource = readFileSync(fileURLToPath(new URL("../public/playora/games/snl.js", import.meta.url)), "utf8");
+const waterSortSource = readFileSync(fileURLToPath(new URL("../public/playora/games/watersort-game.js", import.meta.url)), "utf8");
+const chessSource = readFileSync(fileURLToPath(new URL("../public/playora/games/chess.js", import.meta.url)), "utf8");
+const checkersSource = readFileSync(fileURLToPath(new URL("../public/playora/games/checkers-game.js", import.meta.url)), "utf8");
+const racerSource = readFileSync(fileURLToPath(new URL("../public/playora/games/racer.js", import.meta.url)), "utf8");
 const markup = readFileSync(fileURLToPath(new URL("../src/playora/markup.html", import.meta.url)), "utf8");
-const gameStyles = readFileSync(fileURLToPath(new URL("../src/playora/game.css", import.meta.url)), "utf8");
+const gameStyles = readFileSync(fileURLToPath(new URL("../src/playora/site.css", import.meta.url)), "utf8");
 
 test("the host game picker can collapse while showing the selected game", () => {
   assert.match(markup, /<details id="gamePicker" open><summary>Choose a game <span id="gameSelection"><\/span><svg class="game-picker-arrow"/);
@@ -38,26 +44,73 @@ test("the game board stays hidden until the room enters active-game mode", () =>
   assert.match(gameStyles, /#room:not\(\.game-active\) #gm\{display:none!important\}/);
 });
 
-test("the game board contains full-screen games below the room toolbar", () => {
-  assert.match(
-    gameStyles,
-    /#room\.game-active:not\(\.ludo-game\) #bd\{position:relative;min-height:calc\(100dvh - 68px - env\(safe-area-inset-top,0px\) - env\(safe-area-inset-bottom,0px\)\)\}/,
-  );
+test("active games fill the space below the measured toolbar without room scrolling", () => {
+  assert.match(gameStyles, /#room\.game-active\{display:flex;flex-direction:column;overflow:hidden\}/);
+  assert.match(gameStyles, /#room\.game-active \.rbar\{position:relative;flex:0 0 auto\}/);
+  assert.match(gameStyles, /#room\.game-active \.rin\{display:flex;flex:1;flex-direction:column;min-height:0;[^}]*overflow:hidden\}/);
+  assert.match(gameStyles, /#room\.game-active #gm\{display:flex;flex:1;flex-direction:column;min-height:0;[^}]*overflow:hidden\}/);
+  assert.match(gameStyles, /#room\.game-active #bd\{position:relative;flex:1;min-width:0;min-height:0;overflow:hidden\}/);
 });
 
 test("Arrows keeps its HUD at the top and centers the board within the full-screen area", () => {
   assert.match(arrowsSource, /\.ar-wrap\{position:relative;[^}]*min-height:100%;[^}]*display:flex;flex-direction:column;justify-content:center/);
   assert.match(arrowsSource, /\.ar-bar\{position:absolute;top:12px;left:12px;right:12px;z-index:1;/);
+  assert.match(arrowsSource, /const maxH = Math\.max\(1, Math\.min/);
 });
 
-test("standalone games use one full-width scroll viewport", () => {
+test("standalone games use one full-width, non-scrolling viewport", () => {
   assert.match(gameStyles, /#room\.standalone-game\{overflow:hidden\}/);
-  assert.match(gameStyles, /\.standalone-game #gm\{width:100vw;height:calc\(100dvh - 64px\);min-height:0;overflow:hidden\}/);
-  assert.match(gameStyles, /\.standalone-game-host\{position:absolute;inset:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch\}/);
+  assert.match(gameStyles, /\.standalone-game #gm\{width:100%;height:auto;min-height:0;flex:1;overflow:hidden\}/);
+  assert.match(gameStyles, /\.standalone-game-host\{position:absolute;inset:0;overflow:hidden\}/);
 });
 
-test("embedded game shells allow vertical scrolling without horizontal overflow", () => {
-  assert.match(gameStyles, /\.embedded-game #gm\{[^}]*overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch\}/);
+test("embedded game shells do not create their own scroll viewport", () => {
+  assert.match(gameStyles, /\.embedded-game #gm\{height:auto;min-height:0;flex:1;overflow:hidden\}/);
+  assert.match(gameStyles, /\.embedded-game-board\{position:relative;height:auto;min-height:0;flex:1;overflow:hidden\}/);
+});
+
+test("short landscape game boards and card layouts scale within the game area", () => {
+  assert.match(checkersSource, /\.ck-wrap\{[^}]*height:100%;min-height:0/);
+  assert.match(checkersSource, /@media\(max-width:899px\) and \(max-height:520px\) and \(orientation:landscape\)\{#room \.ck-board\{width:min\(100%,680px,calc\(100dvh - 210px\)\)\}\}/);
+  assert.match(chessSource, /\.cb3w\{width:100%;height:100%;min-height:0/);
+  assert.match(ludoSource, /#room\.ludo-game \.lui-wide\{--lui-size:min\(calc\(100dvh - 76px\),680px\)/);
+  assert.match(ludoSource, /@media \(max-aspect-ratio:5\/4\)\{[\s\S]*?#room\.ludo-game \.lui-board\{--lui-size:min\(100vw,calc\(100dvh - 270px\),680px\);display:flex;align-items:center;justify-content:center;flex:0 0 var\(--lui-size\)!important\}/);
+  assert.match(ludoSource, /@media \(max-aspect-ratio:5\/4\)\{[\s\S]*?#room\.ludo-game #rl\{width:min\(60%,216px\)\}/);
+  assert.match(ludoSource, /@media \(max-width:599px\) and \(max-height:520px\) and \(orientation:landscape\)/);
+  assert.match(ludoSource, /#room\.ludo-game #rl\.hide\{display:block!important;visibility:hidden\}/);
+  assert.match(ludoSource, /#room\.ludo-game #st\{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;[\s\S]*?clip-path:inset\(50%\);white-space:nowrap/);
+  assert.match(ludoSource, /#room\.ludo-game #lg:empty\{display:none\}/);
+  assert.match(ludoSource, /#room \.g\.c15\.lui\{width:var\(--lui-size,min\(94vw,82vh,680px\)\)\}/);
+  assert.match(heartsSource, /@media\(max-height:520px\) and \(orientation:landscape\)\{#room #bd \.hr\{--w:clamp\(24px/);
+  assert.match(unoSource, /@media\(max-height:520px\) and \(orientation:landscape\)\{#room #bd \.uno\{--w:clamp\(18px/);
+  assert.match(carromSource, /@media\(max-height:700px\),\(orientation:landscape\) and \(max-height:1000px\)\{\s*\.cr-wrap\{--bw:min\(68vh,56vw,calc\(100dvh - 120px\),640px\);display:grid/);
+  assert.match(carromSource, /@media\(max-height:380px\)\{\.cr-wrap\{gap:2px\}\}/);
+  assert.match(crazyEightsSource, /@media\(max-height:380px\) and \(orientation:landscape\)\{\.ce\{--w:clamp\(30px,min\(8vw,10vh\),40px\)\}/);
+});
+
+test("Snakes and Ladders centers the board and controls within its viewport", () => {
+  assert.match(snlSource, /\.snl\{--bs:min\(94vw,82vh,calc\(100dvh - 242px\),680px\);--tw:[^;]+;display:flex;flex-direction:column;align-items:center;justify-content:center;[^}]*min-height:100%/);
+  assert.match(snlSource, /@media \(min-width:900px\) and \(min-aspect-ratio:5\/4\)\{\s*\.snl\{[^}]*align-content:center;min-height:100%\}/);
+  assert.match(snlSource, /@media \(max-height:520px\) and \(orientation:landscape\)\{\s*\.snl\{[^}]*align-content:center;min-height:100%\}/);
+});
+
+test("Ludo uses available board space without showing bottom status text", () => {
+  assert.match(ludoSource, /#room\.ludo-game \.lui-wide\{--lui-size:min\(calc\(100dvh - 76px\),calc\(100vw - 340px\)\)/);
+  assert.match(ludoSource, /@media \(max-aspect-ratio:5\/4\)\{[\s\S]*?#room\.ludo-game \.lui-board\{--lui-size:min\(100vw,calc\(100dvh - 270px\),680px\)/);
+  assert.match(ludoSource, /@media \(max-height:520px\) and \(orientation:landscape\) and \(min-width:600px\)\{[\s\S]*?#room\.ludo-game \.lui-wide\{--lui-size:min\(calc\(100dvh - 76px\),680px\)/);
+  assert.match(ludoSource, /#room\.ludo-game #st\{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;[\s\S]*?clip-path:inset\(50%\);white-space:nowrap/);
+  assert.match(ludoSource, /rows\.push\("1fr"\);\s*sideKids\.forEach\(function \(\) \{ rows\.push\("auto"\); \}\);\s*rows\.push\("1fr"\)/);
+});
+
+test("Water Sort sizes tubes from the available game viewport", () => {
+  assert.match(waterSortSource, /const H = Math\.max\(80, \(area && area\.clientHeight \|\| innerHeight\) - fixedHeight - 16\)/);
+  assert.match(waterSortSource, /html,body\{margin:0;height:100%;overflow:hidden;background:#1a0b3b\}/);
+  assert.match(waterSortSource, /#ws-root\{position:fixed;inset:0;overflow:hidden;display:flex/);
+});
+
+test("Realtime Racer sizes its board from the space below the toolbar", () => {
+  assert.match(racerSource, /const availableHeight = board\?\.clientHeight \|\| window\.innerHeight/);
+  assert.match(racerSource, /window\.matchMedia\("\(max-width: 700px\), \(max-height: 520px\)"\)/);
 });
 
 test("2048 action buttons fit the game viewport", () => {
@@ -75,8 +128,12 @@ test("Spades table cards render above overlapping game messages", () => {
 });
 
 test("Spades hand cards scale down on narrow and short mobile viewports", () => {
-  assert.match(gameStyles, /@media\(max-width:520px\)\{#room #bd \.sp-room \.sp\{--w:clamp\(32px,11vw,44px\)\}\}/);
-  assert.match(gameStyles, /@media\(max-height:520px\)\{#room #bd \.sp-room \.sp\{--w:clamp\(32px,13vh,56px\)\}\}/);
+  assert.match(spadesSource, /@media\(max-width:520px\)\{#room #bd \.sp-room \.sp\{--w:clamp\(32px,11vw,44px\)/);
+  assert.match(spadesSource, /@media\(max-height:520px\)\{#room #bd \.sp-room \.sp\{--w:clamp\(32px,13vh,56px\)/);
+});
+
+test("Spades keeps the trick table visible on short screens", () => {
+  assert.match(spadesSource, /@media\(max-height:520px\)\{#room #bd \.sp-room \.sp\{--w:clamp\(24px,8vh,36px\);padding-bottom:calc\(4px \+ env\(safe-area-inset-bottom,0px\)\)\}#room #bd \.sp-room \.sp \.hand\{padding:12px 8px 8px\}#room #bd \.sp-room \.sp \.msg\{padding:2px 8px;min-height:2\.2em\}\}/);
 });
 
 test("Spades hides duplicate engine status outside the game board", () => {
@@ -91,20 +148,19 @@ test("games hide duplicate bottom status except Chess and Ludo", () => {
 
 test("card-game status follows each hand with five-percent bottom spacing", () => {
   const games = [
-    { root: ".bl-room .bl", hand: ".bl-room .hand", msg: ".bl-room .msg", action: ".bl-room .acts" },
-    { root: ".cb", hand: ".cb .hand", msg: ".cb .msg", action: ".cb .room-action" },
-    { root: ".ce-room .ce", hand: ".ce-room .hand", msg: ".ce-room .msg", action: ".ce-room .acts" },
-    { root: ".hr", hand: ".hr .hand", msg: ".hr .msg", action: ".hr .acts" },
-    { root: ".sp-room .sp", hand: ".sp-room .hand", msg: ".sp-room .msg", action: ".sp-room .acts" },
-    { root: ".uno", hand: ".uno .hand", msg: ".uno .msg", action: ".uno .acts" },
+    { source: bluffSource, root: ".bl-room .bl", hand: ".bl-room .hand", msg: ".bl-room .msg", action: ".bl-room .acts" },
+    { source: callBreakSource, root: ".cb", hand: ".cb .hand", msg: ".cb .msg", action: ".cb .room-action" },
+    { source: crazyEightsSource, root: ".ce-room .ce", hand: ".ce-room .hand", msg: ".ce-room .msg", action: ".ce-room .acts" },
+    { source: heartsSource, root: ".hr", hand: ".hr .hand", msg: ".hr .msg", action: ".hr .acts" },
+    { source: spadesSource, root: ".sp-room .sp", hand: ".sp-room .hand", msg: ".sp-room .msg", action: ".sp-room .acts" },
+    { source: unoSource, root: ".uno", hand: ".uno .hand", msg: ".uno .msg", action: ".uno .acts" },
   ];
-  const roots = games.map((game) => `#room #bd ${game.root}`);
-  assert.ok(gameStyles.includes(roots.join(",") +
-    "{box-sizing:border-box;padding-bottom:calc(5vh + env(safe-area-inset-bottom,0px))}"));
-  assert.ok(gameStyles.includes(games.map((game) => `#room #bd ${game.action}`).join(",") + "{order:1}"));
-  assert.ok(gameStyles.includes(games.map((game) => `#room #bd ${game.hand}`).join(",") + "{order:2}"));
-  assert.ok(gameStyles.includes(games.map((game) => `#room #bd ${game.msg}`).join(",") +
-    "{order:3;margin-top:8px}"));
+  for (const game of games) {
+    assert.ok(game.source.includes(`#room #bd ${game.root}`), `${game.root} keeps its room styles in its own script`);
+    assert.ok(game.source.includes(`#room #bd ${game.action}{order:1}`), `${game.root} keeps actions above its hand`);
+    assert.ok(game.source.includes(`#room #bd ${game.hand}{order:2}`), `${game.root} keeps its hand after actions`);
+    assert.ok(game.source.includes(`#room #bd ${game.msg}{order:3;margin-top:8px}`), `${game.root} keeps its message below the hand`);
+  }
 });
 
 test("Spades unplayable cards stay legible while remaining visually muted", () => {
@@ -117,11 +173,14 @@ test("Spades bid choices stay within the bid panel on narrow screens", () => {
 });
 
 test("Spades mobile status text sits below the cards with bottom spacing", () => {
-  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.sp-room \.sp\{box-sizing:border-box;padding-bottom:calc\(18px \+ env\(safe-area-inset-bottom,0px\)\)\}\s*#room #bd \.sp-room \.msg\{padding-bottom:calc\(12px \+ env\(safe-area-inset-bottom,0px\)\)\}\s*\}/);
+  assert.match(spadesSource, /#room #bd \.sp-room \.sp\{box-sizing:border-box;padding-bottom:calc\(18px \+ env\(safe-area-inset-bottom,0px\)\)\}/);
+  assert.match(spadesSource, /#room #bd \.sp-room \.msg\{padding-bottom:calc\(12px \+ env\(safe-area-inset-bottom,0px\)\)\}/);
 });
 
 test("Crazy Eights mobile text follows cards with five-percent bottom spacing", () => {
-  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.ce-room \.ce\{box-sizing:border-box;padding-bottom:5vh\}\s*#room #bd \.ce-room \.acts\{margin-top:4px\}\s*#room #bd \.ce-room \.hand\{grid-template-columns:repeat\(16,minmax\(0,1fr\)\)\}\s*#room #bd \.ce-room \.hand button\.card\{grid-column:span 2\}\s*#room #bd \.ce-room \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\)\}\s*\}/);
+  assert.match(crazyEightsSource, /#room #bd \.ce-room \.ce\{--w:clamp[^}]*padding-bottom:5vh\}/);
+  assert.match(crazyEightsSource, /#room #bd \.ce-room \.acts\{margin-top:4px\}/);
+  assert.match(crazyEightsSource, /#room #bd \.ce-room \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\)\}/);
 });
 
 test("Crazy Eights mobile card spread centers the incomplete row", () => {
@@ -132,11 +191,12 @@ test("Crazy Eights mobile card spread centers the incomplete row", () => {
   assert.equal(position(8, 13), 'style="--hand-row:2;--hand-column:4"');
   assert.equal(position(12, 13), 'style="--hand-row:2;--hand-column:12"');
   assert.match(crazyEightsSource, /@media\(max-width:600px\)\{\.hand\{grid-template-columns:repeat\(16,minmax\(0,1fr\)\)\}\.hand \.card\{grid-column:span 2\}\.hand \.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\)\}\}/);
-  assert.match(gameStyles, /#room #bd \.ce-room \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\)\}/);
+  assert.match(crazyEightsSource, /#room #bd \.ce-room \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\)\}/);
 });
 
 test("Call Break mobile status follows the hand with five-percent bottom spacing", () => {
-  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.cb\{box-sizing:border-box;padding-bottom:5vh\}\s*#room #bd \.cb \.hand\{grid-template-columns:repeat\(16,minmax\(0,1fr\)\)\}\s*#room #bd \.cb \.hand button\.card\{grid-column:span 2\}\s*#room #bd \.cb \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2;translate:calc\(var\(--w\)\*\.3\) 0\}\s*\}/);
+  assert.match(callBreakSource, /#room #bd \.cb\{padding-bottom:5vh\}/);
+  assert.match(callBreakSource, /#room #bd \.cb \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2;translate:calc\(var\(--w\)\*\.3\) 0\}/);
 });
 
 test("Call Break mobile hand centers its final row", () => {
@@ -147,33 +207,50 @@ test("Call Break mobile hand centers its final row", () => {
   assert.equal(position(8, 13), 'style="--hand-row:2;--hand-column:4"');
   assert.equal(position(12, 13), 'style="--hand-row:2;--hand-column:12"');
   assert.match(callBreakSource, /@media\(max-width:600px\)\{\.hand\{display:grid;grid-template-columns:repeat\(16,minmax\(0,1fr\)\);grid-auto-rows:calc\(var\(--w\)\*\.95\);align-content:center;justify-items:center;gap:0;overflow:visible\}\.hand \.card\{grid-column:span 2;margin:0\}\.hand \.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2;translate:calc\(var\(--w\)\*\.3\) 0\}/);
-  assert.match(gameStyles, /#room #bd \.cb \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2;translate:calc\(var\(--w\)\*\.3\) 0\}/);
+  assert.match(callBreakSource, /#room #bd \.cb \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2;translate:calc\(var\(--w\)\*\.3\) 0\}/);
 });
 
-test("Hearts and Spades mobile hands center the incomplete row", () => {
-  for (const source of [heartsSource, spadesSource]) {
-    const helper = source.match(/function roomHandGridPosition\(index, count\)\s*\{[\s\S]*?\n  \}/)?.[0];
-    assert.ok(helper, "the game exposes mobile card row positioning");
-    const position = vm.runInNewContext("(" + helper + ")");
-    assert.equal(position(8, 13), 'style="--hand-row:2;--hand-column:4"');
-    assert.equal(position(12, 13), 'style="--hand-row:2;--hand-column:12"');
-  }
-  assert.match(gameStyles, /#room #bd \.hr \.hand,#room #bd \.sp-room \.hand\{grid-template-columns:repeat\(16,minmax\(0,1fr\)\)\}/);
-  assert.match(gameStyles, /#room #bd \.hr \.hand button\.card\[style\*="--hand-row"\],#room #bd \.sp-room \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2\}/);
+test("Hearts centers its final mobile row and Spades keeps the hand in one row", () => {
+  const helper = heartsSource.match(/function roomHandGridPosition\(index, count\)\s*\{[\s\S]*?\n  \}/)?.[0];
+  assert.ok(helper, "Hearts exposes mobile card row positioning");
+  const position = vm.runInNewContext("(" + helper + ")");
+  assert.equal(position(8, 13), 'style="--hand-row:2;--hand-column:4"');
+  assert.equal(position(12, 13), 'style="--hand-row:2;--hand-column:12"');
+  assert.doesNotMatch(spadesSource, /function roomHandGridPosition/);
+  assert.match(heartsSource, /#room #bd \.hr \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2\}/);
+  assert.match(spadesSource, /#room #bd \.sp-room \.sp \.hand\{display:flex;flex-wrap:nowrap;justify-content:center;overflow:hidden;padding-left:calc\(var\(--w\)\*\.275\);padding-right:calc\(var\(--w\)\*\.275\)\}/);
 });
 
 test("card hands wrap to fit the game viewport and Ludo wide styles stay scoped to Ludo", () => {
-  assert.match(gameStyles, /@media\(min-width:601px\)\{\s*#room #bd \.cb \.hand,#room #bd \.ce-room \.ce \.hand,#room #bd \.hr \.hand,#room #bd \.sp-room \.sp \.hand\{flex-wrap:wrap;justify-content:center;overflow-x:hidden;overflow-y:hidden\}/);
-  assert.match(gameStyles, /#room #bd \.uno \.hand\{flex-wrap:wrap;justify-content:center;overflow:visible\}/);
-  assert.match(ludoSource, /#room\.ludo-game \.lui-wide\{--lui-size:min\(84vh,760px,calc\(100vw - 340px\)\)/);
+  for (const [source, selector] of [
+    [callBreakSource, ".cb"],
+    [crazyEightsSource, ".ce-room .ce"],
+    [heartsSource, ".hr"],
+    [spadesSource, ".sp-room .sp"],
+  ]) {
+    assert.ok(source.includes(`#room #bd ${selector}`));
+    assert.match(source, /@media\(min-width:601px\)\{#room #bd /);
+    assert.match(source, /flex-wrap:wrap;justify-content:center;overflow-x:hidden;overflow-y:hidden/);
+  }
+  assert.match(unoSource, /#room #bd \.uno \.hand\{flex-wrap:wrap;justify-content:center;overflow:visible/);
+  assert.match(ludoSource, /#room\.ludo-game \.lui-wide\{--lui-size:min\(calc\(100dvh - 76px\),calc\(100vw - 340px\)\)/);
   assert.doesNotMatch(ludoSource, /"\s+\.lui-wide\{--lui-size/);
+});
+
+test("game-specific room styles live in each game's script", () => {
+  assert.doesNotMatch(gameStyles, /#room #bd \.bl-room button\.card|#room\.ludo-game #dice\{|\.standalone-game-host \.ar-wrap\{|^\.race\{/m);
+  assert.match(ludoSource, /#room\.ludo-game #dice\{width:72px/);
+  assert.match(ludoSource, /#room\.ludo-game\.game-active \.rin\{min-height:0;flex:1;display:flex;flex-direction:column\}/);
+  assert.match(chessSource, /#room\.chess-game \.lm\{background-image:linear-gradient/);
+  assert.match(arrowsSource, /\.standalone-game-host \.ar-wrap\{box-sizing:border-box/);
+  assert.match(racerSource, /const CSS = `\.race\{width:min\(100%,1100px\)/);
 });
 
 test("Bluff selected cards lift above neighboring cards", () => {
   assert.match(bluffSource, /'\.hand\{[^']*grid-template-columns:repeat\(30,minmax\(0,1fr\)\);grid-auto-rows:calc\(var\(--w\)\*\.95\)/);
   assert.match(bluffSource, /\.hand \.card\{grid-column:span 2;width:var\(--w\);height:calc\(var\(--w\)\*1\.45\);justify-self:center;cursor:default\}/);
   assert.match(bluffSource, /\.hand \.card\.sel\{position:relative;z-index:5;transform:translateY\(calc\(var\(--w\)\*-.55\)\);/);
-  assert.match(gameStyles, /#room #bd \.bl-room \.hand\{max-width:1160px;margin-left:auto;margin-right:auto;grid-auto-rows:calc\(var\(--w\)\*\.95\);row-gap:0;overflow:visible;padding-bottom:calc\(10px \+ var\(--w\)\*\.5\)\}/);
+  assert.match(bluffSource, /#room #bd \.bl-room \.hand\{max-width:1160px;margin:5px auto 0;grid-auto-rows:calc\(var\(--w\)\*\.95\);row-gap:0;overflow:visible;padding-top:28px;padding-bottom:calc\(10px \+ var\(--w\)\*\.5\)\}/);
 });
 
 test("Selectable cards stay above overlapping neighbors in every card game", () => {
@@ -250,32 +327,33 @@ test("Bluff centers each desktop and mobile row while increasing overlap", () =>
   assert.equal(position(0, 13), 'style="--hand-row:1;--hand-column:3;--mobile-row:1;--mobile-column:3"');
   assert.equal(position(8, 13), 'style="--hand-row:1;--hand-column:19;--mobile-row:2;--mobile-column:6"');
   assert.equal(position(12, 13), 'style="--hand-row:1;--hand-column:27;--mobile-row:2;--mobile-column:14"');
-  assert.match(gameStyles, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}#room #bd \.bl-room \.bl \.setup-choice\{width:3\.6rem;font-size:1\.35rem\}#room #bd \.bl-room \.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\);grid-template-rows:none;grid-auto-rows:calc\(var\(--w\)\*\.95\)\}#room #bd \.bl-room \.hand button\.card\{grid-column:span 2\}#room #bd \.bl-room \.hand button\.card\[style\*="--mobile-row"\]\{grid-row:var\(--mobile-row\);grid-column:var\(--mobile-column\) \/ span 2\}\}/);
+  assert.match(bluffSource, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}#room #bd \.bl-room \.bl \.setup-choice\{width:3\.6rem;font-size:1\.35rem\}#room #bd \.bl-room \.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\);grid-template-rows:none;grid-auto-rows:calc\(var\(--w\)\*\.95\)\}#room #bd \.bl-room \.hand button\.card\{grid-column:span 2\}#room #bd \.bl-room \.hand button\.card\[style\*="--mobile-row"\]\{grid-row:var\(--mobile-row\);grid-column:var\(--mobile-column\) \/ span 2\}/);
 });
 
 test("Bluff mobile cards stay above status and actions with five-percent bottom spacing", () => {
   assert.match(bluffSource, /@media\(max-width:600px\)\{\.bl\{[^}]*padding-bottom:5vh\}/);
-  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.bl-room \.bl\{box-sizing:border-box;padding-bottom:5vh\}\s*\}/);
+  assert.match(bluffSource, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{padding-bottom:5vh\}/);
 });
 
 test("Bluff cards overlap on narrow mobile and wide desktop viewports", () => {
-  assert.match(gameStyles, /@media\(max-width:1250px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(8vw,calc\(\(100vw - 56px\)\/11\)\),92px\)\}\}/);
-  assert.match(gameStyles, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}#room #bd \.bl-room \.bl \.setup-choice\{width:3\.6rem;font-size:1\.35rem\}#room #bd \.bl-room \.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\);grid-template-rows:none;grid-auto-rows:calc\(var\(--w\)\*\.95\)\}/);
+  assert.match(bluffSource, /@media\(max-width:1250px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(8vw,calc\(\(100vw - 56px\)\/11\)\),92px\)\}\}/);
+  assert.match(bluffSource, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}#room #bd \.bl-room \.bl \.setup-choice\{width:3\.6rem;font-size:1\.35rem\}#room #bd \.bl-room \.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\);grid-template-rows:none;grid-auto-rows:calc\(var\(--w\)\*\.95\)\}/);
 });
 
-test("Call Break, Crazy Eights, Hearts, and Spades use larger eight-column mobile hands", () => {
+test("Call Break, Crazy Eights, and Hearts use larger eight-column mobile hands", () => {
   const gameClasses = [
     [callBreakSource, "#room #bd .cb"],
     [crazyEightsSource, "#room #bd .ce-room .ce"],
     [heartsSource, "#room #bd .hr"],
-    [spadesSource, "#room #bd .sp-room .sp"],
   ];
   for (const [source, selector] of gameClasses) {
     assert.match(source, /'\.hand\{display:flex;overflow-x:auto;overflow-y:hidden/);
-    assert.ok(gameStyles.includes(selector), `${selector} gets the mobile card-size override`);
+    assert.ok(source.includes(selector), `${selector} keeps its responsive styles in its own script`);
   }
-  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.cb,#room #bd \.ce-room \.ce,#room #bd \.hr,#room #bd \.sp-room \.sp\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}/);
-  assert.match(gameStyles, /#room #bd \.cb \.hand,#room #bd \.ce-room \.hand,#room #bd \.hr \.hand,#room #bd \.sp-room \.hand\{display:grid;grid-template-columns:repeat\(8,minmax\(0,1fr\)\);grid-template-rows:none;grid-auto-rows:calc\(var\(--w\)\*\.95\)/);
+  assert.match(callBreakSource, /@media\(max-width:600px\)\{#room #bd \.cb\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}/);
+  assert.match(crazyEightsSource, /@media\(max-width:600px\)\{#room #bd \.ce-room \.ce\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)/);
+  assert.match(heartsSource, /@media\(max-width:600px\)\{#room #bd \.hr\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)/);
+  assert.match(spadesSource, /@media\(max-width:600px\)\{#room #bd \.sp-room \.sp\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)/);
 });
 
 test("Bluff claim and pile are arranged side by side", () => {
@@ -289,7 +367,8 @@ test("Bluff claim label and rank are inline on mobile", () => {
 });
 
 test("Bluff call and pass buttons fit within the mobile action row", () => {
-  assert.match(gameStyles, /@media\(max-width:600px\)\{#room #bd \.bl-room \.acts\{gap:6px;padding:0 8px\}#room #bd \.bl-room \.acts button\.btn\{width:auto;min-width:0;max-width:100%;flex:1 1 0;margin:0;padding:10px 6px;font-size:clamp\(12px,3\.5vw,14px\);white-space:normal\}\}/);
+  assert.match(bluffSource, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{--w:clamp/);
+  assert.match(bluffSource, /#room #bd \.bl-room \.acts button\.btn\{width:auto;min-width:0;max-width:100%;flex:1 1 0;margin:0;padding:10px 6px;font-size:clamp\(12px,3\.5vw,14px\);white-space:normal\}/);
 });
 
 test("entering a game resets the room scroll position", () => {

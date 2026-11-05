@@ -464,15 +464,16 @@ function botShot(st) {
 // note: .cr-wrap has no entrance animation on purpose. The host replaces the board element on every draw, so a CSS
 // animation there replays (fades in from opacity 0) after every shot, which shows up as a blink.
 const CSS = `
-.cr-wrap{--bw:min(94vw,640px);width:var(--bw);margin:0 auto;box-sizing:border-box;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-.cr-board{position:relative;width:100%;aspect-ratio:1/1}
+.cr-wrap{--bw:min(94vw,calc(100dvh - 220px),640px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  width:100%;height:100%;margin:0 auto;box-sizing:border-box;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.cr-board{position:relative;width:var(--bw);aspect-ratio:1/1;flex:none}
 .cr{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:14px;
   box-shadow:0 18px 44px rgba(40,25,10,.4);cursor:crosshair}
 .cr.nomv{cursor:default}
 .cr-logo{display:inline-block;vertical-align:middle}
 .cr-guide{stroke:#fff;stroke-linecap:round;pointer-events:none}
 .cr-fl{fill:none;stroke:#fff;stroke-width:5;animation:cr-fl .55s ease-out both;pointer-events:none}
-.cr-hud{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 0}
+.cr-hud{display:flex;flex-wrap:wrap;gap:10px;width:min(100%,var(--bw));margin:0}
 .cr-player-name{position:absolute;left:12%;width:76%;height:6%;z-index:5;box-sizing:border-box;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#21170f;
   font:800 clamp(11px,2.4vw,16px)/1.2 system-ui,sans-serif;text-align:center;text-overflow:ellipsis;white-space:nowrap;
   text-shadow:0 1px 2px rgba(255,255,255,.9);pointer-events:none}
@@ -486,7 +487,7 @@ const CSS = `
 .cr-dots .w{background:#f6ead2;border:1.5px solid #8a7550}.cr-dots .b{background:#2b2b2b;border:1.5px solid #000}
 .cr-dots .x{background:transparent;border:1.5px dashed currentColor;opacity:.45}
 .cr-q{font-weight:700;color:#d9363e}.cr-q.pend{animation:cr-bl .7s ease-in-out infinite alternate}
-.cr-ctl{display:grid;grid-template-columns:1fr;gap:6px;margin:10px 0 0;padding:10px 12px;border-radius:14px;background:rgba(120,100,70,.14)}
+.cr-ctl{display:grid;grid-template-columns:1fr;gap:6px;width:min(100%,var(--bw));margin:0;padding:10px 12px;border-radius:14px;background:rgba(120,100,70,.14)}
 .cr-ctl label{display:grid;grid-template-columns:78px 1fr 44px;align-items:center;gap:8px;font-size:14px}
 .cr-ctl input[type=range]{width:100%;min-height:34px;accent-color:#c98a2b}
 .cr-ctl output{text-align:right;font-variant-numeric:tabular-nums;opacity:.8}
@@ -495,12 +496,31 @@ const CSS = `
 .cr-shoot:hover:not(:disabled){transform:translateY(-2px)}
 .cr-shoot:focus-visible,.cr-ctl input:focus-visible{outline:3px solid #111827;outline-offset:2px}
 .cr-shoot:disabled,.cr-ctl input:disabled{opacity:.45;cursor:default}
-.cr-hint{margin:6px 2px 0;font-size:12.5px;opacity:.7;text-align:center}
-.cr-setup{margin:12px 0;padding:14px;border-radius:16px;background:rgba(120,100,70,.14);text-align:center}
+.cr-hint{width:min(100%,var(--bw));margin:0;font-size:12.5px;opacity:.7;text-align:center}
+.cr-setup{width:min(100%,var(--bw));margin:0;padding:14px;border-radius:16px;background:rgba(120,100,70,.14);text-align:center}
 .cr-setup h3{margin:0 0 5px;font-size:19px}.cr-setup p{margin:0 0 12px;font-size:14px;opacity:.75}
 .cr-setup-btns{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}
 .cr-setup-btn{min-height:44px;padding:10px 16px;border:2px solid #c98a2b;border-radius:999px;background:#fff;color:#3b2511;font:700 14px/1.2 system-ui,sans-serif;cursor:pointer}
 .cr-setup-btn:hover:not(:disabled){background:#f9e8c8}.cr-setup-btn:disabled{opacity:.5;cursor:default}
+@media(orientation:landscape) and (max-height:1000px){
+  .cr-wrap{--bw:min(88vh,calc(100dvh - 92px),760px,calc(100vw - 360px));display:grid;
+    grid-template-columns:var(--bw) minmax(180px,300px);grid-template-rows:repeat(4,auto);
+    justify-content:center;align-content:center;align-items:center;gap:clamp(6px,1.5vw,14px);width:100%;height:100%;margin:0 auto}
+  .cr-board{grid-column:1;grid-row:1/5;width:var(--bw)}
+  .cr-hud,.cr-setup,.cr-ctl,.cr-hint{grid-column:2;width:100%;min-width:0}
+  .cr-hud{align-content:center;gap:6px;margin:0}
+  .cr-side{flex:1 1 100%;padding:5px 8px;gap:6px}
+  .cr-ctl{gap:4px;margin:0;padding:6px 8px}
+  .cr-ctl label{grid-template-columns:52px minmax(0,1fr) 34px;gap:4px;font-size:12px}
+  .cr-ctl input[type=range]{min-height:28px}
+  .cr-shoot{min-height:38px;padding:8px 14px}
+  .cr-hint{margin:0;font-size:10px}
+  .cr-setup{margin:0;padding:8px}
+  .cr-setup h3{font-size:15px}
+  .cr-setup p{margin:0 0 6px;font-size:12px}
+  .cr-setup-btn{min-height:36px;padding:7px 10px;font-size:12px}
+}
+@media(max-height:380px){.cr-wrap{gap:2px}}
 .cr-x{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .cr-xbg{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,rgba(15,23,42,.3),rgba(15,23,42,.75));animation:cr-fade .4s ease both}
 .cr-xcv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
@@ -521,6 +541,18 @@ const CSS = `
 @keyframes cr-cardout{to{opacity:0;transform:translateY(20px) scale(.9)}}
 @keyframes cr-ic{from{transform:rotate(-8deg) scale(1)}to{transform:rotate(8deg) scale(1.12)}}
 @media (max-width:480px){.cr-ctl label{grid-template-columns:64px 1fr 38px}}
+@media(max-width:600px) and (max-height:700px) and (orientation:portrait){
+  .cr-wrap{--bw:min(94vw,calc(100dvh - 320px),260px);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;width:100%;height:100%;overflow:hidden}
+  .cr-board{width:var(--bw);height:var(--bw);flex:none}
+  .cr-hud{width:100%;justify-content:center;gap:4px;margin:0}
+  .cr-side{flex:1 1 40%;padding:4px 6px;font-size:12px}
+  .cr-ctl{width:100%;gap:2px;margin:0;padding:4px 6px}
+  .cr-ctl label{grid-template-columns:58px minmax(0,1fr) 32px;gap:3px;font-size:12px}
+  .cr-ctl input[type=range]{min-height:26px}
+  .cr-shoot{min-height:34px;padding:6px 12px}
+  .cr-hint{margin:0;font-size:10px}
+}
 @media (prefers-reduced-motion:reduce){.cr-wrap,.cr-wrap *,.cr-x *{animation:none!important;transition:none!important}}
 `;
 function addStyles() {

@@ -521,6 +521,22 @@
     roomStyleNode = document.createElement('style');
     roomStyleNode.id = 'bluff-room-style';
     roomStyleNode.textContent = '.bl-room{position:absolute;inset:0;min-height:0}' + scopeStyles(CSS, '.bl-room') +
+      `#room #bd .bl-room button.card{--cw:var(--w);width:var(--cw);height:calc(var(--cw)*1.45);flex:none;justify-self:center;margin:0;padding:0;border:1px solid #c9ccd6;border-radius:calc(var(--cw)*.1);background:#fff;color:var(--k);font:inherit;text-align:left;box-shadow:0 3px 8px rgba(0,0,0,.4);appearance:none;-webkit-appearance:none;overflow:hidden}
+#room #bd .bl-room .hand button.card:first-child,#room #bd .bl-room .hand button.card:last-child,#room #bd .bl-room .hand button.card+button.card{margin-left:0;margin-right:0}
+#room #bd .bl-room .hand{max-width:1160px;margin:5px auto 0;grid-auto-rows:calc(var(--w)*.95);row-gap:0;overflow:visible;padding-top:28px;padding-bottom:calc(10px + var(--w)*.5)}
+#room #bd .bl-room .acts{margin-top:12px}
+#room #bd .bl-room .acts button.btn{width:auto;min-width:min(220px,100%);margin:0;padding:10px 24px}
+#room #bd .bl-room .bl .setup-panel{display:grid;flex:1 1 auto;align-content:center;justify-items:center;gap:.8rem;padding:.5rem}
+#room #bd .bl-room .bl .setup-choice{display:grid;width:4.2rem;min-height:0;justify-items:center;margin:0;padding:.6rem .4rem;border:2px solid rgba(255,255,255,.35);border-radius:1rem;background:rgba(0,0,0,.3);color:#fff;font:inherit;font-size:1.6rem;font-weight:900;cursor:pointer;transition:transform .15s,border-color .15s}
+#room #bd .bl-room .bl .setup-choice small{font-size:.65rem;font-weight:600;opacity:.8}
+#room #bd .bl-room .bl .setup-choice:hover{transform:translateY(-.25rem);border-color:#ffd45c}
+#room #bd .bl-room .bl{box-sizing:border-box;padding-bottom:calc(5vh + env(safe-area-inset-bottom,0px))}
+@media(max-width:1250px){#room #bd .bl-room .bl{--w:clamp(36px,min(8vw,calc((100vw - 56px)/11)),92px)}}
+@media(max-width:600px){#room #bd .bl-room .bl{--w:clamp(36px,min(18vw,calc((100vw - 40px)/7)),76px)}#room #bd .bl-room .bl .setup-choice{width:3.6rem;font-size:1.35rem}#room #bd .bl-room .hand{grid-template-columns:repeat(20,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:calc(var(--w)*.95)}#room #bd .bl-room .hand button.card{grid-column:span 2}#room #bd .bl-room .hand button.card[style*="--mobile-row"]{grid-row:var(--mobile-row);grid-column:var(--mobile-column) / span 2}#room #bd .bl-room .acts{gap:6px;padding:0 8px}#room #bd .bl-room .acts button.btn{width:auto;min-width:0;max-width:100%;flex:1 1 0;margin:0;padding:10px 6px;font-size:clamp(12px,3.5vw,14px);white-space:normal}}
+@media(max-width:520px){#room #bd .bl-room .hand{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}}
+@media(max-width:520px) and (max-height:700px){#room #bd .bl-room .bl{--w:clamp(36px,min(12vw,12vh),46px)}#room #bd .bl-room .hand{padding-top:24px}}
+@media(max-width:600px){#room #bd .bl-room .bl{padding-bottom:5vh}}
+@media(max-width:600px){#room #bd .bl-room .acts{order:1}#room #bd .bl-room .hand{order:2}#room #bd .bl-room .msg{order:3;margin-top:8px}}` +
       '.bl-room .playing{animation:card-reveal .38s cubic-bezier(.2,.8,.2,1) both}' +
       '@media(prefers-reduced-motion:reduce){.bl-room .playing{animation:none!important}}';
     document.head.appendChild(roomStyleNode);

@@ -453,7 +453,19 @@
     var style = document.createElement('style');
     style.id = 'hearts-room-style';
     style.textContent = scopeRoomCss(CSS.replace(/card-land/g, 'hearts-card-land')
-      .replace(/card-deal/g, 'hearts-card-deal').replace(/win-glow/g, 'hearts-win-glow'));
+      .replace(/card-deal/g, 'hearts-card-deal').replace(/win-glow/g, 'hearts-win-glow')) +
+      `#room #bd .hr button.card{width:var(--cw);height:calc(var(--cw)*1.45);flex:0 0 var(--cw);margin:0;padding:0;border:1px solid #c9ccd6;border-radius:calc(var(--cw)*.1);background:#fff;color:var(--k);font:inherit;text-align:left;box-shadow:0 3px 8px rgba(0,0,0,.4);appearance:none;-webkit-appearance:none;overflow:hidden}
+#room #bd .hr .hand button.card:first-child{margin-left:auto}#room #bd .hr .hand button.card:last-child{margin-right:auto}
+#room #bd .hr .hand{padding-top:28px;padding-bottom:20px;margin-top:5px}
+#room #bd .hr .hand button.card+button.card{margin-left:calc(var(--w)*-.45)}
+#room #bd .hr .hand{max-width:1160px;margin-left:auto;margin-right:auto}
+#room #bd .hr .acts{order:1}#room #bd .hr .hand{order:2}#room #bd .hr .msg{order:3;margin-top:8px}
+#room #bd .hr{box-sizing:border-box;padding-bottom:calc(5vh + env(safe-area-inset-bottom,0px))}
+@media(min-width:601px){#room #bd .hr .hand{flex-wrap:wrap;justify-content:center;overflow-x:hidden;overflow-y:hidden}#room #bd .hr .hand .card:first-child{margin-left:0}#room #bd .hr .hand .card:last-child{margin-right:0}}
+@media(max-width:600px){#room #bd .hr{--w:clamp(36px,min(18vw,calc((100vw - 40px)/7)),76px)}#room #bd .hr .hand{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:calc(var(--w)*.95);align-content:center;justify-items:center;gap:0;overflow:visible;padding:20px 8px calc(10px + var(--w)*.5 + env(safe-area-inset-bottom,0px));grid-template-columns:repeat(16,minmax(0,1fr))}#room #bd .hr .hand button.card{margin:0;grid-column:span 2}#room #bd .hr .hand button.card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column) / span 2}#room #bd .hr .hand{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:4px 2px;overflow:hidden}#room #bd .hr .hand button.card:first-child,#room #bd .hr .hand button.card:last-child,#room #bd .hr .hand button.card+button.card{margin:0}}
+@media(max-width:520px){#room #bd .hr .hand{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}}
+@media(max-width:520px) and (max-height:700px){#room #bd .hr{--w:clamp(36px,min(12vw,12vh),46px)}#room #bd .hr .hand{padding-top:24px}}
+@media(max-height:520px) and (orientation:landscape){#room #bd .hr{--w:clamp(24px,min(6vh,calc((100vw - 40px)/13)),44px);padding-bottom:4px}#room #bd .hr .hand{flex-wrap:nowrap;overflow:hidden;padding:4px 8px;margin:0}#room #bd .hr .acts{min-height:0;padding:4px 8px;gap:4px}#room #bd .hr .msg{min-height:1em;margin-top:0;padding:2px 8px;font-size:12px}}`;
     document.head.appendChild(style);
   }
   function roomSeat(index) {

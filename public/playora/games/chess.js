@@ -153,7 +153,7 @@ const reduced = () => !!(window.matchMedia && window.matchMedia("(prefers-reduce
 // 3D notes: .chess-board must not use overflow/isolation/opacity/filter (they flatten preserve-3d). Pieces are animated on
 // .mv3 (board-plane x/y plus a real Z hop); the upright counter-rotation lives on .up so animations never clobber it.
 const CSS = `
-.cb3w{width:100%;height:calc(100dvh - 112px);min-height:360px;margin:0 auto;padding:10px clamp(4px,1vw,16px);box-sizing:border-box;
+.cb3w{width:100%;height:100%;min-height:0;margin:0 auto;padding:10px clamp(4px,1vw,16px);box-sizing:border-box;
   display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:visible}
 .cb3{--tilt:36deg;--bs:min(98vw,calc(90dvh - 144px),900px);perspective:calc(var(--bs)*2.8);perspective-origin:50% 42%;width:100%;
   margin:calc(var(--bs)*-.06) 0 calc(var(--bs)*-.14);
@@ -176,6 +176,8 @@ const CSS = `
 .chess-board .sq.l::before{background:linear-gradient(135deg,rgba(255,255,255,.16),transparent 48%,rgba(91,67,37,.08))}
 .chess-board .sq.d::before{background:linear-gradient(135deg,rgba(255,255,255,.12),transparent 48%,rgba(0,0,0,.17))}
 .chess-board .sq.lm::before{background:rgba(255,214,10,.40)}
+#room.chess-game .lm{background-image:linear-gradient(rgba(255,214,0,.42),rgba(255,214,0,.42))}
+#room.chess-game .kc{background-image:radial-gradient(circle,rgba(230,40,40,.85) 0,rgba(230,40,40,.15) 70%)}
 .chess-board .sq.sel::before{background:rgba(70,190,110,.55)}
 .chess-board .sq.chk::before{background:radial-gradient(circle,rgba(255,40,40,.9) 0,rgba(255,40,40,.4) 45%,transparent 72%);
   animation:cb-chk .8s ease-in-out infinite alternate}
@@ -249,7 +251,7 @@ const CSS = `
   .chess-turns{width:100%;margin:0;flex-direction:column;gap:10px}
   .chess-player{flex-wrap:wrap}
 }
-@media(max-width:600px){.cb3w{width:100%;height:calc(100dvh - 112px);min-height:360px;margin:0;padding:6px 0;border:0;border-radius:0;background:none;box-shadow:none}
+@media(max-width:600px){.cb3w{width:100%;height:100%;min-height:0;margin:0;padding:6px 0;border:0;border-radius:0;background:none;box-shadow:none}
   .cb3{--bs:min(86vw,calc(90dvh - 144px),560px);perspective:calc(var(--bs)*3.2);perspective-origin:50% 44%}
   .cb3.flat-view{perspective:none}
   .cb3.flat-view .chess-board{--bs:min(100vw,calc(90dvh - 144px),560px);width:min(100%,var(--bs))}
@@ -259,7 +261,7 @@ const CSS = `
   #room .cb3-ctl button{padding:8px 9px;font-size:12px}
   .chess-turns{width:min(100%,560px);margin-top:8px;padding:10px 12px;font-size:12px}
   .chess-player{gap:4px}.chess-player small{font-size:10px}}
-@media(max-height:520px) and (orientation:landscape){.cb3w{height:calc(100dvh - 68px);min-height:0}}
+@media(max-height:520px) and (orientation:landscape){.cb3w{height:100%;min-height:0}}
 #room:has(.cb3w){overflow-x:hidden}
 #room:has(.cb3w) #lg,#room:has(.cb3w) #st{display:none}
 .cbx-win{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;
