@@ -63,19 +63,20 @@ test("games hide duplicate bottom status except Chess and Ludo", () => {
 
 test("card-game status follows each hand with five-percent bottom spacing", () => {
   const games = [
-    { root: ".bl-room .bl", hand: ".bl-room .hand", msg: ".bl-room .msg" },
-    { root: ".cb", hand: ".cb .hand", msg: ".cb .msg" },
-    { root: ".ce-room .ce", hand: ".ce-room .hand", msg: ".ce-room .msg" },
-    { root: ".hr", hand: ".hr .hand", msg: ".hr .msg" },
-    { root: ".sp-room .sp", hand: ".sp-room .hand", msg: ".sp-room .msg" },
-    { root: ".uno", hand: ".uno .hand", msg: ".uno .msg" },
+    { root: ".bl-room .bl", hand: ".bl-room .hand", msg: ".bl-room .msg", action: ".bl-room .acts" },
+    { root: ".cb", hand: ".cb .hand", msg: ".cb .msg", action: ".cb .room-action" },
+    { root: ".ce-room .ce", hand: ".ce-room .hand", msg: ".ce-room .msg", action: ".ce-room .acts" },
+    { root: ".hr", hand: ".hr .hand", msg: ".hr .msg", action: ".hr .acts" },
+    { root: ".sp-room .sp", hand: ".sp-room .hand", msg: ".sp-room .msg", action: ".sp-room .acts" },
+    { root: ".uno", hand: ".uno .hand", msg: ".uno .msg", action: ".uno .acts" },
   ];
   const roots = games.map((game) => `#room #bd ${game.root}`);
   assert.ok(gameStyles.includes(roots.join(",") +
     "{box-sizing:border-box;padding-bottom:calc(5vh + env(safe-area-inset-bottom,0px))}"));
-  assert.ok(gameStyles.includes(games.map((game) => `#room #bd ${game.hand}`).join(",") + "{order:1}"));
+  assert.ok(gameStyles.includes(games.map((game) => `#room #bd ${game.action}`).join(",") + "{order:1}"));
+  assert.ok(gameStyles.includes(games.map((game) => `#room #bd ${game.hand}`).join(",") + "{order:2}"));
   assert.ok(gameStyles.includes(games.map((game) => `#room #bd ${game.msg}`).join(",") +
-    "{order:2;margin-top:8px}"));
+    "{order:3;margin-top:8px}"));
 });
 
 test("Spades unplayable cards stay legible while remaining visually muted", () => {
@@ -88,11 +89,11 @@ test("Spades bid choices stay within the bid panel on narrow screens", () => {
 });
 
 test("Spades mobile status text sits below the cards with bottom spacing", () => {
-  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.sp-room \.sp\{box-sizing:border-box;padding-bottom:calc\(18px \+ env\(safe-area-inset-bottom,0px\)\)\}\s*#room #bd \.sp-room \.hand\{order:1\}\s*#room #bd \.sp-room \.msg\{order:2;margin-top:8px;padding-bottom:calc\(12px \+ env\(safe-area-inset-bottom,0px\)\)\}\s*#room #bd \.sp-room \.mine\{order:3\}\s*\}/);
+  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.sp-room \.sp\{box-sizing:border-box;padding-bottom:calc\(18px \+ env\(safe-area-inset-bottom,0px\)\)\}\s*#room #bd \.sp-room \.msg\{padding-bottom:calc\(12px \+ env\(safe-area-inset-bottom,0px\)\)\}\s*\}/);
 });
 
 test("Crazy Eights mobile text follows cards with five-percent bottom spacing", () => {
-  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.ce-room \.ce\{box-sizing:border-box;padding-bottom:5vh\}\s*#room #bd \.ce-room \.hand\{order:1\}\s*#room #bd \.ce-room \.msg\{order:2;margin-top:8px\}\s*#room #bd \.ce-room \.acts\{order:3;margin-top:4px\}\s*#room #bd \.ce-room \.hand\{grid-template-columns:repeat\(16,minmax\(0,1fr\)\)\}\s*#room #bd \.ce-room \.hand button\.card\{grid-column:span 2\}\s*#room #bd \.ce-room \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\)\}\s*\}/);
+  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.ce-room \.ce\{box-sizing:border-box;padding-bottom:5vh\}\s*#room #bd \.ce-room \.acts\{margin-top:4px\}\s*#room #bd \.ce-room \.hand\{grid-template-columns:repeat\(16,minmax\(0,1fr\)\)\}\s*#room #bd \.ce-room \.hand button\.card\{grid-column:span 2\}\s*#room #bd \.ce-room \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\)\}\s*\}/);
 });
 
 test("Crazy Eights mobile card spread centers the incomplete row", () => {
@@ -107,7 +108,7 @@ test("Crazy Eights mobile card spread centers the incomplete row", () => {
 });
 
 test("Call Break mobile status follows the hand with five-percent bottom spacing", () => {
-  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.cb\{box-sizing:border-box;padding-bottom:5vh\}\s*#room #bd \.cb \.hand\{order:1\}\s*#room #bd \.cb \.msg\{order:2;margin-top:8px\}\s*#room #bd \.cb \.mine\{order:3\}\s*#room #bd \.cb \.room-action\{order:4\}\s*#room #bd \.cb \.hand\{grid-template-columns:repeat\(16,minmax\(0,1fr\)\)\}\s*#room #bd \.cb \.hand button\.card\{grid-column:span 2\}\s*#room #bd \.cb \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2;translate:calc\(var\(--w\)\*\.3\) 0\}\s*\}/);
+  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.cb\{box-sizing:border-box;padding-bottom:5vh\}\s*#room #bd \.cb \.hand\{grid-template-columns:repeat\(16,minmax\(0,1fr\)\)\}\s*#room #bd \.cb \.hand button\.card\{grid-column:span 2\}\s*#room #bd \.cb \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2;translate:calc\(var\(--w\)\*\.3\) 0\}\s*\}/);
 });
 
 test("Call Break mobile hand centers its final row", () => {
@@ -218,8 +219,8 @@ test("Bluff centers each desktop and mobile row while increasing overlap", () =>
 });
 
 test("Bluff mobile cards stay above status and actions with five-percent bottom spacing", () => {
-  assert.match(bluffSource, /@media\(max-width:600px\)\{\.bl\{[^}]*padding-bottom:5vh\}\.setup-choice\{width:3\.6rem;font-size:1\.35rem\}\.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\);order:1\}\.hand \.card\[style\*="--mobile-row"\]\{[^}]*\}\.msg\{order:2;margin-top:8px\}\.acts\{order:3\}/);
-  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.bl-room \.bl\{box-sizing:border-box;padding-bottom:5vh\}\s*#room #bd \.bl-room \.hand\{order:1\}\s*#room #bd \.bl-room \.msg\{order:2;margin-top:8px\}\s*#room #bd \.bl-room \.acts\{order:3\}\s*\}/);
+  assert.match(bluffSource, /@media\(max-width:600px\)\{\.bl\{[^}]*padding-bottom:5vh\}/);
+  assert.match(gameStyles, /@media\(max-width:600px\)\{\s*#room #bd \.bl-room \.bl\{box-sizing:border-box;padding-bottom:5vh\}\s*\}/);
 });
 
 test("Bluff cards overlap on narrow mobile and wide desktop viewports", () => {

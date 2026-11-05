@@ -223,9 +223,7 @@
 }
 @media(max-width:600px){
   #room #bd .sp-room .sp{box-sizing:border-box;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
-  #room #bd .sp-room .hand{order:1}
-  #room #bd .sp-room .msg{order:2;margin-top:8px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
-  #room #bd .sp-room .mine{order:3}
+  #room #bd .sp-room .msg{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
 }
 @media(max-width:600px){
   #room #bd .hr .hand,#room #bd .sp-room .hand{grid-template-columns:repeat(16,minmax(0,1fr))}
@@ -233,34 +231,25 @@
   #room #bd .hr .hand button.card[style*="--hand-row"],#room #bd .sp-room .hand button.card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column) / span 2}
 }
  #room #bd .bl-room .bl,#room #bd .cb,#room #bd .ce-room .ce,#room #bd .hr,#room #bd .sp-room .sp,#room #bd .uno{box-sizing:border-box;padding-bottom:calc(5vh + env(safe-area-inset-bottom,0px))}
- #room #bd .bl-room .hand,#room #bd .cb .hand,#room #bd .ce-room .hand,#room #bd .hr .hand,#room #bd .sp-room .hand,#room #bd .uno .hand{order:1}
- #room #bd .bl-room .msg,#room #bd .cb .msg,#room #bd .ce-room .msg,#room #bd .hr .msg,#room #bd .sp-room .msg,#room #bd .uno .msg{order:2;margin-top:8px}
- #room #bd .bl-room .acts,#room #bd .cb .mine,#room #bd .ce-room .acts,#room #bd .hr .acts,#room #bd .sp-room .mine,#room #bd .uno .acts{order:3}
- #room #bd .cb .room-action,#room #bd .sp-room .acts{order:4}
+ #room #bd .bl-room .acts,#room #bd .cb .room-action,#room #bd .ce-room .acts,#room #bd .hr .acts,#room #bd .sp-room .acts,#room #bd .uno .acts{order:1}
+ #room #bd .bl-room .hand,#room #bd .cb .hand,#room #bd .ce-room .hand,#room #bd .hr .hand,#room #bd .sp-room .hand,#room #bd .uno .hand{order:2}
+ #room #bd .bl-room .msg,#room #bd .cb .msg,#room #bd .ce-room .msg,#room #bd .hr .msg,#room #bd .sp-room .msg,#room #bd .uno .msg{order:3;margin-top:8px}
+ #room #bd .cb .mine,#room #bd .sp-room .mine{order:4}
 @media(max-width:600px){
   #room #bd .ce-room .ce{box-sizing:border-box;padding-bottom:5vh}
-  #room #bd .ce-room .hand{order:1}
-  #room #bd .ce-room .msg{order:2;margin-top:8px}
-  #room #bd .ce-room .acts{order:3;margin-top:4px}
+  #room #bd .ce-room .acts{margin-top:4px}
   #room #bd .ce-room .hand{grid-template-columns:repeat(16,minmax(0,1fr))}
   #room #bd .ce-room .hand button.card{grid-column:span 2}
   #room #bd .ce-room .hand button.card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column)}
 }
 @media(max-width:600px){
   #room #bd .cb{box-sizing:border-box;padding-bottom:5vh}
-  #room #bd .cb .hand{order:1}
-  #room #bd .cb .msg{order:2;margin-top:8px}
-  #room #bd .cb .mine{order:3}
-  #room #bd .cb .room-action{order:4}
   #room #bd .cb .hand{grid-template-columns:repeat(16,minmax(0,1fr))}
   #room #bd .cb .hand button.card{grid-column:span 2}
   #room #bd .cb .hand button.card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column) / span 2;translate:calc(var(--w)*.3) 0}
 }
 @media(max-width:600px){
   #room #bd .bl-room .bl{box-sizing:border-box;padding-bottom:5vh}
-  #room #bd .bl-room .hand{order:1}
-  #room #bd .bl-room .msg{order:2;margin-top:8px}
-  #room #bd .bl-room .acts{order:3}
 }
 .display-name-backdrop[hidden]{display:none}
 .display-name-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:rgba(5,9,20,.82);backdrop-filter:blur(8px)}
