@@ -148,9 +148,9 @@ const FILES = "abcdefgh";
 const SQN = i => FILES[i & 7] + (8 - (i >> 3));
 const reduced = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
-// note: .cb has no entrance animation on purpose. The host replaces the board element on every draw, so a CSS
+// note: .chess-board has no entrance animation on purpose. The host replaces the board element on every draw, so a CSS
 // animation there replays (fade from opacity 0) after every move, which shows up as a fade out / fade in each turn.
-// 3D notes: .cb must not use overflow/isolation/opacity/filter (they flatten preserve-3d). Pieces are animated on
+// 3D notes: .chess-board must not use overflow/isolation/opacity/filter (they flatten preserve-3d). Pieces are animated on
 // .mv3 (board-plane x/y plus a real Z hop); the upright counter-rotation lives on .up so animations never clobber it.
 const CSS = `
 .cb3w{width:100%;height:calc(100dvh - 112px);min-height:360px;margin:0 auto;padding:10px clamp(4px,1vw,16px);box-sizing:border-box;
@@ -159,58 +159,58 @@ const CSS = `
   margin:calc(var(--bs)*-.06) 0 calc(var(--bs)*-.14);
   margin:calc(var(--bs)*((1 - cos(var(--tilt)))/-2 + sin(var(--tilt))*.11)) 0 calc(var(--bs)*((1 - cos(var(--tilt)))/-2 + .02));
   transition:margin .45s ease}
-.cb{--bs:min(98vw,calc(90dvh - 144px),900px);--cs:calc((var(--bs) - 20px)/8);position:relative;display:grid;
+.chess-board{--bs:min(98vw,calc(90dvh - 144px),900px);--cs:calc((var(--bs) - 20px)/8);position:relative;display:grid;
   grid-template:repeat(8,1fr)/repeat(8,1fr);width:var(--bs);aspect-ratio:1/1;margin:0 auto;box-sizing:border-box;
   border:10px solid #26342d;border-radius:10px;
   transform-style:preserve-3d;transform:rotateX(var(--tilt));transition:transform .45s ease;
   box-shadow:0 0 0 1px #e1c47e88,0 0 0 4px #17231e,0 0 0 6px #b99755aa,0 20px 46px rgba(0,0,0,.48),inset 0 0 0 2px #e9d39b55}
-.cb::before{content:"";position:absolute;left:-10px;right:-10px;top:calc(100% + 10px);height:calc(var(--cs)*.34);
+.chess-board::before{content:"";position:absolute;left:-10px;right:-10px;top:calc(100% + 10px);height:calc(var(--cs)*.34);
   transform-origin:50% 0;transform:rotateX(-90deg);background:linear-gradient(#35473b,#17231e);border-radius:0 0 8px 8px;pointer-events:none}
-.cb::after{content:"";position:absolute;inset:-10px;background:rgba(4,10,8,.56);filter:blur(18px);
+.chess-board::after{content:"";position:absolute;inset:-10px;background:rgba(4,10,8,.56);filter:blur(18px);
   transform:translateZ(calc(var(--cs)*-.45));pointer-events:none}
-.cb .sq{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;
+.chess-board .sq{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;
   user-select:none;-webkit-tap-highlight-color:transparent;transform-style:preserve-3d;transform:translateZ(.5px)}
-.cb .sq.l{background:linear-gradient(145deg,#f2e7ca,#d9c8a4)}
-.cb .sq.d{background:linear-gradient(145deg,#47705c,#254837)}
-.cb .sq::before{content:"";position:absolute;inset:0;pointer-events:none}
-.cb .sq.l::before{background:linear-gradient(135deg,rgba(255,255,255,.16),transparent 48%,rgba(91,67,37,.08))}
-.cb .sq.d::before{background:linear-gradient(135deg,rgba(255,255,255,.12),transparent 48%,rgba(0,0,0,.17))}
-.cb .sq.lm::before{background:rgba(255,214,10,.40)}
-.cb .sq.sel::before{background:rgba(70,190,110,.55)}
-.cb .sq.chk::before{background:radial-gradient(circle,rgba(255,40,40,.9) 0,rgba(255,40,40,.4) 45%,transparent 72%);
+.chess-board .sq.l{background:linear-gradient(145deg,#f2e7ca,#d9c8a4)}
+.chess-board .sq.d{background:linear-gradient(145deg,#47705c,#254837)}
+.chess-board .sq::before{content:"";position:absolute;inset:0;pointer-events:none}
+.chess-board .sq.l::before{background:linear-gradient(135deg,rgba(255,255,255,.16),transparent 48%,rgba(91,67,37,.08))}
+.chess-board .sq.d::before{background:linear-gradient(135deg,rgba(255,255,255,.12),transparent 48%,rgba(0,0,0,.17))}
+.chess-board .sq.lm::before{background:rgba(255,214,10,.40)}
+.chess-board .sq.sel::before{background:rgba(70,190,110,.55)}
+.chess-board .sq.chk::before{background:radial-gradient(circle,rgba(255,40,40,.9) 0,rgba(255,40,40,.4) 45%,transparent 72%);
   animation:cb-chk .8s ease-in-out infinite alternate}
-.cb .sq.champ::before{background:radial-gradient(circle,rgba(255,205,50,.95) 0,rgba(255,205,50,.35) 50%,transparent 75%);
+.chess-board .sq.champ::before{background:radial-gradient(circle,rgba(255,205,50,.95) 0,rgba(255,205,50,.35) 50%,transparent 75%);
   animation:cb-chk .7s ease-in-out infinite alternate}
-.cb .sq.tg::after,.cb .sq.cap::after{content:"";position:absolute;pointer-events:none;border-radius:50%;z-index:1;
+.chess-board .sq.tg::after,.chess-board .sq.cap::after{content:"";position:absolute;pointer-events:none;border-radius:50%;z-index:1;
   animation:cb-pop .18s ease-out both}
-.cb .sq.tg::after{width:30%;height:30%;background:rgba(25,35,25,.30)}
-.cb .sq.cap::after{width:92%;height:92%;border:calc(var(--cs)*.09) solid rgba(25,35,25,.32)}
-.cb .sh{position:absolute;left:20%;width:60%;top:64%;height:20%;border-radius:50%;pointer-events:none;
+.chess-board .sq.tg::after{width:30%;height:30%;background:rgba(25,35,25,.30)}
+.chess-board .sq.cap::after{width:92%;height:92%;border:calc(var(--cs)*.09) solid rgba(25,35,25,.32)}
+.chess-board .sh{position:absolute;left:20%;width:60%;top:64%;height:20%;border-radius:50%;pointer-events:none;
   background:radial-gradient(ellipse at center,rgba(0,0,0,.5) 0,rgba(0,0,0,.22) 55%,transparent 72%);transition:transform .16s ease}
-.cb .mv3{position:absolute;inset:0;transform-style:preserve-3d;transform:translateZ(1px);pointer-events:none}
-.cb .up{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:auto;
+.chess-board .mv3{position:absolute;inset:0;transform-style:preserve-3d;transform:translateZ(1px);pointer-events:none}
+.chess-board .up{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:auto;
   transform-origin:50% 76%;transform:rotateX(calc(var(--tilt)*-1));transition:transform .45s ease}
-.cb .gw .up{pointer-events:none}
-.cb .pc{position:relative;z-index:2;font-style:normal;font-weight:400;line-height:1;font-size:calc(var(--cs)*.9);
+.chess-board .gw .up{pointer-events:none}
+.chess-board .pc{position:relative;z-index:2;font-style:normal;font-weight:400;line-height:1;font-size:calc(var(--cs)*.9);
   font-family:"Segoe UI Symbol","Noto Sans Symbols 2","Apple Symbols","DejaVu Sans",serif;pointer-events:none;
   paint-order:stroke fill;transition:transform .16s ease;will-change:transform}
-.cb .pc.w{color:#fffdf4;-webkit-text-stroke:calc(var(--cs)*.035) #54452f;
+.chess-board .pc.w{color:#fffdf4;-webkit-text-stroke:calc(var(--cs)*.035) #54452f;
   filter:drop-shadow(0 2px 1px rgba(44,34,22,.55)) drop-shadow(0 5px 3px rgba(0,0,0,.28));
   text-shadow:0 calc(var(--cs)*.018) 0 #e5d8ba,0 calc(var(--cs)*.04) 0 #c9b991,0 calc(var(--cs)*.07) 0 #a18d67,0 calc(var(--cs)*.1) calc(var(--cs)*.05) rgba(0,0,0,.38)}
-.cb .pc.b{color:#17251f;-webkit-text-stroke:calc(var(--cs)*.03) #d3b971;
+.chess-board .pc.b{color:#17251f;-webkit-text-stroke:calc(var(--cs)*.03) #d3b971;
   filter:drop-shadow(0 2px 1px rgba(255,255,255,.14)) drop-shadow(0 5px 3px rgba(0,0,0,.5));
   text-shadow:0 calc(var(--cs)*.018) 0 #526358,0 calc(var(--cs)*.04) 0 #38483e,0 calc(var(--cs)*.07) 0 #26352d,0 calc(var(--cs)*.1) calc(var(--cs)*.05) rgba(0,0,0,.5)}
-.cb .sq.mv{cursor:pointer}
-.cb .sq.mv:hover .pc,.cb .sq.sel .pc{transform:translateY(-7%) scale(1.07)}
-.cb .sq.mv:hover .sh,.cb .sq.sel .sh{transform:scale(.8)}
-.cb .sq:focus-visible{outline:3px solid #111827;outline-offset:-3px;z-index:4}
-.cb .rk,.cb .fl{position:absolute;font:700 calc(var(--cs)*.17)/1 system-ui,sans-serif;pointer-events:none;opacity:.8;z-index:1}
-.cb .rk{top:4%;left:5%}.cb .fl{right:5%;bottom:3%}
-.cb .l .rk,.cb .l .fl{color:#a9774b}.cb .d .rk,.cb .d .fl{color:#efe0c2}
-.cb.won{animation:cb-glow 1.3s ease-in-out infinite alternate}
-.cb .sq.fallen .pc{animation:cb-fall .7s .5s ease-in both}
-.cb .ghost{pointer-events:none}
-.cb .rip{position:absolute;z-index:5;width:100%;height:100%;border-radius:50%;pointer-events:none;
+.chess-board .sq.mv{cursor:pointer}
+.chess-board .sq.mv:hover .pc,.chess-board .sq.sel .pc{transform:translateY(-7%) scale(1.07)}
+.chess-board .sq.mv:hover .sh,.chess-board .sq.sel .sh{transform:scale(.8)}
+.chess-board .sq:focus-visible{outline:3px solid #111827;outline-offset:-3px;z-index:4}
+.chess-board .rk,.chess-board .fl{position:absolute;font:700 calc(var(--cs)*.17)/1 system-ui,sans-serif;pointer-events:none;opacity:.8;z-index:1}
+.chess-board .rk{top:4%;left:5%}.chess-board .fl{right:5%;bottom:3%}
+.chess-board .l .rk,.chess-board .l .fl{color:#a9774b}.chess-board .d .rk,.chess-board .d .fl{color:#efe0c2}
+.chess-board.won{animation:cb-glow 1.3s ease-in-out infinite alternate}
+.chess-board .sq.fallen .pc{animation:cb-fall .7s .5s ease-in both}
+.chess-board .ghost{pointer-events:none}
+.chess-board .rip{position:absolute;z-index:5;width:100%;height:100%;border-radius:50%;pointer-events:none;
   border:calc(var(--cs)*.06) solid rgba(255,255,255,.9)}
 .cb-pick{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
   background:rgba(15,23,42,.55);animation:cb-fade .2s ease both;transform:translateZ(calc(var(--cs)*2.4))}
@@ -233,15 +233,15 @@ const CSS = `
 .chess-player small{font-size:12px;opacity:.7}
 .chess-player b{color:#e4d1a0}.chess-player.active{font-weight:700;color:#fff}
 .chess-player.active::before{content:"";width:7px;height:7px;flex:none;border-radius:50%;background:#c9a95d;box-shadow:0 0 10px #d8b963;align-self:center}
-#room .cb .sq.l{background:linear-gradient(145deg,#f2e7ca,#d9c8a4)}
-#room .cb .sq.d{background:linear-gradient(145deg,#47705c,#254837)}
+#room .chess-board .sq.l{background:linear-gradient(145deg,#f2e7ca,#d9c8a4)}
+#room .chess-board .sq.d{background:linear-gradient(145deg,#47705c,#254837)}
 #room .cb3-ctl button{width:auto;margin:0;padding:9px 16px;border:1px solid rgba(226,196,126,.2);border-radius:10px;background:linear-gradient(145deg,#263a32,#18271f);color:#e9dfc6;font:650 13px/1 system-ui,sans-serif}
 #room .cb3-ctl button:hover,#room .cb3-ctl button:focus-visible{background:linear-gradient(145deg,#3b5949,#284331);border-color:#d6b56c}
 #room .cb-pick button{width:calc(var(--cs)*1.05);height:calc(var(--cs)*1.05);margin:0;padding:0;border:0;border-radius:12px;background:#e6d3ae}
 @media(min-width:900px){
   .cb3w{--bs:min(84vh,760px,calc(100vw - 440px));display:grid;grid-template-columns:minmax(0,var(--bs)) minmax(180px,260px);
     grid-template-rows:minmax(0,1fr);column-gap:clamp(48px,5vw,72px);justify-content:center;align-content:center;align-items:center}
-  .cb3,.cb{--bs:min(84vh,760px,calc(100vw - 440px))}
+  .cb3,.chess-board{--bs:min(84vh,760px,calc(100vw - 440px))}
   .cb3{grid-column:1;grid-row:1;width:var(--bs);margin-left:0;margin-right:0}
   .cb3-tools{grid-column:2;grid-row:1;width:100%;display:flex;flex-direction:column;align-items:stretch;gap:14px}
   .cb3-ctl{flex-direction:column;width:100%;margin:0}
@@ -250,14 +250,18 @@ const CSS = `
   .chess-player{flex-wrap:wrap}
 }
 @media(max-width:600px){.cb3w{width:100%;height:calc(100dvh - 112px);min-height:360px;margin:0;padding:6px 0;border:0;border-radius:0;background:none;box-shadow:none}
-  .cb3{--bs:min(100vw,calc(90dvh - 144px),560px);perspective:calc(var(--bs)*3.2);perspective-origin:50% 44%}
-  .cb{--bs:min(100vw,calc(90dvh - 144px),560px);border-width:7px;border-radius:8px;--cs:calc((var(--bs) - 14px)/8)}
-  .cb::before{left:-7px;right:-7px;top:calc(100% + 7px)}
+  .cb3{--bs:min(86vw,calc(90dvh - 144px),560px);perspective:calc(var(--bs)*3.2);perspective-origin:50% 44%}
+  .cb3.flat-view{perspective:none}
+  .cb3.flat-view .chess-board{--bs:min(100vw,calc(90dvh - 144px),560px);width:min(100%,var(--bs))}
+  .chess-board{--bs:min(86vw,calc(90dvh - 144px),560px);border-width:7px;border-radius:8px;--cs:calc((var(--bs) - 14px)/8)}
+  .chess-board::before{left:-7px;right:-7px;top:calc(100% + 7px)}
   .cb3-ctl{gap:4px;margin-top:10px;padding:4px}
   #room .cb3-ctl button{padding:8px 9px;font-size:12px}
   .chess-turns{width:min(100%,560px);margin-top:8px;padding:10px 12px;font-size:12px}
   .chess-player{gap:4px}.chess-player small{font-size:10px}}
-#room:has(.cb3w) #st{display:none}
+@media(max-height:520px) and (orientation:landscape){.cb3w{height:calc(100dvh - 68px);min-height:0}}
+#room:has(.cb3w){overflow-x:hidden}
+#room:has(.cb3w) #lg,#room:has(.cb3w) #st{display:none}
 .cbx-win{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .cbx-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,rgba(15,23,42,.3),rgba(15,23,42,.75));animation:cb-fade .4s ease both}
@@ -286,8 +290,8 @@ const CSS = `
 @keyframes cb-cardout{to{opacity:0;transform:translateY(20px) scale(.9)}}
 @keyframes cb-ic{from{transform:rotate(-8deg) scale(1)}to{transform:rotate(8deg) scale(1.12)}}
 @keyframes cb-shine{from{background-position:0 0}to{background-position:-240% 0}}
-@media (max-width:480px){.cb{border-width:6px;border-radius:6px;--cs:calc((var(--bs) - 12px)/8)}.cb::before{left:-6px;right:-6px;top:calc(100% + 6px)}.cb::after{inset:-6px}}
-@media (prefers-reduced-motion:reduce){.cb,.cb *,.cb3,.cbx-win *{animation:none!important;transition:none!important}}
+@media (max-width:480px){.chess-board{border-width:6px;border-radius:6px;--cs:calc((var(--bs) - 12px)/8)}.chess-board::before{left:-6px;right:-6px;top:calc(100% + 6px)}.chess-board::after{inset:-6px}}
+@media (prefers-reduced-motion:reduce){.chess-board,.chess-board *,.cb3,.cbx-win *{animation:none!important;transition:none!important}}
 `;
 function addStyles() {
   if (document.getElementById("chess-ui-styles")) return;
@@ -374,7 +378,10 @@ function onSquare(i, cb) {
 
 function setTilt(v) {
   tilt = Math.max(0, Math.min(TILT_MAX, v));
-  document.querySelectorAll(".cb3").forEach(el => el.style.setProperty("--tilt", tilt + "deg"));
+  document.querySelectorAll(".cb3").forEach(el => {
+    el.style.setProperty("--tilt", tilt + "deg");
+    el.classList.toggle("flat-view", tilt <= 4);
+  });
 }
 
 document.addEventListener("click", e => {
@@ -395,7 +402,7 @@ document.addEventListener("click", e => {
   }
   const back = e.target.closest(".cb-pick");
   if (back) { closePicker(back.closest(".cb")); sel = null; paint(back.closest(".cb")); return; }
-  const sq = e.target.closest(".cb .sq");
+  const sq = e.target.closest(".chess-board .sq");
   if (!sq) return;
   if (e.detail > 0) kbFocus = null;
   onSquare(+sq.dataset.sq, sq.closest(".cb"));
@@ -588,7 +595,7 @@ function confetti(cv) {
 /* after each render (the board element is replaced on every draw)      */
 /* ------------------------------------------------------------------ */
 function post() {
-  const cb = document.querySelector(".cb");
+  const cb = document.querySelector(".chess-board");
   if (!cb || cb.dataset.lui || typeof S === "undefined" || !S || !S.b) return;
   cb.dataset.lui = "1";
   if (typeof S.n === "number") {
@@ -693,7 +700,7 @@ const game = {
     const from = new Set(mine ? L.map(m => m.f) : []);
     const last = S.last, tab = from.size ? Math.min(...from) : -1;
     const wk = kingSq(S.b, true), bk = kingSq(S.b, false);
-    let h = `<div class="cb3w"><div class="cb3" style="--tilt:${tilt}deg"><div class="cb` + (S.over && S.win >= 0 ? " won" : "") + '" role="grid" aria-label="Chess board"' +
+    let h = `<div class="cb3w"><div class="cb3${tilt <= 4 ? " flat-view" : ""}" style="--tilt:${tilt}deg"><div class="chess-board` + (S.over && S.win >= 0 ? " won" : "") + '" role="grid" aria-label="Chess board"' +
       (S.over && S.win >= 0 ? ` style="--w:${S.win === 0 ? "#e0a800" : "#4b3f72"}"` : "") + ">";
     for (let i = 0; i < 64; i++) {
       const r = i >> 3, c = i & 7, p = S.b[i];

@@ -610,6 +610,23 @@
   .joker-duel .jd-btn { min-height: 2.35rem; padding: 0.45rem 0.8rem; }
 }
 
+@media (max-height: 32rem) and (orientation: landscape) {
+  .joker-duel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto;
+    align-items: start;
+    gap: 0.2rem 0.5rem;
+    min-height: 0;
+    padding: 0.3rem;
+  }
+  .joker-duel .jd-seats { grid-column: 1; grid-row: 1; }
+  .joker-duel .jd-info { grid-column: 1; grid-row: 2; }
+  .joker-duel .jd-stage { grid-column: 2; grid-row: 1 / 3; min-height: 0; margin: 0; }
+  .joker-duel .jd-panel { grid-column: 1 / -1; grid-row: 3; min-height: 0; }
+  .joker-duel .jd-turn-status { grid-column: 1 / -1; grid-row: 4; }
+}
+
 /* ---------- keyframes ---------- */
 @keyframes jd-deal {
   from { opacity: 0; transform: translate(min(40vw, 14rem), -9rem) rotate(24deg) scale(0.5); }

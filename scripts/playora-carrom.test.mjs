@@ -155,6 +155,8 @@ test("Carrom shows unboxed player names at the top and bottom of the board", () 
   completeSetup(carrom, "clear");
 
   const markup = carrom.game.draw()[0];
+  assert.match(source, /\.cr-player-name\{[^}]*left:12%;width:76%;height:6%;[^}]*display:flex;align-items:center;justify-content:center/);
+  assert.match(source, /\.cr-player-name\.top\{top:0\}\.cr-player-name\.bottom\{bottom:0\}/);
   assert.match(markup, /class="cr-player-name top"[^>]*aria-label="Blair · Drew"/);
   assert.match(markup, /class="cr-player-name bottom"[^>]*aria-label="Alex · Casey"/);
   assert.ok(markup.indexOf('class="cr-board"') < markup.indexOf('class="cr-player-name top"'));

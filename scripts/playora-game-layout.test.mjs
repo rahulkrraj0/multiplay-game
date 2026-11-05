@@ -5,6 +5,8 @@ import test from "node:test";
 import vm from "node:vm";
 
 const engineSource = readFileSync(fileURLToPath(new URL("../public/playora/core/engine.js", import.meta.url)), "utf8");
+const game2048Source = readFileSync(fileURLToPath(new URL("../public/playora/games/2048-game.js", import.meta.url)), "utf8");
+const arrowsSource = readFileSync(fileURLToPath(new URL("../public/playora/games/arrows-game.js", import.meta.url)), "utf8");
 const networkSource = readFileSync(fileURLToPath(new URL("../public/playora/core/net.js", import.meta.url)), "utf8");
 const bluffSource = readFileSync(fileURLToPath(new URL("../public/playora/games/bluff.js", import.meta.url)), "utf8");
 const callBreakSource = readFileSync(fileURLToPath(new URL("../public/playora/games/callbreak.js", import.meta.url)), "utf8");
@@ -12,6 +14,7 @@ const crazyEightsSource = readFileSync(fileURLToPath(new URL("../public/playora/
 const heartsSource = readFileSync(fileURLToPath(new URL("../public/playora/games/hearts.js", import.meta.url)), "utf8");
 const spadesSource = readFileSync(fileURLToPath(new URL("../public/playora/games/spades.js", import.meta.url)), "utf8");
 const unoSource = readFileSync(fileURLToPath(new URL("../public/playora/games/uno.js", import.meta.url)), "utf8");
+const ludoSource = readFileSync(fileURLToPath(new URL("../public/playora/games/ludo.js", import.meta.url)), "utf8");
 const markup = readFileSync(fileURLToPath(new URL("../src/playora/markup.html", import.meta.url)), "utf8");
 const gameStyles = readFileSync(fileURLToPath(new URL("../src/playora/game.css", import.meta.url)), "utf8");
 
@@ -40,6 +43,31 @@ test("the game board contains full-screen games below the room toolbar", () => {
     gameStyles,
     /#room\.game-active:not\(\.ludo-game\) #bd\{position:relative;min-height:calc\(100dvh - 68px - env\(safe-area-inset-top,0px\) - env\(safe-area-inset-bottom,0px\)\)\}/,
   );
+});
+
+test("Arrows keeps its HUD at the top and centers the board within the full-screen area", () => {
+  assert.match(arrowsSource, /\.ar-wrap\{position:relative;[^}]*min-height:100%;[^}]*display:flex;flex-direction:column;justify-content:center/);
+  assert.match(arrowsSource, /\.ar-bar\{position:absolute;top:12px;left:12px;right:12px;z-index:1;/);
+});
+
+test("standalone games use one full-width scroll viewport", () => {
+  assert.match(gameStyles, /#room\.standalone-game\{overflow:hidden\}/);
+  assert.match(gameStyles, /\.standalone-game #gm\{width:100vw;height:calc\(100dvh - 64px\);min-height:0;overflow:hidden\}/);
+  assert.match(gameStyles, /\.standalone-game-host\{position:absolute;inset:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch\}/);
+});
+
+test("embedded game shells allow vertical scrolling without horizontal overflow", () => {
+  assert.match(gameStyles, /\.embedded-game #gm\{[^}]*overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch\}/);
+});
+
+test("2048 action buttons fit the game viewport", () => {
+  assert.match(game2048Source, /\.g48-btns button\{width:auto;min-width:0;min-height:42px;flex:1 1 0;margin:0;/);
+  assert.match(game2048Source, /#room \.g48-btns button\{width:auto;min-width:0;min-height:42px;flex:1 1 0;margin:0;padding:8px 14px\}/);
+});
+
+test("2048 board scales to fit short landscape screens without scrolling", () => {
+  assert.match(game2048Source, /@media\(max-height:620px\) and \(orientation:landscape\)\{\.g48-wrap\{--g48-size:min\(calc\(100dvh - 230px\),42vw\);padding:8px 16px\}\.g48-bar\{flex-wrap:nowrap;gap:4px;margin-bottom:6px\}/);
+  assert.match(game2048Source, /\.g48-board\{height:var\(--g48-size\);min-height:0\}/);
 });
 
 test("Spades table cards render above overlapping game messages", () => {
@@ -132,6 +160,13 @@ test("Hearts and Spades mobile hands center the incomplete row", () => {
   }
   assert.match(gameStyles, /#room #bd \.hr \.hand,#room #bd \.sp-room \.hand\{grid-template-columns:repeat\(16,minmax\(0,1fr\)\)\}/);
   assert.match(gameStyles, /#room #bd \.hr \.hand button\.card\[style\*="--hand-row"\],#room #bd \.sp-room \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2\}/);
+});
+
+test("card hands wrap to fit the game viewport and Ludo wide styles stay scoped to Ludo", () => {
+  assert.match(gameStyles, /@media\(min-width:601px\)\{\s*#room #bd \.cb \.hand,#room #bd \.ce-room \.ce \.hand,#room #bd \.hr \.hand,#room #bd \.sp-room \.sp \.hand\{flex-wrap:wrap;justify-content:center;overflow-x:hidden;overflow-y:hidden\}/);
+  assert.match(gameStyles, /#room #bd \.uno \.hand\{flex-wrap:wrap;justify-content:center;overflow:visible\}/);
+  assert.match(ludoSource, /#room\.ludo-game \.lui-wide\{--lui-size:min\(84vh,760px,calc\(100vw - 340px\)\)/);
+  assert.doesNotMatch(ludoSource, /"\s+\.lui-wide\{--lui-size/);
 });
 
 test("Bluff selected cards lift above neighboring cards", () => {

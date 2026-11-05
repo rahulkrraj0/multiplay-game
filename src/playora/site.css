@@ -17,6 +17,12 @@ nav{display:flex;gap:28px;color:var(--muted);font-size:14px}nav a:hover{color:#f
 @media(max-width:800px){nav{display:none}.hero{grid-template-columns:1fr;padding:55px 0 40px;gap:8px}.art{min-height:280px}.orb{width:250px;height:250px}.orb-inner{width:190px;height:190px}.games{grid-template-columns:repeat(2,1fr)}.stats{margin-bottom:50px}.section-head{align-items:start;flex-direction:column}.search{width:100%}.banner{align-items:flex-start;flex-direction:column}.right .online{display:none}}
 @media(max-width:520px){.wrap{width:calc(100% - 28px)}header{height:68px}.brand{font-size:20px}.right .btn{padding:10px 12px}.hero h1{letter-spacing:-2px}.hero p{font-size:15px}.art{min-height:250px}.orb{width:220px;height:220px}.orb-inner{width:170px;height:170px;padding:12px}.mini{font-size:34px}.float.one{right:-2px}.float.two{left:-2px}.stats{grid-template-columns:1fr;gap:10px}.stat{padding:14px 16px;gap:12px}.stat-icon{width:36px;height:36px;font-size:18px;flex:none}.stat>div:last-child{min-width:0}.stat b{font-size:15px}.stat span{font-size:12px}.games{grid-template-columns:1fr}.game-art{height:165px}.banner{padding:24px}.footer-row{align-items:flex-start;flex-direction:column}.footer-links{flex-wrap:wrap}}
 
+.games>.game{display:flex;flex-direction:column}
+.game-body{display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center}
+.game-title{justify-content:center;flex-wrap:wrap}
+.game-body p{margin:0}
+.game-bottom{justify-content:center;flex-wrap:wrap;gap:12px}
+
 .art-snl{background:linear-gradient(135deg,#5b4a1d,#1d3a2c)}.art-ttt{background:linear-gradient(135deg,#6a2f4d,#1f2b52)}
 header{padding-top:env(safe-area-inset-top,0px);height:auto;min-height:78px}
 .btn:focus-visible,.filter:focus-visible,a:focus-visible,.close:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}

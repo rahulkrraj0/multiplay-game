@@ -473,10 +473,10 @@ const CSS = `
 .cr-guide{stroke:#fff;stroke-linecap:round;pointer-events:none}
 .cr-fl{fill:none;stroke:#fff;stroke-width:5;animation:cr-fl .55s ease-out both;pointer-events:none}
 .cr-hud{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 0}
-.cr-player-name{position:absolute;left:12%;width:76%;z-index:5;box-sizing:border-box;overflow:hidden;color:#21170f;
+.cr-player-name{position:absolute;left:12%;width:76%;height:6%;z-index:5;box-sizing:border-box;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#21170f;
   font:800 clamp(11px,2.4vw,16px)/1.2 system-ui,sans-serif;text-align:center;text-overflow:ellipsis;white-space:nowrap;
   text-shadow:0 1px 2px rgba(255,255,255,.9);pointer-events:none}
-.cr-player-name.top{top:3%}.cr-player-name.bottom{bottom:3%}
+.cr-player-name.top{top:0}.cr-player-name.bottom{bottom:0}
 .cr-places{flex-basis:100%;padding:8px 10px;border-radius:10px;background:rgba(120,100,70,.1);font-size:13px;font-weight:700}
 .cr-side{flex:1 1 40%;min-width:0;padding:8px 10px;border-radius:12px;background:rgba(120,100,70,.14);border:2px solid transparent;
   display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;line-height:1.2}

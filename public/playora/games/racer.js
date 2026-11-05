@@ -119,7 +119,10 @@
       keys.clear();
       pressed = newControls();
     };
-    onResize = () => resizeCanvas();
+    onResize = () => {
+      resizeLayout();
+      resizeCanvas();
+    };
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("keyup", onKeyUp);
     window.addEventListener("blur", onBlur);
@@ -168,6 +171,19 @@
     canvas.width = Math.max(1, Math.round(bounds.width * dpr));
     canvas.height = Math.max(1, Math.round(bounds.height * dpr));
     context.setTransform(canvas.width / W, 0, 0, canvas.width / W, 0, 0);
+  }
+
+  function resizeLayout() {
+    if (!canvas) return;
+    const race = canvas.closest(".race");
+    if (!race) return;
+    const toolbar = document.querySelector("#room .rbar");
+    const board = document.querySelector("#room #bd");
+    const availableHeight = window.innerHeight - (toolbar?.getBoundingClientRect().height || 0);
+    const controlHeight = window.matchMedia("(max-width: 700px)").matches ? 82 : 0;
+    const canvasHeight = Math.max(120, availableHeight - 76 - controlHeight);
+    const availableWidth = (board?.clientWidth || window.innerWidth) - 24;
+    race.style.maxWidth = `${Math.max(200, Math.min(1100, availableWidth, canvasHeight * 1.6))}px`;
   }
 
   function validControls(value) {
@@ -473,6 +489,7 @@
       S.startedAt = Date.now();
     }
     bindInput();
+    resizeLayout();
     resizeCanvas();
     resizeObserver = new ResizeObserver(resizeCanvas);
     resizeObserver.observe(canvas);

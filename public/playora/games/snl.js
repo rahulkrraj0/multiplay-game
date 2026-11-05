@@ -204,6 +204,16 @@ ${pipCss}
   .snl-act{flex-direction:column}
   .snl-rankings{grid-column:1/-1;justify-self:center}
 }
+@media (max-height:520px) and (orientation:landscape){
+  .snl{--bs:min(60vh,calc(100vw - 600px),240px);display:grid;grid-template-columns:var(--bs) minmax(160px,220px);
+    grid-template-rows:auto auto;column-gap:12px;row-gap:4px;justify-content:center;align-items:center}
+  .snl-frame{grid-column:1;grid-row:1}
+  .snl-bar{grid-column:2;grid-row:1;width:auto;align-items:stretch;gap:4px}
+  .snl-act{flex-direction:column;gap:4px}
+  .snl-die{width:44px;height:44px;padding:6px}
+  .snl .snl-roll{padding:8px 12px;font-size:14px}
+  .snl-rankings{grid-column:1/-1;margin:0;padding:4px 10px 4px 24px;font-size:11px;line-height:1.2}
+}
 /* small phones */
 @media (max-width:480px){
   .snl{gap:12px}

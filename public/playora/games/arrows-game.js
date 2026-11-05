@@ -151,8 +151,8 @@
 
   // ---------- UI ----------
   const CSS = `
-.ar-wrap{max-width:560px;margin:0 auto;font-family:system-ui,sans-serif}
-.ar-bar{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.ar-wrap{position:relative;box-sizing:border-box;max-width:560px;min-height:100%;margin:0 auto;padding:12px;display:flex;flex-direction:column;justify-content:center;font-family:system-ui,sans-serif}
+.ar-bar{position:absolute;top:12px;left:12px;right:12px;z-index:1;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ar-lv{font-weight:700;font-size:18px}
 .ar-hearts{color:#e11d48;font-size:20px;letter-spacing:2px}
 .ar-btns{margin-left:auto;display:flex;gap:6px}

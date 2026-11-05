@@ -42,6 +42,9 @@ test("Chess shows White to move first and updates the player marker after each m
   chess.state = chess.game.init();
 
   let markup = chess.game.draw()[0];
+  assert.match(markup, /class="chess-board"/);
+  assert.match(source, /\.chess-board\{[^}]*transform-style:preserve-3d/);
+  assert.doesNotMatch(source, /\.cb(?:\s+\.|[:{])/);
   assert.match(
     markup,
     /class="chess-player active" aria-current="step"><b>White<\/b><span>Alex<\/span><small>to move<\/small>/,
@@ -76,4 +79,24 @@ test("Chess reports move, capture, and check sound events", () => {
   chess.state.cs = "";
   chess.game.apply({ f: 52, t: 12 });
   assert.equal(chess.game.soundEvent(), "check");
+});
+
+test("the tilted Chess board fits within narrow mobile viewports", () => {
+  assert.match(source, /@media\(max-width:600px\)[\s\S]*?\.cb3\{--bs:min\(86vw,calc\(90dvh - 144px\),560px\)/);
+  assert.match(source, /@media\(max-width:600px\)[\s\S]*?\.chess-board\{--bs:min\(86vw,calc\(90dvh - 144px\),560px\)/);
+});
+
+test("the flat Chess board fills mobile width without changing 3D sizing", () => {
+  assert.match(source, /\.cb3\.flat-view\{perspective:none\}/);
+  assert.match(source, /\.cb3\.flat-view \.chess-board\{--bs:min\(100vw,calc\(90dvh - 144px\),560px\);width:min\(100%,var\(--bs\)\)\}/);
+  assert.match(source, /classList\.toggle\("flat-view", tilt <= 4\)/);
+  assert.match(source, /class="cb3\$\{tilt <= 4 \? " flat-view" : ""\}"/);
+});
+
+test("Chess hides the duplicate room status below its in-game player panel", () => {
+  assert.match(source, /#room:has\(\.cb3w\) #lg,#room:has\(\.cb3w\) #st\{display:none\}/);
+});
+
+test("Chess prevents horizontal overflow from creating an unnecessary room scrollbar", () => {
+  assert.match(source, /#room:has\(\.cb3w\)\{overflow-x:hidden\}/);
 });
