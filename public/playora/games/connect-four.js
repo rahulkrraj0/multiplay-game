@@ -90,26 +90,28 @@ function search(b, turn, me, depth, alpha, beta, filled) {
 /* ------------------------------------------------------------------ */
 /*
   Sizing: the board is always an exact 7:4 rectangle (aspect-ratio 7/4). Padding is 1% and gaps 1.2% of
-  the width. Discs stay perfect circles, centred in their (wider) columns. Its width is the largest value that fits BOTH the screen width
-  and the screen height (minus --rsv, the room kept for the page header / status line), so it grows
-  to fill any phone, tablet, laptop or wide monitor and never overflows. Change --rsv if your page
-  has a taller or shorter header.
+  the width. Discs stay perfect circles, centred in their columns. Its width fits the available screen
+  width and height, respects safe areas, and is capped on large displays. The board is centred in the
+  game area below the room header.
 */
 const CSS = `
-.cf4{--vh:1vh;--rsv:120px;--w:min(calc(100vw - 16px),calc((var(--vh) * 100 - var(--rsv)) * 7 / 4));
-  --gap:calc(var(--w) * .012);--pad:calc(var(--w) * .01);--tc:#ef4444;position:relative;display:grid;
-  grid-template-columns:repeat(7,1fr);gap:var(--gap);width:var(--w);height:auto;aspect-ratio:7/4;margin:0 auto;padding:var(--pad);box-sizing:border-box;
-  background:linear-gradient(160deg,#2563eb,#1e40af);border-radius:calc(var(--w) * .04);overflow:hidden;isolation:isolate;
-  box-shadow:0 18px 44px rgba(15,30,80,.38),inset 0 0 0 2px rgba(255,255,255,.12)}
+.cf4{--vh:1vh;--rsv:calc(120px + env(safe-area-inset-top,0px) + env(safe-area-inset-bottom,0px));--w:min(calc(100vw - 32px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)),calc((var(--vh) * 100 - var(--rsv)) * 7 / 4),1120px);
+  --gap:calc(var(--w) * .012);--pad:calc(var(--w) * .01);--tc:#ef4444;position:absolute;display:grid;
+  left:50%;top:50%;transform:translate(-50%,-50%);grid-template-columns:repeat(7,1fr);gap:var(--gap);
+  width:var(--w);height:auto;aspect-ratio:7/4;margin:0;padding:var(--pad);box-sizing:border-box;
+  background:radial-gradient(ellipse at 50% 0,rgba(191,219,254,.22),transparent 58%),linear-gradient(145deg,#3478f6 0%,#1e50c8 54%,#172b69 100%);
+  border:1px solid rgba(219,234,254,.64);border-radius:calc(var(--w) * .035);overflow:hidden;isolation:isolate;
+  box-shadow:0 28px 70px rgba(3,10,35,.48),0 8px 20px rgba(15,30,80,.3),inset 0 2px 0 rgba(255,255,255,.3),inset 0 -8px 18px rgba(6,20,65,.24)}
 @supports (height:1dvh){.cf4{--vh:1dvh}}
 .cf4 .cf4-col{position:relative;display:grid;grid-template-columns:100%;grid-template-rows:repeat(6,1fr);gap:var(--gap);margin:0;padding:0;border:0;min-width:0;min-height:0;
-  border-radius:999px;background:transparent;cursor:pointer;font:inherit;color:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  z-index:1;border-radius:999px;background:transparent;cursor:pointer;font:inherit;color:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .cf4 .cf4-col.off{cursor:default}
 @media (hover:hover){.cf4 .cf4-col:not(.off):hover{background:rgba(255,255,255,.16)}}
 .cf4 .cf4-col:not(.off):active{background:rgba(255,255,255,.24)}
 .cf4 .cf4-col:focus-visible{outline:3px solid #fff;outline-offset:1px;background:rgba(255,255,255,.18)}
-.cf4 .cf4-cell{position:relative;display:block;height:100%;aspect-ratio:1/1;justify-self:center;min-width:0;min-height:0;border-radius:50%;background:#0b1b4a;
-  box-shadow:inset 0 4px 7px rgba(0,0,0,.55),0 1px 0 rgba(255,255,255,.18)}
+.cf4 .cf4-cell{position:relative;display:block;height:100%;aspect-ratio:1/1;justify-self:center;min-width:0;min-height:0;border-radius:50%;
+  background:radial-gradient(circle at 50% 45%,#07163f 0%,#0a1a48 68%,#132b65 100%);
+  box-shadow:inset 0 5px 9px rgba(0,0,0,.58),inset 0 -1px 2px rgba(255,255,255,.12),0 1px 0 rgba(255,255,255,.2)}
 .cf4 .cf4-cell,.cf4 .cf4-col{opacity:1!important;filter:none!important}
 .cf4 .cf4-cell.p0,.cf4 .cf4-cell.p1{box-shadow:inset 0 -4px 6px rgba(0,0,0,.3),inset 0 3px 5px rgba(255,255,255,.35),0 0 0 2px rgba(0,0,0,.18)}
 .cf4 .cf4-cell.p0{background:radial-gradient(circle at 35% 30%,#fca5a5,#ef4444 55%,#b91c1c)}
@@ -147,7 +149,7 @@ const CSS = `
 
 /* phones in landscape: little vertical room is kept for the page header */
 @media (orientation:landscape) and (max-height:520px){
-  .cf4{--rsv:56px}
+  .cf4{--rsv:calc(72px + env(safe-area-inset-top,0px) + env(safe-area-inset-bottom,0px))}
 }
 
 /* win banner: safe areas, short screens, scrolling if needed */
