@@ -1,4 +1,4 @@
-/* global S, np, isLocalComputerGame, nm, ids, canAct, act, registerGame */
+/* global S, np, seat, isLocalComputerGame, nm, ids, canAct, act, registerGame */
 /*
  * Ludo UI v2 + corrected rules  (ONE merged game, set up inside the game)
  *
@@ -101,9 +101,11 @@
 
   /* rotate board (this screen only) */
   var ROT_KEY = "ludo-board-rotation";
+  var ROT_COLOR_KEY = "ludo-board-player-color";
   var COS = [1, 0, -1, 0], SIN = [0, 1, 0, -1];   // cos / sin of 0, 90, 180, 270 degrees (exact)
   var rotQ = 0;       // quarter turns clockwise, 0..3
   var rotAcc = 0;     // total degrees turned so far, so the board always spins the same way
+  var orientedPlayerColor = "";
   var rotBtn = null;
   var rotGrid = null;
 
@@ -145,11 +147,12 @@
 
       /* decoration layer: yards + centre */
       ".lui-deco{position:absolute;inset:0;z-index:1;pointer-events:none}",
-      ".lui-player-name-anchor{position:absolute;z-index:20;display:block;max-width:46%;pointer-events:none}",
+      ".lui-player-name-anchor{position:absolute;z-index:20;display:block;max-width:46%;pointer-events:none;",
+      "  transition:left .35s ease,top .35s ease,transform .35s ease}",
+      ".lui-player-names{rotate:var(--lui-unrot,0deg);transform-origin:center;transition:rotate .35s ease}",
       ".lui-player-name-badge{display:block;box-sizing:border-box;max-width:100%;overflow:hidden;padding:4px 8px;",
       "  border:2px solid #fff;border-radius:999px;color:#fff;font:800 clamp(10px,2.2vw,15px)/1.2 system-ui,sans-serif;",
-      "  text-align:center;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 2px 6px #0009;",
-      "  rotate:var(--lui-unrot,0deg);transform-origin:center;transition:rotate .35s ease}",
+      "  text-align:center;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 2px 6px #0009}",
       ".lui-yard{position:absolute;width:40%;height:40%}",
       ".lui-yard-in{position:absolute;inset:15.5%;background:#fff;border-radius:9%;",
       "  box-shadow:0 0 0 calc(var(--lui-cell)*.12) var(--l),inset 0 2px 8px rgba(0,0,0,.12)}",
@@ -345,25 +348,33 @@
     return d;
   }
 
+  function playerNameCorner(color) {
+    var corners = [
+      { left: "2%", top: "2%", transform: "" },
+      { left: "98%", top: "2%", transform: "translateX(-100%)" },
+      { left: "98%", top: "98%", transform: "translate(-100%,-100%)" },
+      { left: "2%", top: "98%", transform: "translateY(-100%)" }
+    ];
+    return corners[(color + rotQ) % 4];
+  }
+
+  function playerNamePosition(color) {
+    var corner = playerNameCorner(color);
+    return "left:" + corner.left + ";top:" + corner.top + ";transform:" + corner.transform + ";";
+  }
+
   function playerNamesHtml() {
     if (!S || !S.p || !S.cols || S.setup) return "";
-    var positions = [
-      { left: "2%", top: "2%", color: PAL.red.base },
-      { right: "2%", top: "2%", color: PAL.green.base },
-      { right: "2%", bottom: "2%", color: PAL.yellow.dark },
-      { left: "2%", bottom: "2%", color: PAL.blue.base }
-    ];
+    var nameColors = [PAL.red.base, PAL.green.base, PAL.yellow.dark, PAL.blue.base];
     var labels = "";
     S.p.forEach(function (_, player) {
       var seen = {};
       (S.cols[player] || []).forEach(function (color) {
         if (seen[color]) return;
         seen[color] = true;
-        var pos = positions[color];
-        labels += '<span class="lui-player-name-anchor" style="' + (pos.left ? "left:" + pos.left + ";" : "") +
-          (pos.right ? "right:" + pos.right + ";" : "") + (pos.top ? "top:" + pos.top + ";" : "") +
-          (pos.bottom ? "bottom:" + pos.bottom + ";" : "") + '">' +
-          '<span class="lui-player-name-badge" style="background:' + pos.color + '" title="' +
+        labels += '<span class="lui-player-name-anchor" data-house-color="' + ORDER[color] +
+          '" style="' + playerNamePosition(color) + '">' +
+          '<span class="lui-player-name-badge" style="background:' + nameColors[color] + '" title="' +
           escapeHtml(playerName(player)) + '" aria-label="' + escapeHtml(playerName(player)) + '">' +
           escapeHtml(playerName(player)) + "</span></span>";
       });
@@ -439,6 +450,7 @@
     try {
       var v = parseInt(window.localStorage.getItem(ROT_KEY), 10);
       if (v >= 0 && v <= 3) { rotQ = v; rotAcc = v * 90; }
+      orientedPlayerColor = window.localStorage.getItem(ROT_COLOR_KEY) || "";
     } catch (e) { /* storage unavailable: start unrotated */ }
   }
 
@@ -446,9 +458,44 @@
     try { window.localStorage.setItem(ROT_KEY, String(rotQ)); } catch (e) { /* ignore */ }
   }
 
+  function syncViewerOrientation() {
+    if (!S || !S.cols || !S.cols.length) return;
+    var viewer = typeof seat === "number" && seat >= 0 && seat < S.cols.length ? seat :
+      seat === -1 || (typeof isLocalComputerGame === "function" && isLocalComputerGame()) ? 0 : -1;
+    if (viewer < 0 || !S.cols[viewer] || !S.cols[viewer].length) return;
+
+    var color = S.cols[viewer][0];
+    var colorKey = viewer + ":" + color;
+    if (orientedPlayerColor === colorKey) return;
+
+    var target = ((3 - color) % 4 + 4) % 4;
+    var turns = (target - rotQ + 4) % 4;
+    rotQ = target;
+    rotAcc += turns * 90;
+    orientedPlayerColor = colorKey;
+    try { window.localStorage.setItem(ROT_COLOR_KEY, colorKey); } catch (e) { /* ignore */ }
+    saveRotation();
+    var grids = document.querySelectorAll(".g.c15");
+    for (var i = 0; i < grids.length; i++) applyRotation(grids[i]);
+    if (rotBtn && rotBtn.firstChild) rotBtn.firstChild.style.transform = "rotate(" + rotAcc + "deg)";
+    positionRotBtn(rotGrid);
+  }
+
   /* a screen-space offset (x right, y down) expressed in the board's own (turned) frame */
   function toLocal(x, y) {
     return [x * COS[rotQ] + y * SIN[rotQ], -x * SIN[rotQ] + y * COS[rotQ]];
+  }
+
+  function positionPlayerNames(grid) {
+    var anchors = grid.querySelectorAll(".lui-player-name-anchor");
+    for (var i = 0; i < anchors.length; i++) {
+      var color = ORDER.indexOf(anchors[i].getAttribute("data-house-color"));
+      if (color < 0) continue;
+      var corner = playerNameCorner(color);
+      anchors[i].style.left = corner.left;
+      anchors[i].style.top = corner.top;
+      anchors[i].style.transform = corner.transform;
+    }
   }
 
   /* sets the rotation and matching light/shadow directions on one board */
@@ -456,6 +503,7 @@
     var st = grid.style;
     st.setProperty("--lui-rot", rotAcc + "deg");
     st.setProperty("--lui-unrot", (-rotAcc) + "deg");      /* cancels the turn for stars and the setup card */
+    positionPlayerNames(grid);
     var hi = toLocal(-18, -22), lo = toLocal(20, 30), dr = toLocal(0, 2), ins = toLocal(0, -3);
     st.setProperty("--lui-hx", (50 + hi[0]) + "%");        /* token highlight stays at the top-left of the screen */
     st.setProperty("--lui-hy", (50 + hi[1]) + "%");
@@ -1686,6 +1734,7 @@
     },
     draw: function () {
       if (!S.setup) syncNames();
+      if (!S.setup) syncViewerOrientation();
       var player = S.t;
       var moves = S.die && !S.setup ? new Set(legalTokens(player, S.die)) : new Set();
       var cells = Array.from({ length: N * N }, function () { return []; });

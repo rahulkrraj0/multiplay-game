@@ -6,7 +6,7 @@ import vm from "node:vm";
 
 const source = readFileSync(join(process.cwd(), "public", "playora", "games", "ludo.js"), "utf8");
 
-function createLudo({ players = 2, names } = {}) {
+function createLudo({ players = 2, names, rotation = null, seat = 99, orientationColor = null } = {}) {
   let game;
   const actions = [];
   const document = {
@@ -17,7 +17,11 @@ function createLudo({ players = 2, names } = {}) {
     getElementById: () => null,
   };
   const window = {
-    localStorage: { getItem: () => null, setItem() {} },
+    localStorage: {
+      getItem: (key) => key === "ludo-board-rotation" ? (rotation == null ? null : String(rotation)) :
+        key === "ludo-board-player-color" ? orientationColor : null,
+      setItem() {},
+    },
     matchMedia: () => ({ matches: true }),
     addEventListener() {},
     removeEventListener() {},
@@ -27,6 +31,7 @@ function createLudo({ players = 2, names } = {}) {
     document,
     window,
     np: players,
+    seat,
     S: null,
     nm: (seat) => (names || ["Red", "Green", "Yellow", "Blue"])[seat],
     act: (action) => actions.push(action),
@@ -253,14 +258,57 @@ test("Ludo shows each player name inside their colored board area", () => {
   for (const name of ["Red Player", "Green Player", "Yellow Player", "Blue Player"]) {
     assert.match(html, new RegExp('<span class="lui-player-name-badge"[^>]*>' + name + "</span>"));
   }
-  assert.match(html, /left:2%;top:2%/);
-  assert.match(html, /right:2%;top:2%/);
-  assert.match(html, /right:2%;bottom:2%/);
-  assert.match(html, /left:2%;bottom:2%/);
+  assert.match(html, /left:2%;top:2%;transform:;/);
+  assert.match(html, /left:98%;top:2%;transform:translateX\(-100%\);/);
+  assert.match(html, /left:98%;top:98%;transform:translate\(-100%,-100%\);/);
+  assert.match(html, /left:2%;top:98%;transform:translateY\(-100%\);/);
   assert.equal((html.match(/class="lui-player-name-anchor"/g) || []).length, 4,
-    "each player's name is anchored to its house corner on the rotating board");
+    "each player's name is anchored at its house's outer corner");
   assert.equal((source.match(/rotate:var\(--lui-unrot,0deg\)/g) || []).length, 5,
     "the name badges and other board labels counter-rotate so their text stays upright");
+});
+
+test("Ludo moves player names to their nearest screen corner for every board rotation", () => {
+  const expectedCorners = [
+    ["left:2%;top:2%;transform:;", "left:98%;top:2%;transform:translateX(-100%);",
+      "left:98%;top:98%;transform:translate(-100%,-100%);", "left:2%;top:98%;transform:translateY(-100%);"],
+    ["left:98%;top:2%;transform:translateX(-100%);", "left:98%;top:98%;transform:translate(-100%,-100%);",
+      "left:2%;top:98%;transform:translateY(-100%);", "left:2%;top:2%;transform:;"],
+    ["left:98%;top:98%;transform:translate(-100%,-100%);", "left:2%;top:98%;transform:translateY(-100%);",
+      "left:2%;top:2%;transform:;", "left:98%;top:2%;transform:translateX(-100%);"],
+    ["left:2%;top:98%;transform:translateY(-100%);", "left:2%;top:2%;transform:;",
+      "left:98%;top:2%;transform:translateX(-100%);", "left:98%;top:98%;transform:translate(-100%,-100%);"],
+  ];
+  for (let rotation = 0; rotation < 4; rotation += 1) {
+    const ludo = createLudo({ players: 4, rotation });
+    ludo.state = ludo.game.init();
+    ludo.game.apply({ color: 0 });
+
+    const html = ludo.game.draw()[0];
+    for (const corner of expectedCorners[rotation]) assert.ok(html.includes(corner), `${corner} at rotation ${rotation}`);
+    assert.equal((html.match(/data-house-color="/g) || []).length, 4);
+  }
+  assert.match(source, /function positionPlayerNames\(grid\)/);
+  assert.match(source, /corners\[\(color \+ rotQ\) % 4\]/);
+  assert.match(source, /\.lui-player-names\{rotate:var\(--lui-unrot,0deg\)/);
+  assert.match(source, /transition:left \.35s ease,top \.35s ease,transform \.35s ease/);
+  assert.match(source, /max-width:46%;pointer-events:none/);
+  assert.match(source, /text-overflow:ellipsis;white-space:nowrap/);
+});
+
+test("Ludo defaults each online player's own house to the bottom-left corner", () => {
+  const colors = ["red", "green", "yellow", "blue"];
+  for (let playerSeat = 0; playerSeat < colors.length; playerSeat += 1) {
+    const ludo = createLudo({ players: 4, seat: playerSeat });
+    ludo.state = ludo.game.init();
+    ludo.game.apply({ color: 0 });
+
+    const html = ludo.game.draw()[0];
+    const ownNameAnchor = html.match(new RegExp(`<span class="lui-player-name-anchor" data-house-color="${colors[playerSeat]}" style="([^"]+)"`));
+    assert.ok(ownNameAnchor, `seat ${playerSeat} should have a ${colors[playerSeat]} house`);
+    assert.equal(ownNameAnchor[1], "left:2%;top:98%;transform:translateY(-100%);",
+      `${colors[playerSeat]} should appear at the viewer's bottom-left`);
+  }
 });
 
 test("Ludo escapes player names displayed on the board", () => {
