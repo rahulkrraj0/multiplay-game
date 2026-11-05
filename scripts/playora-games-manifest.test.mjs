@@ -541,6 +541,12 @@ test("Checkers enforces mandatory captures and forward-only man moves", () => {
 
 test("Checkers keeps a multi-jump with the same piece and crowns at turn end", () => {
   const checkers = createGame("checkers-game.js");
+  checkers.context.S = checkers.game.init();
+  checkers.game.draw();
+  assert.match(checkers.styles[0].textContent, /\.ck-pc\{[^}]*box-sizing:border-box/);
+  assert.match(checkers.styles[0].textContent, /@keyframes ck-crown\{0%\{transform:scale\(\.82\) rotate\(-8deg\)\}65%\{transform:scale\(1\.04\) rotate\(4deg\)\}/);
+  assert.match(checkers.styles[0].textContent, /grid-template-columns:repeat\(8,minmax\(0,1fr\)\);grid-template-rows:repeat\(8,minmax\(0,1fr\)\)/);
+  assert.match(checkers.styles[0].textContent, /\.ck-sq,#room \.ck-board \.ck-sq\{box-sizing:border-box;[^}]*min-width:0;min-height:0/);
   const board = Array.from({ length: 8 }, () => Array(8).fill(null));
   board[5][0] = "r";
   board[4][1] = "b";
@@ -572,6 +578,39 @@ test("Checkers keeps a multi-jump with the same piece and crowns at turn end", (
   assert.equal(checkers.context.S.board[0][3], "R");
   assert.equal(checkers.context.S.chain, null, "crowning ends a capture turn in American checkers");
   assert.equal(checkers.context.S.turn, "b");
+});
+
+test("Checkers places turn status beside the board on wide screens and below on mobile", () => {
+  const checkers = createGame("checkers-game.js");
+  checkers.context.S = checkers.game.init();
+  const [html] = checkers.game.draw();
+
+  assert.ok(html.indexOf('class="ck-board"') < html.indexOf('class="ck-status"'),
+    "the status follows the board in document order for mobile layouts");
+  assert.match(checkers.styles[0].textContent, /\.ck-play-layout\{display:flex;flex-direction:column/);
+  assert.match(checkers.styles[0].textContent, /@media\(min-width:900px\)\{[\s\S]*?\.ck-play-layout\{flex:1;display:grid;grid-template-columns:minmax\(0,760px\) minmax\(140px,1fr\)/);
+  assert.match(checkers.styles[0].textContent, /\.ck-status\{order:1;text-align:center/);
+  assert.match(checkers.styles[0].textContent, /\.ck-status\{order:0;text-align:left/);
+});
+
+test("Checkers board and status are vertically centered on mobile", () => {
+  const checkers = createGame("checkers-game.js");
+  checkers.context.S = checkers.game.init();
+  checkers.game.draw();
+
+  assert.match(checkers.styles[0].textContent, /@media\(max-width:899px\)\{\.ck-wrap\{box-sizing:border-box;min-height:calc\(100vh - 68px\);display:flex;flex-direction:column\}\.ck-play-layout\{flex:1;justify-content:center\}\.ck-board\{align-self:center\}\}/);
+  assert.match(checkers.styles[0].textContent, /@supports\(height:100dvh\)\{@media\(max-width:899px\)\{\.ck-wrap\{min-height:calc\(100dvh - 68px - env\(safe-area-inset-top,0px\) - env\(safe-area-inset-bottom,0px\)\)\}\}\}/);
+});
+
+test("Checkers board height stays within the visible viewport on wide screens", () => {
+  const checkers = createGame("checkers-game.js");
+  checkers.context.S = checkers.game.init();
+  checkers.game.draw();
+
+  assert.match(checkers.styles[0].textContent, /@media\(min-width:900px\)\{\s*\.ck-wrap\{box-sizing:border-box;min-height:calc\(100vh - 68px\);display:flex;flex-direction:column\}/);
+  assert.match(checkers.styles[0].textContent, /\.ck-play-layout\{flex:1;display:grid;grid-template-columns:minmax\(0,760px\) minmax\(140px,1fr\);align-items:center/);
+  assert.match(checkers.styles[0].textContent, /\.ck-board\{width:min\(100%,760px,calc\(100vh - 100px\)\)\}/);
+  assert.match(checkers.styles[0].textContent, /@supports\(height:100dvh\)\{@media\(min-width:900px\)\{\.ck-wrap\{min-height:calc\(100dvh - 68px\)\}\.ck-board\{width:min\(100%,760px,calc\(100dvh - 100px\)\)\}\}\}/);
 });
 
 test("Checkers kings move backwards and quiet king moves count toward draws", () => {
