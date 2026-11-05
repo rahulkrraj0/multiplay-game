@@ -397,24 +397,24 @@ document.addEventListener("click", e => {
   }
   const pk = e.target.closest(".cb-pick button[data-pp]");
   if (pk) {
-    const cb = pk.closest(".cb"), a = { f: pend.f, t: pend.t, p: pk.dataset.pp };
+    const cb = pk.closest(".chess-board"), a = { f: pend.f, t: pend.t, p: pk.dataset.pp };
     closePicker(cb); sel = null;
     if (typeof canAct !== "function" || canAct()) act(a);
     return;
   }
   const back = e.target.closest(".cb-pick");
-  if (back) { closePicker(back.closest(".cb")); sel = null; paint(back.closest(".cb")); return; }
+  if (back) { closePicker(back.closest(".chess-board")); sel = null; paint(back.closest(".chess-board")); return; }
   const sq = e.target.closest(".chess-board .sq");
   if (!sq) return;
   if (e.detail > 0) kbFocus = null;
-  onSquare(+sq.dataset.sq, sq.closest(".cb"));
+  onSquare(+sq.dataset.sq, sq.closest(".chess-board"));
 });
 
 document.addEventListener("keydown", e => {
   const t = e.target;
   if (e.key === "Escape" && winEl) { closeBanner(); return; }
-  if (!t || !t.classList || !t.classList.contains("sq") || !t.closest(".cb")) return;
-  const i = +t.dataset.sq, cb = t.closest(".cb");
+  if (!t || !t.classList || !t.classList.contains("sq") || !t.closest(".chess-board")) return;
+  const i = +t.dataset.sq, cb = t.closest(".chess-board");
   if (e.key === "Enter" || e.key === " ") { e.preventDefault(); kbFocus = i; t.click(); return; }
   const d = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] }[e.key];
   if (!d) return;

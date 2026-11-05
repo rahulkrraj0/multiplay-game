@@ -14,16 +14,73 @@
   const SNAPSHOT_MS = 33;
   const INPUT_MS = 33;
   const STYLE_ID = "racer-game-style";
-  const CSS = `.race{width:min(100%,1100px);margin:0 auto;padding:10px 12px 18px}
-.race-canvas{display:block;width:100%;aspect-ratio:8/5;border:2px solid rgba(255,255,255,.16);border-radius:18px;background:#183b2d;box-shadow:0 18px 50px #0005}
-.race-help{margin:10px 0;color:#cbd5e1;font-size:14px}
-.race-controls{display:none;grid-template-columns:repeat(4,minmax(56px,76px));justify-content:center;gap:12px}
-.race-control{min-height:58px;border:1px solid rgba(255,255,255,.2);border-radius:16px;background:#1e293b;color:#fff;font-size:24px;font-weight:800;touch-action:none;user-select:none}
-.race-control:active{background:#475569;transform:scale(.97)}
-.race-throttle{background:#146c55}
-.race-brake{background:#8c2934}
-@media(max-width:700px){.race{padding:6px 8px 14px}.race-controls{display:grid}.race-control{min-height:54px}.race-help{font-size:12px}}`;
-  const COLORS = ["#4cc9f0", "#ffbe0b"];
+
+  const CSS = `
+.race{
+  width:min(100%,1100px);
+  margin:0 auto;
+  padding:10px 12px 18px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.race-canvas{
+  display:block;
+  width:100%;
+  aspect-ratio:8/5;
+  border:2px solid rgba(255,255,255,.12);
+  border-radius:20px;
+  background:#0f1f1a;
+  box-shadow:
+    0 25px 60px rgba(0,0,0,.55),
+    inset 0 0 0 1px rgba(255,255,255,.05);
+}
+.race-help{
+  margin:12px 0 6px;
+  color:#94a3b8;
+  font-size:13.5px;
+  letter-spacing:.2px;
+  text-align:center;
+}
+.race-controls{
+  display:none;
+  grid-template-columns:repeat(4,minmax(58px,80px));
+  justify-content:center;
+  gap:14px;
+  margin-top:8px;
+}
+.race-control{
+  min-height:60px;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:18px;
+  background:linear-gradient(180deg,#1e293b,#0f172a);
+  color:#f1f5f9;
+  font-size:26px;
+  font-weight:800;
+  touch-action:none;
+  user-select:none;
+  box-shadow:0 8px 20px rgba(0,0,0,.35);
+  transition:transform .08s ease, background .1s ease;
+}
+.race-control:active{
+  transform:scale(.94);
+  background:linear-gradient(180deg,#334155,#1e293b);
+}
+.race-throttle{
+  background:linear-gradient(180deg,#0d9488,#0f766e);
+  border-color:rgba(45,212,191,.4);
+}
+.race-brake{
+  background:linear-gradient(180deg,#b91c1c,#7f1d1d);
+  border-color:rgba(248,113,113,.35);
+}
+@media(max-width:700px){
+  .race{padding:8px 8px 16px}
+  .race-controls{display:grid}
+  .race-control{min-height:56px;font-size:24px}
+  .race-help{font-size:12px}
+}
+`;
+
+  const COLORS = ["#22d3ee", "#fbbf24"];
   const names = ["Cyan", "Gold"];
   const carName = (player) => typeof nm === "function" ? nm(player) : names[player];
   const TAU = Math.PI * 2;
@@ -319,75 +376,163 @@
     if (car) car.controls = newControls();
   }
 
+  // ─────────────────────────────────────────────
+  // WORLD-CLASS VISUALS
+  // ─────────────────────────────────────────────
+
   function drawTrack(ctx) {
-    ctx.fillStyle = "#183b2d";
+    // Deep background
+    ctx.fillStyle = "#0c1a15";
     ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = "#344252";
+
+    // Outer grass ring with subtle radial gradient feel
+    const grassGrad = ctx.createRadialGradient(CX, CY, RX * 0.4, CX, CY, RX * 1.15);
+    grassGrad.addColorStop(0, "#1a3c2e");
+    grassGrad.addColorStop(0.7, "#143028");
+    grassGrad.addColorStop(1, "#0e231c");
+    ctx.fillStyle = grassGrad;
+    ctx.beginPath();
+    ctx.ellipse(CX, CY, RX * 1.18, RY * 1.18, 0, 0, TAU);
+    ctx.fill();
+
+    // Asphalt road
+    const roadGrad = ctx.createRadialGradient(CX, CY, 0, CX, CY, RX);
+    roadGrad.addColorStop(0, "#2a3441");
+    roadGrad.addColorStop(1, "#1e293b");
+    ctx.fillStyle = roadGrad;
     ctx.beginPath();
     ctx.ellipse(CX, CY, RX, RY, 0, 0, TAU);
     ctx.fill();
-    ctx.fillStyle = "#214b38";
+
+    // Inner grass
+    ctx.fillStyle = "#16352a";
     ctx.beginPath();
     ctx.ellipse(CX, CY, RX * ROAD_INNER, RY * ROAD_INNER, 0, 0, TAU);
     ctx.fill();
 
-    ctx.strokeStyle = "#e9c46a";
-    ctx.lineWidth = 3;
-    ctx.setLineDash([17, 15]);
+    // Inner soft highlight
+    ctx.fillStyle = "rgba(34,197,94,.06)";
     ctx.beginPath();
-    ctx.ellipse(CX, CY, RX * 0.79, RY * 0.79, 0, 0, TAU);
+    ctx.ellipse(CX, CY, RX * ROAD_INNER * 0.92, RY * ROAD_INNER * 0.92, 0, 0, TAU);
+    ctx.fill();
+
+    // Center dashed line (glowing)
+    ctx.save();
+    ctx.strokeStyle = "rgba(251,191,36,.85)";
+    ctx.lineWidth = 3.5;
+    ctx.setLineDash([18, 14]);
+    ctx.shadowColor = "rgba(251,191,36,.45)";
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.ellipse(CX, CY, RX * 0.795, RY * 0.795, 0, 0, TAU);
     ctx.stroke();
+    ctx.restore();
     ctx.setLineDash([]);
 
-    ctx.strokeStyle = "rgba(255,255,255,.72)";
-    ctx.lineWidth = 3;
-    [0.02, ROAD_INNER].forEach((scale) => {
-      if (scale === 0.02) {
-        ctx.beginPath();
-        ctx.ellipse(CX, CY, RX * 1.01, RY * 1.01, 0, 0, TAU);
-      } else {
-        ctx.beginPath();
-        ctx.ellipse(CX, CY, RX * scale, RY * scale, 0, 0, TAU);
-      }
-      ctx.stroke();
-    });
+    // Outer and inner white curbs
+    ctx.strokeStyle = "rgba(255,255,255,.78)";
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.ellipse(CX, CY, RX * 1.012, RY * 1.012, 0, 0, TAU);
+    ctx.stroke();
 
+    ctx.beginPath();
+    ctx.ellipse(CX, CY, RX * ROAD_INNER, RY * ROAD_INNER, 0, 0, TAU);
+    ctx.stroke();
+
+    // Start / Finish checkered line
     const lineX = CX;
     const lineY = CY - RY * 0.9;
     ctx.save();
     ctx.translate(lineX, lineY);
     ctx.rotate(Math.PI / 2);
-    const tile = 14;
-    for (let x = -tile * 2; x < tile * 2; x += tile) {
-      for (let y = 0; y < tile * 2; y += tile) {
-        ctx.fillStyle = (Math.floor(x / tile) + Math.floor(y / tile)) % 2 ? "#111827" : "#f8fafc";
+    const tile = 13;
+    for (let x = -tile * 2.2; x < tile * 2.2; x += tile) {
+      for (let y = 0; y < tile * 2.1; y += tile) {
+        ctx.fillStyle = (Math.floor(x / tile) + Math.floor(y / tile)) % 2 ? "#0f172a" : "#f8fafc";
         ctx.fillRect(x, y, tile, tile);
       }
     }
+    // Soft glow under the line
+    ctx.shadowColor = "rgba(255,255,255,.25)";
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = "rgba(255,255,255,.08)";
+    ctx.fillRect(-tile * 2.2, -4, tile * 4.4, tile * 2.1 + 8);
     ctx.restore();
 
-    ctx.fillStyle = "rgba(255,255,255,.65)";
-    ctx.font = "700 14px system-ui, sans-serif";
+    // Center text
+    ctx.fillStyle = "rgba(255,255,255,.55)";
+    ctx.font = "700 15px system-ui, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("3 LAPS", CX, CY + 8);
+    ctx.textBaseline = "middle";
+    ctx.fillText("3 LAPS", CX, CY + 2);
   }
 
   function drawCar(ctx, car, index) {
     ctx.save();
     ctx.translate(car.x, car.y);
     ctx.rotate(car.heading);
-    ctx.shadowColor = "rgba(0,0,0,.4)";
-    ctx.shadowBlur = 10;
+
+    // Soft ground shadow
+    ctx.fillStyle = "rgba(0,0,0,.35)";
+    ctx.beginPath();
+    ctx.ellipse(2, 4, 22, 11, 0, 0, TAU);
+    ctx.fill();
+
+    // Main body
+    ctx.shadowColor = "rgba(0,0,0,.45)";
+    ctx.shadowBlur = 12;
     ctx.fillStyle = COLORS[index];
     ctx.beginPath();
-    ctx.roundRect(-20, -11, 40, 22, 7);
+    ctx.roundRect(-21, -12, 42, 24, 8);
     ctx.fill();
     ctx.shadowBlur = 0;
-    ctx.fillStyle = "#10202a";
-    ctx.fillRect(-6, -8, 15, 16);
-    ctx.fillStyle = "rgba(255,255,255,.85)";
-    ctx.fillRect(9, -7, 4, 5);
-    ctx.fillRect(9, 2, 4, 5);
+
+    // Darker underside / side detail
+    ctx.fillStyle = "rgba(0,0,0,.18)";
+    ctx.beginPath();
+    ctx.roundRect(-21, 2, 42, 10, 6);
+    ctx.fill();
+
+    // Cockpit / windshield
+    ctx.fillStyle = "#0f172a";
+    ctx.beginPath();
+    ctx.roundRect(-5, -8.5, 16, 17, 4);
+    ctx.fill();
+
+    // Windshield glass highlight
+    ctx.fillStyle = "rgba(255,255,255,.12)";
+    ctx.fillRect(-3, -7, 12, 5);
+
+    // Headlights
+    ctx.fillStyle = "rgba(255,255,255,.92)";
+    ctx.beginPath();
+    ctx.roundRect(16, -8, 5, 5.5, 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.roundRect(16, 2.5, 5, 5.5, 2);
+    ctx.fill();
+
+    // Headlight glow
+    ctx.fillStyle = "rgba(255,255,255,.25)";
+    ctx.beginPath();
+    ctx.ellipse(19, -5, 7, 4, 0, 0, TAU);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(19, 5, 7, 4, 0, 0, TAU);
+    ctx.fill();
+
+    // Rear lights
+    ctx.fillStyle = "#ef4444";
+    ctx.fillRect(-20, -7, 4, 4);
+    ctx.fillRect(-20, 3, 4, 4);
+
+    // Subtle top highlight
+    ctx.fillStyle = "rgba(255,255,255,.15)";
+    ctx.beginPath();
+    ctx.roundRect(-18, -11, 28, 6, 4);
+    ctx.fill();
+
     ctx.restore();
   }
 
@@ -416,22 +561,47 @@
 
     const countdown = Math.ceil((S.raceAt - Date.now()) / 1000);
     if (S.raceAt && countdown > 0) {
-      ctx.fillStyle = "rgba(5,12,23,.68)";
+      // Dark overlay
+      ctx.fillStyle = "rgba(5,12,18,.72)";
       ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "#fff";
-      ctx.font = "900 86px system-ui, sans-serif";
+
+      // Soft ring
+      ctx.strokeStyle = "rgba(255,255,255,.12)";
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(CX, CY, 92, 0, TAU);
+      ctx.stroke();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "900 96px system-ui, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(String(countdown), CX, CY + 30);
+      ctx.textBaseline = "middle";
+      ctx.shadowColor = "rgba(0,0,0,.5)";
+      ctx.shadowBlur = 18;
+      ctx.fillText(String(countdown), CX, CY + 6);
+      ctx.shadowBlur = 0;
     } else if (S.over) {
-      ctx.fillStyle = "rgba(5,12,23,.68)";
+      ctx.fillStyle = "rgba(5,12,18,.75)";
       ctx.fillRect(0, 0, W, H);
+
+      // Winner color accent bar
       ctx.fillStyle = COLORS[S.winner];
-      ctx.font = "900 44px system-ui, sans-serif";
+      ctx.globalAlpha = 0.15;
+      ctx.fillRect(0, CY - 70, W, 140);
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = COLORS[S.winner];
+      ctx.font = "900 48px system-ui, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(carName(S.winner) + " wins!", CX, CY + 12);
-      ctx.fillStyle = "#fff";
-      ctx.font = "600 17px system-ui, sans-serif";
-      ctx.fillText("The host can restart for another race.", CX, CY + 48);
+      ctx.textBaseline = "middle";
+      ctx.shadowColor = "rgba(0,0,0,.45)";
+      ctx.shadowBlur = 16;
+      ctx.fillText(carName(S.winner) + " wins!", CX, CY - 8);
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle = "rgba(255,255,255,.85)";
+      ctx.font = "600 16px system-ui, sans-serif";
+      ctx.fillText("Host can restart for another race", CX, CY + 38);
     }
 
     if (now - lastStatusUpdate > 180) {

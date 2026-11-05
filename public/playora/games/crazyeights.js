@@ -9,6 +9,14 @@
   var G = { phase: 'setup', players: [] }, root = null, timer = null, mountHost = null, shadow = null;
   var S = null, roomStyleNode = null, roomAnimationSeq = 0, roomWildCard = null;
   var roomStyleNode = null, roomPick = null, roomAnimationSeen = 0;
+  var SUIT_PICKER_STYLE = 'position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(5,24,30,.97);padding:20px';
+  var SUIT_GRID_STYLE = 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(12px,3vw,20px)';
+  var SUIT_BUTTON_STYLE = 'width:clamp(88px,18vw,136px);height:clamp(88px,18vw,136px);border-radius:24px;font-size:clamp(44px,9vw,64px);box-shadow:0 6px 18px rgba(0,0,0,.4)';
+  function suitButtonStyle(suit) {
+    var red = suit === 'H' || suit === 'D';
+    return SUIT_BUTTON_STYLE + ';background:#fff;color:' + (red ? '#d02b3a' : '#1b1f2a') +
+      ';border-color:' + (red ? '#ff9aa2' : '#a8b4cf');
+  }
 
   function playSound(event) {
     if (global.playoraSound && typeof global.playoraSound.playGame === 'function')
@@ -166,8 +174,8 @@
     });
     h += '</div>';
     if (G.pick != null) {
-      h += '<div class="ovl"><p>Choose a suit</p><div class="row">' + SUITS.map(function (s) {
-        return '<button class="sw' + (s === 'H' || s === 'D' ? ' red' : '') + '" data-a="suit" data-v="' + s + '" aria-label="' + SNAME[s] + '">' + SYM[s] + '</button>';
+      h += '<div class="ovl suit-picker" style="' + SUIT_PICKER_STYLE + '"><p>Choose a suit</p><div class="row" style="' + SUIT_GRID_STYLE + '">' + SUITS.map(function (s) {
+        return '<button class="sw' + (s === 'H' || s === 'D' ? ' red' : '') + '" style="' + suitButtonStyle(s) + '" data-a="suit" data-v="' + s + '" aria-label="' + SNAME[s] + '">' + SYM[s] + '</button>';
       }).join('') + '</div></div>';
     }
     if (G.phase === 'over') {
@@ -487,9 +495,9 @@
       });
     }
     html += '</div>';
-    if (roomWildCard != null && active) html += '<div class="ovl"><p>Choose a suit</p><div class="row">' +
+    if (roomWildCard != null && active) html += '<div class="ovl suit-picker" style="' + SUIT_PICKER_STYLE + '"><p>Choose a suit</p><div class="row" style="' + SUIT_GRID_STYLE + '">' +
       SUITS.map(function (suit) { return '<button class="sw' + (suit === 'H' || suit === 'D' ? ' red' : '') +
-        '" data-m="suit:' + suit + '" aria-label="' + SNAME[suit] + '">' + SYM[suit] + '</button>'; }).join('') +
+        '" style="' + suitButtonStyle(suit) + '" data-m="suit:' + suit + '" aria-label="' + SNAME[suit] + '">' + SYM[suit] + '</button>'; }).join('') +
       '</div></div>';
     if (S.phase === 'roundend') {
       var winner = S.players[S.winner];
@@ -552,10 +560,13 @@
     '.hand .card+.card{margin-left:calc(var(--w)*-.4)}.hand .card{cursor:default}.hand .card.ok{position:relative;z-index:2;transform:translateY(-14px);cursor:pointer;box-shadow:0 0 0 3px #ffcf5a,0 6px 14px rgba(0,0,0,.5)}' +
     '.hand .card.no{filter:brightness(.6)}' +
     '.ovl{position:absolute;inset:0;z-index:5;background:rgba(5,24,30,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}' +
+    '.ovl.suit-picker{z-index:9999;background:rgba(5,24,30,.96)}.ovl.suit-picker .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(12px,3vw,20px)}' +
+    '.ovl.suit-picker .sw{width:clamp(88px,18vw,132px);height:clamp(88px,18vw,132px);border-radius:24px;font-size:clamp(44px,9vw,64px);box-shadow:0 6px 18px rgba(0,0,0,.4)}' +
     '.ovl h1{margin:0;font-size:clamp(34px,9vw,60px);color:#ffcf5a}.ovl p{margin:0;max-width:42ch;line-height:1.45}.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}' +
     '.sw{width:68px;height:68px;border-radius:50%;border:4px solid #ffcf5a;background:#fff;color:#1b1f2a;font-size:34px;cursor:pointer;line-height:1}.sw.red{color:#d02b3a}' +
     '.btn:focus-visible,.card:focus-visible,.pile:focus-visible,.sw:focus-visible{outline:3px solid #fff;outline-offset:3px}' +
     '@media(max-width:600px){.hand{grid-template-columns:repeat(16,minmax(0,1fr))}.hand .card{grid-column:span 2}.hand .card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column)}}' +
+    '@media(min-width:601px){.ce{--w:clamp(41.8px,min(11.59vw,14.25vh),87.4px)}}' +
     '@media(max-height:380px) and (orientation:landscape){.ce{--w:clamp(30px,min(8vw,10vh),40px)}.bar{padding:4px 10px}.bar .logo{font-size:16px}.opps{gap:4px;padding:2px 8px}.opp{gap:2px;padding:2px 6px;font-size:11px}.table{gap:calc(var(--w)*1.6)}.msg{font-size:12px;min-height:0;padding:2px 8px}.acts{gap:6px;min-height:34px}.btn{padding:.4em .8em}.hand{padding:8px 8px 4px}.hand .card.ok{transform:translateY(-5px)}}' +
     '@keyframes card-land{from{opacity:0;translate:0 -34px;rotate:-8deg;scale:.9}to{opacity:1;translate:0 0;rotate:0deg;scale:1}}' +
     '@media (prefers-reduced-motion:no-preference){.hand .card{transition:transform .2s cubic-bezier(.2,.8,.2,1)}.cur .card.fresh{animation:card-land .34s cubic-bezier(.2,.8,.2,1) both}.hand .card.dealing{animation:card-land .34s cubic-bezier(.2,.8,.2,1) both}.pile .card{transition:transform .22s cubic-bezier(.2,.8,.2,1)}.pile.ok:hover .card{transform:translateY(-5px) rotate(-3deg)}}' +
