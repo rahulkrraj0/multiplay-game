@@ -294,7 +294,10 @@
     var perPlayer = S.players.length === 2 ? 7 : 5;
     S.players.forEach(function (player) { player.hand = roomTake(perPlayer); });
     var first;
-    do { first = roomTake(1)[0]; } while (first && first.r === 8);
+    do {
+      first = roomTake(1)[0];
+      if (first && first.r === 8) S.stock.unshift(first); // never start on an 8: return it to the bottom of the deck
+    } while (first && first.r === 8);
     if (!first) throw new Error('Crazy Eights could not deal a starting card.');
     S.disc.push(first);
     S.color = first.s;

@@ -1,5 +1,8 @@
 # Playora Project Guidelines
 
+Before changing project files, read [`FILE_CHANGE_POLICY.md`](FILE_CHANGE_POLICY.md)
+and edit only paths explicitly authorized by the user for the current task.
+
 Playora is a browser-based board-game and multiplayer site built with TanStack
 Start, Vite, and classic browser scripts for its game runtime. It is deployed to
 Vercel. Make focused changes that fit the existing architecture and preserve
