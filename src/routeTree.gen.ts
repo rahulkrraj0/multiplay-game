@@ -15,6 +15,7 @@ import { Route as OnlineMultiplayerRouteImport } from './routes/online-multiplay
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as ApiIceRouteImport } from './routes/api/ice'
 import { Route as ApiRtcRouteImport } from './routes/api/rtc'
+import { Route as GamesGameRouteImport } from './routes/games/$game'
 import { Route as GamesChessRouteImport } from './routes/games/chess'
 import { Route as GamesSnakesAndLaddersRouteImport } from './routes/games/snakes-and-ladders'
 import { Route as GamesTicTacToeRouteImport } from './routes/games/tic-tac-toe'
@@ -49,6 +50,11 @@ const ApiRtcRoute = ApiRtcRouteImport.update({
   path: '/api/rtc',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GamesGameRoute = GamesGameRouteImport.update({
+  id: '/games/$game',
+  path: '/games/$game',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GamesChessRoute = GamesChessRouteImport.update({
   id: '/games/chess',
   path: '/games/chess',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/api/ice': typeof ApiIceRoute
   '/api/rtc': typeof ApiRtcRoute
+  '/games/$game': typeof GamesGameRoute
   '/games/chess': typeof GamesChessRoute
   '/games/snakes-and-ladders': typeof GamesSnakesAndLaddersRoute
   '/games/tic-tac-toe': typeof GamesTicTacToeRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/api/ice': typeof ApiIceRoute
   '/api/rtc': typeof ApiRtcRoute
+  '/games/$game': typeof GamesGameRoute
   '/games/chess': typeof GamesChessRoute
   '/games/snakes-and-ladders': typeof GamesSnakesAndLaddersRoute
   '/games/tic-tac-toe': typeof GamesTicTacToeRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/api/ice': typeof ApiIceRoute
   '/api/rtc': typeof ApiRtcRoute
+  '/games/$game': typeof GamesGameRoute
   '/games/chess': typeof GamesChessRoute
   '/games/snakes-and-ladders': typeof GamesSnakesAndLaddersRoute
   '/games/tic-tac-toe': typeof GamesTicTacToeRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/api/ice'
     | '/api/rtc'
+    | '/games/$game'
     | '/games/chess'
     | '/games/snakes-and-ladders'
     | '/games/tic-tac-toe'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/api/ice'
     | '/api/rtc'
+    | '/games/$game'
     | '/games/chess'
     | '/games/snakes-and-ladders'
     | '/games/tic-tac-toe'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/api/ice'
     | '/api/rtc'
+    | '/games/$game'
     | '/games/chess'
     | '/games/snakes-and-ladders'
     | '/games/tic-tac-toe'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   ApiIceRoute: typeof ApiIceRoute
   ApiRtcRoute: typeof ApiRtcRoute
+  GamesGameRoute: typeof GamesGameRoute
   GamesChessRoute: typeof GamesChessRoute
   GamesSnakesAndLaddersRoute: typeof GamesSnakesAndLaddersRoute
   GamesTicTacToeRoute: typeof GamesTicTacToeRoute
@@ -191,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRtcRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/games/$game': {
+      id: '/games/$game'
+      path: '/games/$game'
+      fullPath: '/games/$game'
+      preLoaderRoute: typeof GamesGameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/games/chess': {
       id: '/games/chess'
       path: '/games/chess'
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   ApiIceRoute: ApiIceRoute,
   ApiRtcRoute: ApiRtcRoute,
+  GamesGameRoute: GamesGameRoute,
   GamesChessRoute: GamesChessRoute,
   GamesSnakesAndLaddersRoute: GamesSnakesAndLaddersRoute,
   GamesTicTacToeRoute: GamesTicTacToeRoute,

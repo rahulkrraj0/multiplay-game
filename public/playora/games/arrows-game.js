@@ -179,6 +179,7 @@
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } },
   };
+  const PROGRESS_KEY = 'arrows.progress';
 
   // The part of a polyline between arc lengths a and b.
   function sub(pts, a, b) {
@@ -303,14 +304,46 @@
       ov.onclick = onClick;
     }
 
+    function readProgress() {
+      try {
+        const saved = JSON.parse(store.get(PROGRESS_KEY));
+        if (!saved || !Number.isInteger(saved.level) || saved.level < 1 ||
+          !Number.isInteger(saved.lives) || saved.lives < 0 || saved.lives > LIVES ||
+          !Array.isArray(saved.alive) || !saved.alive.every(value => typeof value === 'boolean') ||
+          typeof saved.won !== 'boolean' || typeof saved.over !== 'boolean' ||
+          (saved.won && saved.over)) return null;
+        const restored = init(saved.level);
+        if (saved.alive.length !== restored.arrows.length) return null;
+        restored.arrows.forEach((arrow, i) => { arrow.alive = saved.alive[i]; });
+        restored.lives = saved.lives;
+        restored.won = saved.won;
+        restored.over = saved.over;
+        if (restored.won !== restored.arrows.every(arrow => !arrow.alive) ||
+          restored.over !== (restored.lives === 0)) return null;
+        return restored;
+      } catch (e) { return null; }
+    }
+
+    function persist() {
+      if (!s) return;
+      store.set('arrows.level', String(level));
+      store.set(PROGRESS_KEY, JSON.stringify({
+        level,
+        lives: s.lives,
+        alive: s.arrows.map(arrow => arrow.alive),
+        won: s.won,
+        over: s.over,
+      }));
+    }
+
     function load(lv) {
       clearTimeout(timer);
       timer = 0;
       level = lv;
-      store.set('arrows.level', String(level));
       s = init(level);
       anims.clear(); hint = null;
       ov.classList.remove('on');
+      persist();
       layout(); hud(); draw(performance.now());
     }
 
@@ -330,6 +363,7 @@
     function tap(i) {
       if (!valid(s, i) || anims.has(i)) return;
       s = apply(s, i);
+      persist();
       const now = performance.now(), l = s.last;
       hint = null;
       const motion = !reducedMotion();
@@ -382,7 +416,21 @@
     $('.ar-restart').addEventListener('click', () => { playSound('menu'); load(level); });
     window.addEventListener('resize', onResize);
 
-    load(level);
+    const saved = readProgress();
+    if (saved) {
+      level = saved.level;
+      s = saved;
+      anims.clear(); hint = null;
+      layout(); hud(); draw(performance.now());
+      if (s.won) {
+        overlay('Level ' + level + ' complete!<button>Next level</button>', () => { clearTimeout(timer); nextLevel(); });
+        timer = setTimeout(nextLevel, 1600);
+      } else if (s.over) {
+        overlay('Out of lives<button>Try again</button>', () => load(level));
+      }
+    } else {
+      load(level);
+    }
     playSound('start');
     return {
       load,

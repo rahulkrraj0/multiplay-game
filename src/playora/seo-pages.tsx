@@ -11,6 +11,29 @@ export type SeoPageId =
   | "online-multiplayer"
   | "how-to-play";
 
+export type GameSeoPageId =
+  | "2048"
+  | "arrows"
+  | "bluff"
+  | "callbreak"
+  | "carrom"
+  | "checkers"
+  | "connect-four"
+  | "crazyeights"
+  | "hearts"
+  | "joker-duel"
+  | "ludo"
+  | "poker"
+  | "racer"
+  | "rummy"
+  | "spades"
+  | "sudoku"
+  | "teenpatti"
+  | "uno"
+  | "watersort";
+
+type SeoRoutePageId = SeoPageId | GameSeoPageId;
+
 type SeoPageContent = {
   title: string;
   description: string;
@@ -20,6 +43,209 @@ type SeoPageContent = {
   faqs: { question: string; answer: string }[];
   related: { href: string; label: string }[];
 };
+
+function gameGuide(
+  name: string,
+  summary: string,
+  howTo: string,
+  tip: string,
+  multiplayer: boolean,
+): SeoPageContent {
+  return {
+    title: `Play ${name} Online`,
+    description: `${summary} Play ${name} free in your browser on GamesLord.`,
+    intro: `${summary} Open ${name} on GamesLord in your browser and follow the game controls to get started.`,
+    playHref: "/#games",
+    sections: [
+      {
+        heading: `How to play ${name}`,
+        paragraphs: [
+          howTo,
+          "Choose the game from the GamesLord home page and use the instructions shown in the game to begin. The available controls and setup options are displayed before or during play.",
+        ],
+      },
+      {
+        heading: `${name} tips for a better game`,
+        paragraphs: [tip],
+      },
+    ],
+    faqs: [
+      {
+        question: `Can I play ${name} for free?`,
+        answer: `Yes. ${name} runs in your browser on GamesLord, with no download or account required.`,
+      },
+      {
+        question: `Can I play ${name} with friends?`,
+        answer: multiplayer
+          ? "Create an online lobby and invite friends with its link or room code. The lobby shows the player options available for this game."
+          : `${name} is a solo game. Browse the GamesLord game list for multiplayer titles you can play with friends.`,
+      },
+      {
+        question: `How do I start ${name}?`,
+        answer: `Choose ${name} from the game list and select the available game or player setup. Follow the on-screen instructions to begin.`,
+      },
+    ],
+    related: [],
+  };
+}
+
+const gamePages: Record<GameSeoPageId, SeoPageContent> = {
+  "2048": gameGuide(
+    "2048",
+    "Slide numbered tiles across a four-by-four board to merge matching values and build the 2048 tile.",
+    "Use the directional controls to slide every tile. Matching numbers combine into one larger tile, while each move can add another number to the board.",
+    "Plan several moves ahead and keep open spaces available. Combining tiles in a consistent direction can make the board easier to manage.",
+    false,
+  ),
+  arrows: gameGuide(
+    "Arrows",
+    "Clear a puzzle board by sliding each arrow off in the direction it points while managing blocked paths and limited lives.",
+    "Select an arrow to move it off the board in its indicated direction. Other arrows can block its path, so work through the available spaces to clear the puzzle.",
+    "Look for arrows with a clear exit first, then use hints when the remaining paths are difficult to see.",
+    false,
+  ),
+  bluff: gameGuide(
+    "Bluff",
+    "Play cards face down, make a claim, and decide when to challenge an opponent in this multiplayer card game.",
+    "Take turns playing cards face down and announcing what you played. Call a bluff when you think a claim is false, and try to empty your hand before the other players.",
+    "Pay attention to the cards already played and to how confidently opponents make their claims. A well-timed challenge can change the round.",
+    true,
+  ),
+  callbreak: gameGuide(
+    "Call Break",
+    "Bid for tricks, follow suit, and use spades as trump in this four-player trick-taking card game.",
+    "Estimate how many tricks you can take, make your bid, and play one card per trick while following suit when possible. Spades can win tricks as the trump suit.",
+    "Consider your high cards and the spades in your hand before bidding. Track which suits have been played to judge what may still be held.",
+    true,
+  ),
+  carrom: gameGuide(
+    "Carrom",
+    "Aim and flick a striker to pocket carrom coins in a multiplayer tabletop game.",
+    "Set your aim, choose the striker's force, and release to send coins toward the pockets. Follow the selected table mode and its scoring instructions.",
+    "Use controlled shots to improve your position instead of relying only on maximum force. Watch how a shot may leave coins for the next turn.",
+    true,
+  ),
+  checkers: gameGuide(
+    "Checkers",
+    "Move diagonally, jump opposing pieces, chain captures, and crown kings in this classic board game.",
+    "Move pieces diagonally across the board. Jump an opponent's piece to capture it, continue a capture chain when available, and reach the far side to crown a king.",
+    "Check for forced captures before choosing a move, and protect pieces that could be trapped by a chain jump.",
+    true,
+  ),
+  "connect-four": gameGuide(
+    "Connect Four",
+    "Drop colored discs into a grid and connect four in a row horizontally, vertically, or diagonally.",
+    "Choose a column to drop a disc. Take turns with your opponent and try to make a line of four while preventing their line from forming first.",
+    "Look for threats in more than one direction. A move that creates two possible winning lines can force your opponent to block only one.",
+    true,
+  ),
+  crazyeights: gameGuide(
+    "Crazy Eights",
+    "Match the discard pile by suit or rank, play wild eights, and race to empty your hand.",
+    "Play a card that matches the top discard by suit or rank. An eight can change the active suit; draw when you cannot make a play and follow the game's turn prompts.",
+    "Save wild eights for turns when they give you a useful suit or help you get rid of your last cards.",
+    true,
+  ),
+  hearts: gameGuide(
+    "Hearts",
+    "Avoid penalty cards, pass cards each round, and finish a hand of Hearts with the lowest score.",
+    "Play one card into each trick and follow the led suit when possible. Hearts and the Queen of Spades carry penalty points, so try not to take unwanted tricks.",
+    "Pay attention to which suits players can no longer follow and decide carefully which cards to pass at the start of a hand.",
+    true,
+  ),
+  "joker-duel": gameGuide(
+    "Joker Duel",
+    "Build poker hands, collect jokers, multiply chip scores, and compete across a best-of-three match.",
+    "Form the strongest poker hands available and use joker effects to increase your score. Keep track of the round objective and choose upgrades that support your scoring plan.",
+    "Look for joker effects that work well together and build around the hands you can reliably make.",
+    true,
+  ),
+  ludo: gameGuide(
+    "Ludo",
+    "Roll the dice, move tokens around the board, and race to bring your pieces safely home.",
+    "Roll to enter tokens onto the track, then move them according to each dice result. Reach the home path while watching for chances to send rival tokens back to their yards.",
+    "Spread your moves across tokens when it helps you make progress, but keep an eye on nearby opponents who could capture an exposed piece.",
+    true,
+  ),
+  poker: gameGuide(
+    "Poker",
+    "Play Texas Hold'em, make a hand from private and community cards, and compete through betting rounds.",
+    "Use your two private cards and the shared board cards to make the best five-card hand. Decide whether to fold, check, call, or raise during each betting round.",
+    "Consider the strength of your hand and the community cards before committing chips. The best decision can depend on both your cards and the action at the table.",
+    true,
+  ),
+  racer: gameGuide(
+    "Realtime Racer",
+    "Race around a top-down track in real time, steering and accelerating as you compete to finish the laps.",
+    "Use the driving controls to steer around the course and manage acceleration. Complete the required laps while keeping your racer on the track.",
+    "Look ahead to upcoming turns and ease into corners so you can keep control and build speed on the straights.",
+    true,
+  ),
+  rummy: gameGuide(
+    "Rummy",
+    "Draw and discard cards to build matching sets and consecutive runs before your opponents go out.",
+    "Take a card from the stock or discard pile, arrange your hand into valid sets and runs, and discard one card to end your turn. Use the table options to lay off cards when allowed.",
+    "Keep track of useful discards and avoid holding cards that could help an opponent complete a combination.",
+    true,
+  ),
+  spades: gameGuide(
+    "Spades",
+    "Bid for tricks with your partner, follow suit, and use spades as trump to meet your contract.",
+    "Estimate the tricks your team can win, make a bid, and play one card per trick. Follow the led suit when possible; spades can trump cards from other suits.",
+    "Coordinate your bid with your hand's high cards and spades, and remember which trump cards have already been played.",
+    true,
+  ),
+  sudoku: gameGuide(
+    "Sudoku",
+    "Fill a nine-by-nine Sudoku grid so every row, column, and three-by-three box contains the numbers one through nine.",
+    "Enter a number in an empty cell without repeating it in that row, column, or box. Use notes to track candidates and the available undo or hint controls when needed.",
+    "Start with rows, columns, or boxes that have the fewest empty cells, and eliminate candidates using the same number's positions across intersecting groups.",
+    false,
+  ),
+  teenpatti: gameGuide(
+    "Teen Patti",
+    "Play a three-card Indian poker game with blind or seen play, betting, and showdowns.",
+    "Each player receives three cards. Follow the table prompts to play blind or seen, place bets, and decide whether to continue, pack, or request a show.",
+    "Set a limit before betting and compare your three-card hand with the table's hand rankings before choosing to stay in.",
+    true,
+  ),
+  uno: gameGuide(
+    "UNO",
+    "Match colors and numbers, use action cards, and race to empty your hand in a multiplayer UNO game.",
+    "Play a card that matches the discard by color or number, or use a wild card when allowed. Action cards change how the round proceeds; follow the prompts when you have one card left.",
+    "Watch the active color and save flexible cards for turns when you need to change the direction of play or get out of a difficult hand.",
+    true,
+  ),
+  watersort: gameGuide(
+    "Water Sort",
+    "Pour colored liquid between tubes until each tube contains a single color.",
+    "Choose a tube to pour from and another to pour into, following the game's rules for matching colors and available space. Complete each level by separating the colors.",
+    "Keep at least one tube with free space when possible. That gives you room to move colors while uncovering the layers below.",
+    false,
+  ),
+};
+
+const GAME_SEO_IDS: GameSeoPageId[] = [
+  "2048",
+  "arrows",
+  "bluff",
+  "callbreak",
+  "carrom",
+  "checkers",
+  "connect-four",
+  "crazyeights",
+  "hearts",
+  "joker-duel",
+  "ludo",
+  "poker",
+  "racer",
+  "rummy",
+  "spades",
+  "sudoku",
+  "teenpatti",
+  "uno",
+  "watersort",
+];
 
 const pages: Record<SeoPageId, SeoPageContent> = {
   "privacy-policy": {
@@ -341,25 +567,53 @@ const pagePaths: Record<SeoPageId, string> = {
   "how-to-play": "/how-to-play",
 };
 
-export function seoHead(page: SeoPageId) {
-  const { title, description } = pages[page];
-  const canonical = canonicalUrl(pagePaths[page]);
+const legacyGamePages: SeoPageId[] = ["chess", "tic-tac-toe", "snakes-and-ladders"];
+const gameGuideLinks = [
+  { href: "/games/chess", label: "Play Chess Online" },
+  { href: "/games/tic-tac-toe", label: "Play Tic-Tac-Toe Online" },
+  { href: "/games/snakes-and-ladders", label: "Play Snakes & Ladders Online" },
+  ...GAME_SEO_IDS.map((game) => ({
+    href: `/games/${game}`,
+    label: gamePages[game].title,
+  })),
+];
+
+export function isGameSeoPage(page: string): page is GameSeoPageId {
+  return Object.prototype.hasOwnProperty.call(gamePages, page);
+}
+
+function getSeoPageContent(page: SeoRoutePageId) {
+  return isGameSeoPage(page) ? gamePages[page] : pages[page];
+}
+
+function getSeoPagePath(page: SeoRoutePageId) {
+  return isGameSeoPage(page) ? `/games/${page}` : pagePaths[page];
+}
+
+export function seoHead(page: SeoRoutePageId) {
+  const { title, description } = getSeoPageContent(page);
+  const canonical = canonicalUrl(getSeoPagePath(page));
   return {
     meta: [
       { title: `${title} | GamesLord` },
       { name: "description", content: description },
       { name: "robots", content: "index,follow" },
+      { property: "og:title", content: `${title} | GamesLord` },
+      { property: "og:description", content: description },
+      { property: "og:type", content: "website" },
     ],
     links: canonical ? [{ rel: "canonical", href: canonical }] : [],
   };
 }
 
-export function SeoPage({ page }: { page: SeoPageId }) {
-  const content = pages[page];
-  const pageUrl = canonicalUrl(pagePaths[page]);
+export function SeoPage({ page }: { page: SeoRoutePageId }) {
+  const content = getSeoPageContent(page);
+  const pageUrl = canonicalUrl(getSeoPagePath(page));
   const homeUrl = canonicalUrl("/");
   const siteOperator = import.meta.env.VITE_PUBLIC_SITE_OPERATOR?.trim();
   const privacyEmail = import.meta.env.VITE_PUBLIC_PRIVACY_EMAIL?.trim();
+  const isGamePage =
+    isGameSeoPage(page) || legacyGamePages.includes(page as SeoPageId);
   const structuredData = pageUrl && homeUrl
     ? [
         {
@@ -376,7 +630,7 @@ export function SeoPage({ page }: { page: SeoPageId }) {
             { "@type": "ListItem", position: 3, name: content.title, item: pageUrl },
           ],
         },
-        ...(page === "chess" || page === "tic-tac-toe" || page === "snakes-and-ladders"
+        ...(isGamePage
           ? [
               {
                 "@context": "https://schema.org",
@@ -487,17 +741,14 @@ export function SeoPage({ page }: { page: SeoPageId }) {
           </div>
           {page !== "privacy-policy" ? <AdSenseSlot placement="guide" /> : null}
         </article>
-        {content.related.length ? (
-          <aside className="seo-related" aria-labelledby="related-heading">
-            <h2 id="related-heading">Keep exploring</h2>
-            <div>{content.related.map((item) => <a key={item.href} href={item.href}>{item.label}<span aria-hidden="true">↗</span></a>)}</div>
-          </aside>
-        ) : null}
       </main>
       <footer className="seo-footer">
         <a className="brand" href="/" aria-label="GamesLord home"><img className="brand-mark" src="/playora/logo/gameslord-logo-dark.svg" alt="GamesLord" /></a>
         <p>Free browser games to play solo or with friends.</p>
-        <div><a href="/#game-guides">All guides</a><a href="/how-to-play">How to play</a><a href="/online-multiplayer">Online multiplayer</a><a href="/privacy-policy">Privacy policy</a></div>
+        <div className="seo-footer-link-groups">
+          <nav aria-label="Site pages"><ul><li><a href="/">Home</a></li><li><a href="/#game-guides">All guides</a></li><li><a href="/how-to-play">How to play</a></li><li><a href="/online-multiplayer">Online multiplayer</a></li><li><a href="/privacy-policy">Privacy policy</a></li></ul></nav>
+          <nav aria-label="Game guides"><h2>Game guides</h2><div className="seo-footer-guide-lists">{Array.from({ length: 4 }, (_, column) => <ul key={column}>{gameGuideLinks.filter((_, index) => index % 4 === column).map((item) => <li key={item.href}><a href={item.href}>{item.label.replace(/^Play /, "").replace(/ Online$/, "")}</a></li>)}</ul>)}</div></nav>
+        </div>
       </footer>
     </div>
   );
