@@ -31,7 +31,7 @@ function buildCards(){const grid=$('gameGrid');
   try{await window.ensurePlayoraGame(game);note.textContent='';openRoom(game)}
   catch(error){console.error('[playora] Could not load game:',error);note.textContent='Could not load '+metadata.t+'. Check your connection and try again.'}};
  grid.querySelectorAll('.game').forEach(tile=>{tile.onclick=()=>activate(tile);tile.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activate(tile)}}})}
-function filterGames(){const q=$('search').value.toLowerCase().trim();let n=0;
+function filterGames(){const q=$('search').value.slice(0,128).toLowerCase().trim();let n=0;
  document.querySelectorAll('#gameGrid .game').forEach(c=>{const m=(c.dataset.name.includes(q)||c.textContent.toLowerCase().includes(q))&&(activeFilter==='all'||c.dataset.category.split(' ').includes(activeFilter));c.style.display=m?'':'none';if(m)n++});
  let e=document.querySelector('#gameGrid .empty');if(!n){if(!e){e=document.createElement('div');e.className='empty';e.textContent='No games found. Try another search.';$('gameGrid').appendChild(e)}}else if(e)e.remove()}
 $('search').addEventListener('input',filterGames);

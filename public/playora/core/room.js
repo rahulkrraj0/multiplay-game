@@ -3,7 +3,8 @@
    cloud, which drops these handshakes), swap connection details, then play
    peer-to-peer. Manual copy-paste codes still work as a fallback. */
 const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789",
-  ROOM_MAX = 8;
+  ROOM_MAX = 8,
+  MAX_ROOM_INPUT_LENGTH = 2_048;
 const room = { code: "", ws: null, pend: {}, jt: 0, jws: null, jc: null, rejoinId: null, reconnectInPlace: false, claiming: false, claimingCode: "" };
 const hostId = (c) => "h" + c,
   rtcKey = (c) => "g" + c,
@@ -414,9 +415,14 @@ function roomJoined() {
   }
 }
 async function joinRoom(raw, reconnectInPlace = false) {
+  const rawCode = typeof raw === "string" ? raw : "";
+  if (rawCode.length > MAX_ROOM_INPUT_LENGTH) {
+    setJoinProgress(false);
+    return jmsg("That room link or code is too long.", 1);
+  }
   if (!requireDisplayName(() => joinRoom(raw, reconnectInPlace))) return;
   room.reconnectInPlace = reconnectInPlace;
-  const code = parseCode(raw);
+  const code = parseCode(rawCode);
   if (code.length < 4) {
     setJoinProgress(false);
     return jmsg("Enter a valid room code (at least 4 characters).", 1);

@@ -81,6 +81,24 @@ const STALL_MS = 10_000;
 const MAX_RECOVERY_ATTEMPTS = 3;
 const SIGNAL_RETRY_DELAYS_MS = [250, 750];
 
+function getPeerAuthToken(room: string, selfId: string): string {
+  const key = `playora:rtc-auth:${room}:${selfId}`;
+  try {
+    const stored = sessionStorage.getItem(key);
+    if (stored && /^[a-f0-9]{64}$/.test(stored)) return stored;
+  } catch {
+    // Storage may be disabled; keep this peer's credential in memory.
+  }
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  const token = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  try {
+    sessionStorage.setItem(key, token);
+  } catch {
+    // The in-memory token remains valid until this P2PRoom is closed.
+  }
+  return token;
+}
+
 export function defaultIceServers(): RTCIceServer[] {
   const urls = (import.meta.env.VITE_STUN_URLS as string | undefined)
     ?.split(",")
@@ -97,6 +115,7 @@ export function defaultIceServers(): RTCIceServer[] {
 
 export class P2PRoom {
   private readonly opts: P2PRoomOptions;
+  private readonly authToken: string;
   private readonly peers = new Map<string, PeerSlot>();
   /** Per-remote-peer signal delivery chains (order-preserving). */
   private readonly signalQueues = new Map<string, Promise<void>>();
@@ -109,6 +128,7 @@ export class P2PRoom {
 
   constructor(opts: P2PRoomOptions) {
     this.opts = opts;
+    this.authToken = getPeerAuthToken(opts.room, opts.selfId);
   }
 
   /**
@@ -141,7 +161,12 @@ export class P2PRoom {
     void fetch("/api/rtc", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ op: "leave", room: this.opts.room, peer: this.opts.selfId }),
+      body: JSON.stringify({
+        op: "leave",
+        room: this.opts.room,
+        peer: this.opts.selfId,
+        token: this.authToken,
+      }),
       keepalive: true,
     }).catch(() => {});
   }
@@ -192,7 +217,9 @@ export class P2PRoom {
       name: this.opts.name ?? "",
       since: String(this.cursor),
     });
-    const res = await fetch(`/api/rtc?${params}`);
+    const res = await fetch(`/api/rtc?${params}`, {
+      headers: { authorization: `Bearer ${this.authToken}` },
+    });
     if (this.closed) return;
     if (!res.ok) throw new Error(`signaling poll failed: ${res.status}`);
     const body = (await res.json()) as RtcPollResponse;
@@ -455,6 +482,7 @@ export class P2PRoom {
             op: "signal",
             room: this.opts.room,
             from: this.opts.selfId,
+            token: this.authToken,
             to,
             kind,
             payload,

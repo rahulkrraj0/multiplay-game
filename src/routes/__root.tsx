@@ -1,11 +1,13 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
+import { AppNotFoundComponent } from "@/lib/error-component";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import appCss from "../styles.css?url";
 
 const googleSiteVerification = import.meta.env.VITE_GOOGLE_SITE_VERIFICATION?.trim();
 const bingSiteVerification = import.meta.env.VITE_BING_SITE_VERIFICATION?.trim();
 export const Route = createRootRoute({
+  notFoundComponent: AppNotFoundComponent,
   head: () => ({
     meta: [
       { charSet: "utf-8" },

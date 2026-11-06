@@ -30,14 +30,16 @@ function updateResumePreviousButton(){const button=$('resumePreviousGame');if(bu
 function sharePreviousGameSnapshot(){const snapshot=readPreviousGame();if(snapshot)peers().forEach(C=>snd(C,{k:'previous-game',snapshot}))}
 function acceptPreviousGameSnapshot(C,snapshot){if(!amHost()||!C.playerKey||!validPreviousGame(snapshot,room.code)||!snapshot.playerKeys.includes(C.playerKey))return;const current=readPreviousGame();if(current&&(current.game!==snapshot.game||current.playerKeys.join('\0')!==snapshot.playerKeys.join('\0')||(current.savedAt||0)>=(snapshot.savedAt||0)))return;if(writePreviousGame(snapshot))updateResumePreviousButton()}
 const enc=d=>btoa(JSON.stringify(d)),dec=s=>JSON.parse(atob(s.trim()));
+const MAX_MANUAL_CODE_LENGTH=65536;
+function parsePeerMessage(data){if(typeof data!=='string'||data.length>262144)throw new Error('Peer message exceeds the supported size');const message=JSON.parse(data);if(message&&message.k==='m'&&(typeof message.m!=='string'||message.m.length>200))throw new Error('Peer chat message exceeds 200 characters');return message}
 const gath=pc=>Promise.race([new Promise(r=>{let done=0;const finish=()=>{if(!done){done=1;r()}};if(pc.iceGatheringState==='complete')return finish();pc.addEventListener('icegatheringstatechange',()=>{if(pc.iceGatheringState==='complete')finish()});pc.addEventListener('icecandidate',e=>{if(!e.candidate)finish()})}),new Promise(r=>setTimeout(r,4000))]);
 const snd=(C,o)=>{if(C&&C.dc&&C.dc.readyState==='open')C.dc.send(JSON.stringify(o))},bcast=(o,ex)=>cs.forEach(C=>C!==ex&&snd(C,o));
 const peers=()=>cs.filter(C=>C.open&&C.id),hostSeat=()=>Math.min(js,...peers().map(C=>C.seat)),amHost=()=>js===hostSeat();
 const ready=()=>{const n=peers().length;return n>0&&peers().every(C=>rep[C.id]===n)};
 function mkC(id,s){const C={pc:new RTCPeerConnection(CFG),id,seat:s,open:0,sn:{},disconnectTimer:0};C.pc.onconnectionstatechange=()=>{const state=C.pc.connectionState;if(state==='failed'&&!C.open)linkFailed(C);if(state==='disconnected'){if(!C.disconnectTimer)C.disconnectTimer=setTimeout(()=>{C.disconnectTimer=0;if(C.pc.connectionState==='disconnected')drop(C)},12000);return}clearTimeout(C.disconnectTimer);C.disconnectTimer=0;if(state==='failed'||state==='closed')drop(C)};cs.push(C);return C}
-function wire(C,ch){if(ch.label==='playora-actions'){C.action=ch;ch.onmessage=e=>{C.messageQueue=(C.messageQueue||Promise.resolve()).then(()=>handleRealtime(C,JSON.parse(e.data))).catch(error=>console.warn('[playora] Ignored an invalid game action packet.',error))};ch.onclose=()=>{C.action=null;C.actionStarting=0};return}
-if(ch.label==='playora-realtime'){C.rtc=ch;ch.onmessage=e=>{try{handleRealtime(C,JSON.parse(e.data))}catch(error){console.warn('[playora] Ignored an invalid real-time game packet.',error)}};ch.onclose=()=>{C.rtc=null;C.rtcStarting=0};return}
-C.dc=ch;ch.onmessage=e=>{C.messageQueue=(C.messageQueue||Promise.resolve()).then(()=>handle(C,JSON.parse(e.data))).catch(error=>console.warn('[playora] Ignored an invalid peer message.',error))};ch.onclose=()=>drop(C);
+function wire(C,ch){if(ch.label==='playora-actions'){C.action=ch;ch.onmessage=e=>{C.messageQueue=(C.messageQueue||Promise.resolve()).then(()=>handleRealtime(C,parsePeerMessage(e.data))).catch(error=>console.warn('[playora] Ignored an invalid game action packet.',error))};ch.onclose=()=>{C.action=null;C.actionStarting=0};return}
+if(ch.label==='playora-realtime'){C.rtc=ch;ch.onmessage=e=>{try{handleRealtime(C,parsePeerMessage(e.data))}catch(error){console.warn('[playora] Ignored an invalid real-time game packet.',error)}};ch.onclose=()=>{C.rtc=null;C.rtcStarting=0};return}
+C.dc=ch;ch.onmessage=e=>{C.messageQueue=(C.messageQueue||Promise.resolve()).then(()=>handle(C,parsePeerMessage(e.data))).catch(error=>console.warn('[playora] Ignored an invalid peer message.',error))};ch.onclose=()=>drop(C);
 ch.onopen=()=>{if(C.open)return;C.open=1;if(C.first)snd(C,{k:'hi',id:myId,playerKey,name:displayName});live(C);mesh()};if(ch.readyState==='open')ch.onopen()}
 function startGameChannels(){if(!G||!ids.length||!amHost())return;peers().forEach(C=>{if(!C.open)return;
 if(G.realtime&&!C.rtc&&!C.rtcStarting){C.rtcStarting=1;try{wire(C,C.pc.createDataChannel('playora-realtime',{ordered:false,maxRetransmits:0}))}catch(error){C.rtcStarting=0;console.warn('[playora] Could not create a real-time game channel.',error)}}})}
@@ -276,7 +278,7 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('callPan
 async function invite(){await iceReady;if(inv&&!inv.open&&inv.pc.signalingState==='have-local-offer')return; /* a fresh code is already waiting */
  if(inv&&!inv.open){cs=cs.filter(x=>x!==inv);try{inv.pc.close()}catch{}}
  const C=mkC(null,null);inv=C;$('oc').value='Creating code…';$('ar').value='';const ch=C.pc.createDataChannel('g');wire(C,ch);
- try{await C.pc.setLocalDescription(await C.pc.createOffer());await gath(C.pc);if(inv===C)$('oc').value=enc(C.pc.localDescription)}catch{}}
+ try{await C.pc.setLocalDescription(await C.pc.createOffer());await gath(C.pc);if(inv===C){const code=enc(C.pc.localDescription);if(code.length>MAX_MANUAL_CODE_LENGTH)throw new Error('Manual connection code exceeds 65,536 characters.');$('oc').value=code}}catch(error){console.warn('[playora] Could not create a manual connection code.',error)}}
 const manual=()=>{if($('mi').open&&!$('lobby').classList.contains('hide'))invite()};
 function createLobby(){if(!requireDisplayName(createLobby))return;if(!pick||!GAMES[pick]||(GAMES[pick].max||2)<2)pick=onlineGames()[0]?.id;js=0;hiSeat=0;$('rt').textContent='Create a lobby';$('mt').textContent='Create or join a game';$('room').classList.add('open');$('room').classList.remove('ludo-game');$('room').scrollTop=0;document.body.style.overflow='hidden';show('lobby');lobbyUp();startRoom();manual()}
 $('mh').onclick=createLobby;
@@ -287,8 +289,9 @@ $('playerCount').onchange=()=>{if(!amHost())return;setLobbyPlayerLimit(+$('playe
 $('chg').onclick=()=>{if(!amHost())return;void startNet()};
 $('gameChoice').addEventListener('focus',updateLobbyControls);
 $('playerCount').addEventListener('focus',updateLobbyControls);
-$('hc').onclick=async()=>{try{await inv.pc.setRemoteDescription(dec($('ar').value))}catch{alert('That code is not valid')}};
-$('gc').onclick=async()=>{try{await iceReady;const C=mkC(null,null);C.first=1;C.pc.ondatachannel=e=>wire(C,e.channel);await C.pc.setRemoteDescription(dec($('oi').value));await C.pc.setLocalDescription(await C.pc.createAnswer());await gath(C.pc);$('ac').value=enc(C.pc.localDescription)}catch{alert('That code is not valid')}};
+function readManualCode(id){const value=$(id).value;if(value.length>MAX_MANUAL_CODE_LENGTH){alert('That manual connection code is too long.');return null}return value}
+$('hc').onclick=async()=>{const code=readManualCode('ar');if(code===null)return;try{await inv.pc.setRemoteDescription(dec(code))}catch{alert('That code is not valid')}};
+$('gc').onclick=async()=>{const code=readManualCode('oi');if(code===null)return;try{await iceReady;const C=mkC(null,null);C.first=1;C.pc.ondatachannel=e=>wire(C,e.channel);await C.pc.setRemoteDescription(dec(code));await C.pc.setLocalDescription(await C.pc.createAnswer());await gath(C.pc);const reply=enc(C.pc.localDescription);if(reply.length>MAX_MANUAL_CODE_LENGTH)throw new Error('Manual connection code exceeds 65,536 characters.');$('ac').value=reply}catch(error){alert(error instanceof Error&&error.message.includes('65,536')?error.message:'That code is not valid')}}
 document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{const t=$(b.dataset.copy);t.select();if(/Android|iPhone|iPad/.test(navigator.userAgent)&&navigator.share)navigator.share({text:t.value}).catch(()=>{});else try{navigator.clipboard.writeText(t.value)}catch{document.execCommand('copy')}});
 /* leave the room: close every link, stop camera/mic, clear the game */
 function leave(){clearTimeout(aiTimer);localBot=false;clearDisconnectRecovery();if(G&&typeof G.onStop==='function')G.onStop();roomStop();const L=cs;cs=[];rep={};inv=null;js=0;hiSeat=0;activeLimit=2;L.forEach(C=>{try{C.pc.close()}catch{}C.tile?.remove();C.remoteAudio?.remove()});
@@ -296,7 +299,7 @@ function leave(){clearTimeout(aiTimer);localBot=false;clearDisconnectRecovery();
  $('lv').classList.add('hide');$('localVideoTile').hidden=true;$('localVideoTile').classList.remove('hide');$('cl').innerHTML='';$('lg').textContent='';$('du').textContent='';$('participantList').innerHTML='';$('participants').hidden=true;ids=[];dead=new Set();G=S=undefined;updateGameControls()}
 /* chat */
 function say(t,me,C){const p=document.createElement('p'),b=document.createElement('b');b.textContent=(me?displayName:peerName(C))+': ';p.append(b,t);$('cl').append(p);$('cl').scrollTop=1e9}
-$('cs').onclick=()=>{const t=$('ci').value.trim();if(t){bcast({k:'m',m:t});say(t,1);$('ci').value=''}};$('ci').addEventListener('keydown',e=>{if(e.key==='Enter')$('cs').click()});
+$('cs').onclick=()=>{const t=$('ci').value.trim().slice(0,200);if(t){bcast({k:'m',m:t});say(t,1);$('ci').value=''}};$('ci').addEventListener('keydown',e=>{if(e.key==='Enter')$('cs').click()});
 /* voice / video to everyone (data saver on by default) */
 const vc=()=>low?{facingMode:'user',width:{ideal:320},height:{ideal:240},frameRate:{ideal:12,max:15}}:{facingMode:'user',width:{ideal:640},height:{ideal:480},frameRate:{ideal:24}};
 async function cap(C,k){const x=C.sn[k];if(!x)return;const p=x.getParameters();if(!p.encodings||!p.encodings.length)p.encodings=[{}];p.encodings[0].maxBitrate=k==='a'?(low?20000:32000):(low?150000:500000);try{await x.setParameters(p)}catch{}}
