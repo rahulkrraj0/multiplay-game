@@ -280,7 +280,7 @@ header{padding-top:env(safe-area-inset-top,0px);height:auto;min-height:78px}
 :root{--bg:#0b1020;--panel:#101b16;--panel2:#17261f;--purple:#147a53;--cyan:#e7b83f;--line:rgba(231,184,63,.12)}
 body{background:radial-gradient(ellipse at 80% -10%,#27215c 0,transparent 38%),var(--bg)}
 .logo{background:linear-gradient(135deg,#17885d,#0c543b);box-shadow:0 8px 24px rgba(20,122,83,.3)}
-.btn.primary,.primary,#room button.p,.display-name-actions button.p{background:linear-gradient(135deg,#168357,#0e6848);box-shadow:0 8px 24px rgba(18,112,75,.25)}
+.btn.primary,.primary,#room button.p,.display-name-actions button.p{background:linear-gradient(135deg,#f3d16b,#dcae2f);color:#172015;box-shadow:0 8px 24px rgba(231,184,63,.22)}
 .eyebrow{border-color:rgba(231,184,63,.36);background:rgba(231,184,63,.09);color:#f0d47a}
 .gradient{background-image:linear-gradient(90deg,#f3d16b,#e6b83f 54%,#49b580)}
 .orb{background:radial-gradient(circle at 30% 25%,#43a978,#16734f 45%,#102d23 76%);box-shadow:0 0 100px rgba(22,115,79,.24)}
@@ -335,7 +335,7 @@ body{background:radial-gradient(ellipse at 80% -10%,#27215c 0,transparent 38%),v
 .game-art.art-tone-29{background:linear-gradient(135deg,#3c4b35,#202d3b)}
 .game-art.art-tone-30{background:linear-gradient(135deg,#4c3b56,#24213b)}
 .hero-actions .btn.primary{animation:play-now-glow 2.4s ease-in-out infinite}
-@keyframes play-now-glow{0%,100%{box-shadow:0 8px 24px rgba(18,112,75,.25)}50%{box-shadow:0 0 12px rgba(67,185,126,.65),0 0 30px rgba(67,185,126,.4)}}
+@keyframes play-now-glow{0%,100%{box-shadow:0 8px 24px rgba(231,184,63,.22)}50%{box-shadow:0 0 12px rgba(243,209,107,.65),0 0 30px rgba(231,184,63,.4)}}
 @media(prefers-reduced-motion:reduce){.game::after{transition:none}}
 @media(prefers-reduced-motion:reduce){.hero-actions .btn.primary{animation:none}}
 .hero .gradient{background-image:linear-gradient(90deg,#f3d16b,#e6b83f 54%,#49b580),linear-gradient(110deg,transparent 40%,rgba(255,255,255,.75) 50%,transparent 60%);background-size:100% 100%,220% 100%;background-position:0 0,-150% 0;background-repeat:no-repeat;animation:heading-sheen 4s ease-in-out infinite}
