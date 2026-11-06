@@ -23,6 +23,20 @@ export const Route = createRootRoute({
         property: "og:description",
         content: "Free online multiplayer games with audio and video. No sign-up required.",
       },
+      {
+        property: "og:image",
+        content: "https://gameslord.online/playora/logo/gameslord-social-preview.png",
+      },
+      { property: "og:image:type", content: "image/png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "GamesLord - online multiplayer games, made for fun" },
+      { name: "twitter:card", content: "summary_large_image" },
+      {
+        name: "twitter:image",
+        content: "https://gameslord.online/playora/logo/gameslord-social-preview.png",
+      },
+      { name: "twitter:image:alt", content: "GamesLord - online multiplayer games, made for fun" },
       ...(googleSiteVerification
         ? [{ name: "google-site-verification", content: googleSiteVerification }]
         : []),

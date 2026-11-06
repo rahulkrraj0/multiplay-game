@@ -593,6 +593,7 @@ function getSeoPagePath(page: SeoRoutePageId) {
 export function seoHead(page: SeoRoutePageId) {
   const { title, description } = getSeoPageContent(page);
   const canonical = canonicalUrl(getSeoPagePath(page));
+  const socialImage = "https://gameslord.online/playora/logo/gameslord-social-preview.png";
   return {
     meta: [
       { title: `${title} | GamesLord` },
@@ -601,6 +602,16 @@ export function seoHead(page: SeoRoutePageId) {
       { property: "og:title", content: `${title} | GamesLord` },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: socialImage },
+      { property: "og:image:type", content: "image/png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "GamesLord - online multiplayer games, made for fun" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: `${title} | GamesLord` },
+      { name: "twitter:description", content: description },
+      { name: "twitter:image", content: socialImage },
+      { name: "twitter:image:alt", content: "GamesLord - online multiplayer games, made for fun" },
     ],
     links: canonical ? [{ rel: "canonical", href: canonical }] : [],
   };
