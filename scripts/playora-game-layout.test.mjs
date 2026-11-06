@@ -14,6 +14,7 @@ const callBreakSource = readFileSync(fileURLToPath(new URL("../public/playora/ga
 const crazyEightsSource = readFileSync(fileURLToPath(new URL("../public/playora/games/crazyeights.js", import.meta.url)), "utf8");
 const heartsSource = readFileSync(fileURLToPath(new URL("../public/playora/games/hearts.js", import.meta.url)), "utf8");
 const spadesSource = readFileSync(fileURLToPath(new URL("../public/playora/games/spades.js", import.meta.url)), "utf8");
+const sudokuSource = readFileSync(fileURLToPath(new URL("../public/playora/games/sudoku.js", import.meta.url)), "utf8");
 const unoSource = readFileSync(fileURLToPath(new URL("../public/playora/games/uno.js", import.meta.url)), "utf8");
 const ludoSource = readFileSync(fileURLToPath(new URL("../public/playora/games/ludo.js", import.meta.url)), "utf8");
 const snlSource = readFileSync(fileURLToPath(new URL("../public/playora/games/snl.js", import.meta.url)), "utf8");
@@ -42,6 +43,11 @@ test("guests see available games without controls to change the host selection",
 
 test("the game board stays hidden until the room enters active-game mode", () => {
   assert.match(gameStyles, /#room:not\(\.game-active\) #gm\{display:none!important\}/);
+});
+
+test("narrow game headers keep the title aligned beside compact controls", () => {
+  assert.match(gameStyles, /#room \.rbar #rx,#room \.rbar #bk,#room \.rbar #rs,#room \.rbar #reconnect\{flex:0 0 auto;white-space:nowrap\}/);
+  assert.match(gameStyles, /@media\(max-width:380px\)\{#room \.rbar\{gap:6px;padding-right:8px;padding-left:8px\}#room \.rbar h2\{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px\}/);
 });
 
 test("active games fill the space below the measured toolbar without room scrolling", () => {
@@ -83,7 +89,7 @@ test("short landscape game boards and card layouts scale within the game area", 
   assert.match(ludoSource, /#room \.g\.c15\.lui\{width:var\(--lui-size,min\(94vw,82vh,680px\)\)\}/);
   assert.match(heartsSource, /@media\(max-height:520px\) and \(orientation:landscape\)\{#room #bd \.hr\{--w:clamp\(24px/);
   assert.match(unoSource, /@media\(max-height:520px\) and \(orientation:landscape\)\{#room #bd \.uno\{--w:clamp\(18px/);
-  assert.match(carromSource, /@media\(max-height:700px\),\(orientation:landscape\) and \(max-height:1000px\)\{\s*\.cr-wrap\{--bw:min\(68vh,56vw,calc\(100dvh - 120px\),640px\);display:grid/);
+  assert.match(carromSource, /@media\(orientation:landscape\) and \(max-height:1000px\)\{\s*\.cr-wrap\{--bw:min\(88vh,calc\(100dvh - 92px\),760px,calc\(100vw - 360px\)\);display:grid;\s*grid-template-columns:var\(--bw\) minmax\(180px,300px\)/);
   assert.match(carromSource, /@media\(max-height:380px\)\{\.cr-wrap\{gap:2px\}\}/);
   assert.match(crazyEightsSource, /@media\(max-height:380px\) and \(orientation:landscape\)\{\.ce\{--w:clamp\(30px,min\(8vw,10vh\),40px\)\}/);
 });
@@ -111,6 +117,11 @@ test("Water Sort sizes tubes from the available game viewport", () => {
 test("Realtime Racer sizes its board from the space below the toolbar", () => {
   assert.match(racerSource, /const availableHeight = board\?\.clientHeight \|\| window\.innerHeight/);
   assert.match(racerSource, /window\.matchMedia\("\(max-width: 700px\), \(max-height: 520px\)"\)/);
+});
+
+test("Carrom uses the available width on short portrait phones", () => {
+  assert.match(carromSource, /@media\(max-width:600px\) and \(max-height:700px\) and \(orientation:portrait\)\{\s*\.cr-wrap\{--bw:min\(94vw,calc\(100dvh - 320px\),480px\)/);
+  assert.doesNotMatch(carromSource, /--bw:min\(94vw,calc\(100dvh - 320px\),260px\)/);
 });
 
 test("2048 action buttons fit the game viewport", () => {
@@ -157,7 +168,7 @@ test("card-game status follows each hand with five-percent bottom spacing", () =
   ];
   for (const game of games) {
     assert.ok(game.source.includes(`#room #bd ${game.root}`), `${game.root} keeps its room styles in its own script`);
-    assert.ok(game.source.includes(`#room #bd ${game.action}{order:1}`), `${game.root} keeps actions above its hand`);
+    assert.ok(game.source.includes(`#room #bd ${game.action}{order:1`), `${game.root} keeps actions above its hand`);
     assert.ok(game.source.includes(`#room #bd ${game.hand}{order:2}`), `${game.root} keeps its hand after actions`);
     assert.ok(game.source.includes(`#room #bd ${game.msg}{order:3;margin-top:8px}`), `${game.root} keeps its message below the hand`);
   }
@@ -196,6 +207,8 @@ test("Crazy Eights mobile card spread centers the incomplete row", () => {
 
 test("Call Break mobile status follows the hand with five-percent bottom spacing", () => {
   assert.match(callBreakSource, /#room #bd \.cb\{padding-bottom:5vh\}/);
+  assert.match(callBreakSource, /#room #bd \.cb \.bar \.logo\{display:none\}/);
+  assert.match(callBreakSource, /@media\(max-width:520px\) and \(max-height:700px\)\{#room #bd \.cb\{--w:clamp\(36px,min\(12vw,12vh\),46px\)\}#room #bd \.cb \.hand\{padding-top:24px\}#room #bd \.cb \.bidbox\{top:0;transform:translateX\(-50%\);z-index:30\}\}/);
   assert.match(callBreakSource, /#room #bd \.cb \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2;translate:calc\(var\(--w\)\*\.3\) 0\}/);
 });
 
@@ -226,12 +239,12 @@ test("card hands wrap to fit the game viewport and Ludo wide styles stay scoped 
     [callBreakSource, ".cb"],
     [crazyEightsSource, ".ce-room .ce"],
     [heartsSource, ".hr"],
-    [spadesSource, ".sp-room .sp"],
   ]) {
     assert.ok(source.includes(`#room #bd ${selector}`));
     assert.match(source, /@media\(min-width:601px\)\{#room #bd /);
     assert.match(source, /flex-wrap:wrap;justify-content:center;overflow-x:hidden;overflow-y:hidden/);
   }
+  assert.match(spadesSource, /#room #bd \.sp-room \.sp \.hand\{display:flex;flex-wrap:nowrap;justify-content:center;overflow:hidden/);
   assert.match(unoSource, /#room #bd \.uno \.hand\{flex-wrap:wrap;justify-content:center;overflow:visible/);
   assert.match(ludoSource, /#room\.ludo-game \.lui-wide\{--lui-size:min\(calc\(100dvh - 76px\),calc\(100vw - 340px\)\)/);
   assert.doesNotMatch(ludoSource, /"\s+\.lui-wide\{--lui-size/);
@@ -243,7 +256,7 @@ test("game-specific room styles live in each game's script", () => {
   assert.match(ludoSource, /#room\.ludo-game\.game-active \.rin\{min-height:0;flex:1;display:flex;flex-direction:column\}/);
   assert.match(chessSource, /#room\.chess-game \.lm\{background-image:linear-gradient/);
   assert.match(arrowsSource, /\.standalone-game-host \.ar-wrap\{box-sizing:border-box/);
-  assert.match(racerSource, /const CSS = `\.race\{width:min\(100%,1100px\)/);
+  assert.match(racerSource, /const CSS = `\s*\.race\{\s*width:min\(100%,1100px\)/);
 });
 
 test("Bluff selected cards lift above neighboring cards", () => {
@@ -256,7 +269,7 @@ test("Bluff selected cards lift above neighboring cards", () => {
 test("Selectable cards stay above overlapping neighbors in every card game", () => {
   for (const [source, selector] of [
     [callBreakSource, /\.hand \.card\.ok\{position:relative;z-index:2;transform:translateY\(-14px\)/],
-    [crazyEightsSource, /\.hand \.card\.ok\{position:relative;z-index:2;transform:translateY\(-14px\)/],
+    [crazyEightsSource, /\.hand \.card\.ok\{[^}]*position:relative;z-index:2;transform:translateY\(-14px\)/],
     [spadesSource, /\.hand \.card\.ok\{position:relative;z-index:2;transform:translateY\(-14px\)/],
     [unoSource, /\.uno \.hand \.card\.ok\{position:relative;z-index:2;transform:translateY\(-14px\)/],
   ]) {
@@ -347,13 +360,23 @@ test("Call Break, Crazy Eights, and Hearts use larger eight-column mobile hands"
     [heartsSource, "#room #bd .hr"],
   ];
   for (const [source, selector] of gameClasses) {
-    assert.match(source, /'\.hand\{display:flex;overflow-x:auto;overflow-y:hidden/);
+    assert.match(source, /\.hand\{display:flex;overflow-x:auto;overflow-y:hidden/);
     assert.ok(source.includes(selector), `${selector} keeps its responsive styles in its own script`);
   }
-  assert.match(callBreakSource, /@media\(max-width:600px\)\{#room #bd \.cb\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}/);
+  assert.match(callBreakSource, /@media\(max-width:600px\)\{#room #bd \.cb\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/8\)\),76px\)\}/);
   assert.match(crazyEightsSource, /@media\(max-width:600px\)\{#room #bd \.ce-room \.ce\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)/);
   assert.match(heartsSource, /@media\(max-width:600px\)\{#room #bd \.hr\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)/);
   assert.match(spadesSource, /@media\(max-width:600px\)\{#room #bd \.sp-room \.sp\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)/);
+});
+
+test("Call Break bounds the landscape hand and bidding panel", () => {
+  assert.match(callBreakSource, /#room #bd \.cb \.hand\{width:100%;min-width:0;max-width:1160px;margin-left:auto;margin-right:auto\}/);
+  assert.match(callBreakSource, /@media\(min-width:601px\) and \(max-height:520px\) and \(orientation:landscape\)\{#room #bd \.cb\{--w:clamp\(36px,min\(7\.5vw,13vh,calc\(\(100vw - 40px\)\/14\.75\)\),58px\)\}\}/);
+  assert.match(callBreakSource, /@media\(max-height:520px\) and \(orientation:landscape\)\{#room #bd \.cb \.bidbox\{top:0;transform:translateX\(-50%\);z-index:30;padding:8px\}#room #bd \.cb \.bidbox p\{margin:0 0 6px\}#room #bd \.cb \.bids\{gap:4px\}#room #bd \.cb \.bids \.btn\{padding:\.35em 0\}\}/);
+});
+
+test("Sudoku fits its board and controls within short landscape game rooms", () => {
+  assert.match(sudokuSource, /@media \(max-height:520px\) and \(orientation:landscape\)\{#room \.sdk\{--s:min\(calc\(100dvh - 164px\),49vw\);padding:4px\}#room \.sdk \.bar\{padding:0 2px 6px\}#room \.sdk \.main\{gap:clamp\(12px,2vw,24px\);padding-bottom:0\}#room \.sdk \.panel\{gap:6px;padding:8px\}#room \.sdk \.pad\{gap:4px\}#room \.sdk \.n\{font-size:clamp\(16px,4\.2vh,20px\);padding:3px 0 2px\}#room \.sdk \.t\{padding:6px 3px\}\}/);
 });
 
 test("Bluff claim and pile are arranged side by side", () => {

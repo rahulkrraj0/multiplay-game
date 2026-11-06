@@ -33,16 +33,8 @@ test("discovers supported audio files across game and shared sound folders", () 
 test("all checked-in audio assets are included in the generated sound manifest", () => {
   const root = fileURLToPath(new URL("..", import.meta.url));
   const sounds = discoverPlayoraSounds(root);
-
-  assert.ok(sounds.includes("chess/capture.ogg"));
-  assert.ok(sounds.includes("chess/check.ogg"));
-  assert.ok(sounds.includes("chess/loss.ogg"));
-  assert.ok(sounds.includes("chess/move.ogg"));
-  assert.ok(sounds.includes("ludo/capture.ogg"));
-  assert.ok(sounds.includes("ludo/roll.ogg"));
-  assert.ok(sounds.includes("ludo/token-move.ogg"));
-  assert.ok(sounds.includes("shared/start.ogg"));
-  assert.ok(sounds.includes("shared/draw.ogg"));
-  assert.ok(sounds.includes("shared/loss.ogg"));
-  assert.ok(sounds.includes("shared/win.ogg"));
+  assert.equal(
+    createPlayoraSoundsManifest(root),
+    `window.PLAYORA_SOUND_ASSETS = ${JSON.stringify(sounds)};`,
+  );
 });

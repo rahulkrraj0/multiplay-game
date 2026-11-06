@@ -542,7 +542,7 @@ const CSS = `
 @keyframes cr-ic{from{transform:rotate(-8deg) scale(1)}to{transform:rotate(8deg) scale(1.12)}}
 @media (max-width:480px){.cr-ctl label{grid-template-columns:64px 1fr 38px}}
 @media(max-width:600px) and (max-height:700px) and (orientation:portrait){
-  .cr-wrap{--bw:min(94vw,calc(100dvh - 320px),260px);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  .cr-wrap{--bw:min(94vw,calc(100dvh - 320px),480px);display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:4px;width:100%;height:100%;overflow:hidden}
   .cr-board{width:var(--bw);height:var(--bw);flex:none}
   .cr-hud{width:100%;justify-content:center;gap:4px;margin:0}

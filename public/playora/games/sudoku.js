@@ -222,6 +222,7 @@
     '@media (min-aspect-ratio:1/1){.sdk{--s:min(76vh,49vw)}.sdk .main{flex-direction:row;align-items:center;justify-content:center;gap:clamp(20px,4vw,56px)}' +
     '.sdk .panel{width:min(34vw,360px)}.sdk .pad{grid-template-columns:repeat(3,1fr)}.sdk .n{font-size:22px}}' +
     '@media (max-width:520px){.sdk{--s:min(94vw,48vh);padding:8px}.sdk .bar{padding:4px 2px 10px}.sdk .bar .btn{min-width:96px;font-size:13px}.sdk .main{gap:12px}.sdk .panel{gap:9px;padding:11px}.sdk .tools{gap:5px}.sdk .t{font-size:12px;padding:9px 2px}.sdk .pad{gap:4px}.sdk .n small{font-size:8px}.sdk .board{border-radius:8px}}' +
+    '@media (max-height:520px) and (orientation:landscape){#room .sdk{--s:min(calc(100dvh - 164px),49vw);padding:4px}#room .sdk .bar{padding:0 2px 6px}#room .sdk .main{gap:clamp(12px,2vw,24px);padding-bottom:0}#room .sdk .panel{gap:6px;padding:8px}#room .sdk .pad{gap:4px}#room .sdk .n{font-size:clamp(16px,4.2vh,20px);padding:3px 0 2px}#room .sdk .t{padding:6px 3px}}' +
     '@media (prefers-reduced-motion:reduce){.sdk *{transition:none!important;scroll-behavior:auto!important}}';
 
   function mount(container) {

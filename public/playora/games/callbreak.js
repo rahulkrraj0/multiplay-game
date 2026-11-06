@@ -1,4 +1,4 @@
-/* callbreak.js - Call Break (4 players: you + 3 bots, 5 rounds, spades are trump).
+/* callbreak.js - Call Break (2–4 players, 5 rounds, spades are trump).
    Add <script src="callbreak.js"></script> to any page. Progress is saved in the browser. */
 (function (global) {
   'use strict';
@@ -167,8 +167,35 @@
   /* ---------- UI ---------- */
   function cardHTML(c, cls, attrs) {
     var tag = attrs ? 'button type="button"' : 'div', col = c.s === 'H' || c.s === 'D' ? ' r' : ' b';
-    return '<' + tag + ' class="card' + col + (cls || '') + '" ' + (attrs || '') + ' aria-label="' + cname(c) + '"><i class="rk">' +
-      (RANK[c.r] || c.r) + '<br>' + SYM[c.s] + '</i><span class="su">' + SYM[c.s] + '</span></' + tag.split(' ')[0] + '>';
+    var rank = c.r === 14 ? 1 : c.r, label = RANK[c.r] || String(c.r), face;
+    function suitSvg(suit) {
+      var path = {
+        S: '<path d="M12 2C12 2 3 8.5 3 14.2c0 3 2.3 5 4.9 5 1.5 0 2.8-.6 3.6-1.7-.2 2.2-.9 3.7-2.1 4.9h5.2c-1.2-1.2-1.9-2.7-2.1-4.9.8 1.1 2.1 1.7 3.6 1.7 2.6 0 4.9-2 4.9-5C21 8.5 12 2 12 2z"/>',
+        H: '<path d="M12 21C4 15 2 11.5 2 8.2 2 5.4 4.2 3.2 6.9 3.2c2.2 0 4.1 1.2 5.1 3.2 1-2 2.9-3.2 5.1-3.2 2.7 0 4.9 2.2 4.9 5C22 11.5 20 15 12 21z"/>',
+        C: '<circle cx="12" cy="7.3" r="4.7"/><circle cx="6.9" cy="14.2" r="4.7"/><circle cx="17.1" cy="14.2" r="4.7"/><circle cx="12" cy="12.3" r="3.2"/><path d="M12 11c0 5-1.4 8.7-3.4 11.5h6.8C13.4 19.7 12 16 12 11z"/>',
+        D: '<path d="M12 1.5l8 10.5-8 10.5L4 12z"/>'
+      }[suit];
+      return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + path + '</svg>';
+    }
+    function index(extra) { return '<i class="ix' + extra + '">' + label + suitSvg(c.s) + '</i>'; }
+    if (rank >= 11) face = '<span class="ct"><b>' + label + '</b>' + suitSvg(c.s) + suitSvg(c.s) + '</span>';
+    else if (rank === 1) face = '<span class="pp"><span class="big" style="left:50%;top:50%">' + suitSvg(c.s) + '</span></span>';
+    else {
+      var layouts = {
+        2: [[1, 0], [1, 1]], 3: [[1, 0], [1, .5], [1, 1]], 4: [[0, 0], [2, 0], [0, 1], [2, 1]],
+        5: [[0, 0], [2, 0], [1, .5], [0, 1], [2, 1]], 6: [[0, 0], [2, 0], [0, .5], [2, .5], [0, 1], [2, 1]],
+        7: [[0, 0], [2, 0], [0, .5], [2, .5], [0, 1], [2, 1], [1, .25]],
+        8: [[0, 0], [2, 0], [0, .5], [2, .5], [0, 1], [2, 1], [1, .25], [1, .75]],
+        9: [[0, 0], [2, 0], [0, 1 / 3], [2, 1 / 3], [0, 2 / 3], [2, 2 / 3], [0, 1], [2, 1], [1, .5]],
+        10: [[0, 0], [2, 0], [0, 1 / 3], [2, 1 / 3], [0, 2 / 3], [2, 2 / 3], [0, 1], [2, 1], [1, 1 / 6], [1, 5 / 6]]
+      };
+      face = '<span class="pp">' + layouts[rank].map(function (position) {
+        return '<span' + (position[1] > .5 ? ' class="f"' : '') + ' style="left:' + [32, 50, 68][position[0]] +
+          '%;top:' + (23 + position[1] * 54).toFixed(1) + '%">' + suitSvg(c.s) + '</span>';
+      }).join('') + '</span>';
+    }
+    return '<' + tag + ' class="card' + col + (cls || '') + '" ' + (attrs || '') + ' aria-label="' + cname(c) + '">' +
+      index(label === '10' ? ' ten' : '') + face + index((label === '10' ? ' ten' : '') + ' br') + '</' + tag.split(' ')[0] + '>';
   }
   function handGridPosition(index, count) {
     var columns = 8, row = Math.ceil(count / columns), remainder = count % columns || columns;
@@ -246,11 +273,11 @@
   /* ---------- shared room contract ---------- */
   function roomOnline() { return typeof ids !== 'undefined' && ids.length > 0; }
   function roomIsBot(i) {
-    var humans = roomOnline() ? np : (typeof localBot !== 'undefined' && localBot ? 1 : (typeof np === 'number' ? np : 2));
+    var humans = roomOnline() ? ids.length : (typeof localBot !== 'undefined' && localBot ? 1 : 4);
     return i >= humans;
   }
   function roomName(i) {
-    if (roomIsBot(i)) return roomOnline() ? 'Bot ' + (i - np + 1) : 'Computer ' + (i - (roomOnline() ? np : (typeof localBot !== 'undefined' && localBot ? 1 : np)) + 1);
+    if (roomIsBot(i)) return roomOnline() ? 'Bot ' + (i - ids.length + 1) : 'Computer ' + (i - (typeof localBot !== 'undefined' && localBot ? 1 : 4) + 1);
     if (typeof gamePlayerNames !== 'undefined' && gamePlayerNames[i]) return gamePlayerNames[i];
     if (typeof nm === 'function') return nm(i);
     return i === 0 ? 'You' : 'Player ' + (i + 1);
@@ -268,10 +295,10 @@
     return cards;
   }
   function roomNewRound() {
-    var hands, valid;
+    var hands, valid, playerCount = S.players.length, handSize = Math.floor(52 / playerCount);
     do {
       var cards = roomShuffle(S, deck());
-      hands = [0, 1, 2, 3].map(function (i) { return cards.slice(i * 13, i * 13 + 13); });
+      hands = S.players.map(function (_, i) { return cards.slice(i * handSize, i * handSize + handSize); });
       valid = hands.every(function (hand) {
         return hand.some(function (card) { return card.s === 'S'; }) &&
           hand.some(function (card) { return card.r >= 11; });
@@ -280,18 +307,29 @@
     S.players.forEach(function (player, i) {
       player.hand = hands[i]; player.bid = null; player.tricks = 0;
     });
-    S.dealer = (S.dealer + 1) % 4;
-    S.turn = S.lead = (S.dealer + 1) % 4;
+    S.handSize = handSize;
+    S.dealer = (S.dealer + 1) % playerCount;
+    S.turn = S.lead = (S.dealer + 1) % playerCount;
     S.trick = []; S.collect = false; S.phase = 'bid';
     S.msg = 'Round ' + S.round + '. Place your bids.';
     roomSyncTurn();
   }
   function roomInit() {
     roomAnimationSeq = 0;
-    var online = roomOnline(), rng = Math.floor(Math.random() * 4294967296) >>> 0;
+    var online = roomOnline(), localComputer = typeof localBot !== 'undefined' && localBot;
+    if (localComputer) {
+      S = {
+        phase: 'setup', players: [{ name: roomName(0), bot: false, hand: [] }],
+        turn: 0, t: 0, over: false, msg: roomName(0) + ', how many players?',
+        animationSeq: 0, animation: null
+      };
+      return S;
+    }
+    var playerCount = online ? Math.max(4, Number(np) || 4) : 4;
+    var rng = Math.floor(Math.random() * 4294967296) >>> 0;
     S = {
-      phase: 'bid', round: 1, dealer: 2, trick: [], collect: false, turn: 0, t: 0, lead: 0,
-      players: Array.from({ length: 4 }, function (_, i) {
+      phase: 'bid', round: 1, dealer: playerCount - 2, trick: [], collect: false, turn: 0, t: 0, lead: 0,
+      players: Array.from({ length: playerCount }, function (_, i) {
         return { name: roomName(i), bot: roomIsBot(i), hand: [], bid: null, tricks: 0, total: 0, last: 0 };
       }),
       rng: rng || 1, over: false, winner: -1, animationSeq: 0, animation: null
@@ -318,8 +356,10 @@
   function roomValid(action) {
     if (!action || typeof action !== 'object' || S.over || action.player !== S.t ||
         !Number.isInteger(action.player) || !S.players[action.player]) return false;
+    if (S.phase === 'setup') return !roomOnline() && localBot && action.type === 'players' &&
+      Number.isInteger(action.count) && action.count >= 2 && action.count <= 4;
     if (S.phase === 'bid') return action.type === 'bid' && Number.isInteger(action.value) &&
-      action.value >= 1 && action.value <= 13 && S.players[action.player].bid == null;
+      action.value >= 1 && action.value <= S.handSize && S.players[action.player].bid == null;
     if (S.phase === 'play') {
       if (S.collect) return action.type === 'collect' && action.player === S.win;
       if (action.type !== 'play' || !Number.isInteger(action.cardId)) return false;
@@ -329,6 +369,23 @@
   }
   function roomApply(action) {
     if (!roomValid(action)) return;
+    if (S.phase === 'setup') {
+      var nextState = {
+        phase: 'bid', round: 1, dealer: action.count - 2, trick: [], collect: false, turn: 0, t: 0, lead: 0,
+        players: Array.from({ length: action.count }, function (_, i) {
+          return {
+            name: i === 0 ? roomName(i) : 'Computer ' + i,
+            bot: i > 0, hand: [], bid: null, tricks: 0, total: 0, last: 0
+          };
+        }),
+        rng: (Math.floor(Math.random() * 4294967296) >>> 0) || 1,
+        over: false, winner: -1, animationSeq: 0, animation: null
+      };
+      Object.keys(S).forEach(function (key) { delete S[key]; });
+      Object.assign(S, nextState);
+      roomNewRound();
+      return;
+    }
     var pi = action.player, player = S.players[pi];
     if (action.type === 'next') {
       S.round++;
@@ -368,7 +425,7 @@
     var card = player.hand.splice(index, 1)[0];
     S.trick.push({ p: pi, card: card });
     S.animation = { seq: ++S.animationSeq, type: 'play', player: pi, cardId: card.id };
-    if (S.trick.length === 4) {
+    if (S.trick.length === S.players.length) {
       var win = S.trick[roomWinnerIdx(S.trick)].p;
       S.win = win; S.collect = true; S.turn = win;
       S.lastTrick = S.trick.slice();
@@ -412,21 +469,34 @@
       roomStyleNode = document.createElement('style');
       roomStyleNode.id = 'callbreak-room-style';
       roomStyleNode.textContent = scopeCSS(CSS, '.cb') +
-        `#room #bd .cb button.card{width:var(--cw);height:calc(var(--cw)*1.45);flex:0 0 var(--cw);margin:0;padding:0;border:1px solid #c9ccd6;border-radius:calc(var(--cw)*.1);background:#fff;color:var(--k);font:inherit;text-align:left;box-shadow:0 3px 8px rgba(0,0,0,.4);appearance:none;-webkit-appearance:none;overflow:hidden}
+        `        #room #bd .cb button.card{width:var(--cw);height:calc(var(--cw)*1.45);flex:0 0 var(--cw);margin:0;padding:0;border:var(--edge);border-radius:calc(var(--cw)*.09);background:var(--face);color:var(--k);font:inherit;text-align:left;box-shadow:var(--sh);appearance:none;-webkit-appearance:none;overflow:hidden}
 #room #bd .cb .hand button.card:first-child{margin-left:auto}#room #bd .cb .hand button.card:last-child{margin-right:auto}
 #room #bd .cb .hand{padding-top:28px;padding-bottom:20px;margin-top:5px}
 #room #bd .cb .hand button.card+button.card{margin-left:calc(var(--w)*-.45)}
-#room #bd .cb .hand{max-width:1160px;margin-left:auto;margin-right:auto}
+#room #bd .cb .hand{width:100%;min-width:0;max-width:1160px;margin-left:auto;margin-right:auto}
 #room #bd .cb .room-action{order:1}#room #bd .cb .hand{order:2}#room #bd .cb .msg{order:3;margin-top:8px}#room #bd .cb .mine{order:4}
 #room #bd .cb{box-sizing:border-box;padding-bottom:calc(5vh + env(safe-area-inset-bottom,0px))}
+#room #bd .cb .bar .logo{display:none}
 @media(min-width:601px){#room #bd .cb .hand{flex-wrap:wrap;justify-content:center;overflow-x:hidden;overflow-y:hidden}#room #bd .cb .hand .card:first-child{margin-left:0}#room #bd .cb .hand .card:last-child{margin-right:0}}
-@media(max-width:600px){#room #bd .cb{--w:clamp(36px,min(18vw,calc((100vw - 40px)/7)),76px)}#room #bd .cb .hand{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:calc(var(--w)*.95);align-content:center;justify-items:center;gap:0;overflow:visible;padding:20px 8px calc(10px + var(--w)*.5 + env(safe-area-inset-bottom,0px))}#room #bd .cb .hand button.card{margin:0}#room #bd .cb{padding-bottom:5vh}#room #bd .cb .hand{grid-template-columns:repeat(16,minmax(0,1fr))}#room #bd .cb .hand button.card{grid-column:span 2}#room #bd .cb .hand button.card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column) / span 2;translate:calc(var(--w)*.3) 0}}
+@media(max-width:600px){#room #bd .cb{--w:clamp(36px,min(18vw,calc((100vw - 40px)/8)),76px)}#room #bd .cb .hand{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:calc(var(--w)*.95);align-content:center;justify-items:center;gap:0;overflow:visible;padding:20px 12px calc(10px + var(--w)*.5 + env(safe-area-inset-bottom,0px))}#room #bd .cb .hand button.card{margin:0}#room #bd .cb{padding-bottom:5vh}#room #bd .cb .hand{grid-template-columns:repeat(16,minmax(0,1fr))}#room #bd .cb .hand button.card{grid-column:span 2}#room #bd .cb .hand button.card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column) / span 2;translate:calc(var(--w)*.3) 0}}
 @media(max-width:520px){#room #bd .cb .hand{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}}
-@media(max-width:520px) and (max-height:700px){#room #bd .cb{--w:clamp(36px,min(12vw,12vh),46px)}#room #bd .cb .hand{padding-top:24px}}` +
+@media(max-width:520px) and (max-height:700px){#room #bd .cb{--w:clamp(36px,min(12vw,12vh),46px)}#room #bd .cb .hand{padding-top:24px}#room #bd .cb .bidbox{top:0;transform:translateX(-50%);z-index:30}}` +
+        `@media(min-width:601px) and (max-height:520px) and (orientation:landscape){#room #bd .cb{--w:clamp(36px,min(7.5vw,13vh,calc((100vw - 40px)/14.75)),58px)}}` +
+        `@media(max-height:520px) and (orientation:landscape){#room #bd .cb .bidbox{top:0;transform:translateX(-50%);z-index:30;padding:8px}#room #bd .cb .bidbox p{margin:0 0 6px}#room #bd .cb .bids{gap:4px}#room #bd .cb .bids .btn{padding:.35em 0}}` +
         '#bd .cb button{width:auto;margin:0}#bd .cb .btn{font:inherit;font-weight:800;padding:.55em 1.1em;border:0;border-radius:999px;background:#ffd45c;color:#16251d;cursor:pointer}' +
         '#bd .cb .bids .btn{box-sizing:border-box;width:100%;min-width:0;padding:.6em 0}' +
         '@media(max-width:520px){#bd .cb .table{padding-top:12px}}';
       document.head.appendChild(roomStyleNode);
+    }
+    if (S.phase === 'setup') {
+      return ['<div class="cb"><div class="bar"><b class="logo">Call Break</b></div>' +
+        '<section class="setup-panel" aria-labelledby="callbreak-setup-title">' +
+        '<h3 id="callbreak-setup-title">Call Break</h3><p>' + roomEscape(S.players[0].name) +
+        ', how many players?</p><div class="setup-options">' +
+        [2, 3, 4].map(function (count) {
+          return '<button class="btn setup-choice" data-m="players:' + count + '">' + count +
+            '<small>players</small></button>';
+        }).join('') + '</div><p>Computers fill the remaining seats.</p></section></div>', S.msg];
     }
     var online = roomOnline();
     var currentIndex = seat >= 0 && seat < S.players.length ? seat :
@@ -438,7 +508,7 @@
     if (fresh) roomAnimationSeq = fresh.seq;
     var html = '<div class="bar"><b class="logo">Call Break</b><span>Round ' + S.round + ' of ' + ROUNDS +
       ' · Spades ♠ are trump</span></div><div class="table">' +
-      [2, 1].map(function (i) { return roomSeatHTML(i); }).join('') + '<div class="trick">';
+      S.players.slice(1).map(function (_, index) { return roomSeatHTML(index + 1); }).join('') + '<div class="trick">';
     var collecting = fresh && fresh.type === 'collect';
     var cards = collecting ? S.lastTrick : S.trick;
     cards.forEach(function (turn, i) {
@@ -446,10 +516,10 @@
       html += cardHTML(turn.card, ' t' + turn.p + ((S.collect || collecting) && S.win === turn.p ? ' win' : '') +
         (animate ? ' fresh' : '') + (collecting ? ' collect' : ''));
     });
-    html += '</div>' + roomSeatHTML(3);
+    html += '</div>';
     if (active && S.phase === 'bid') {
       html += '<div class="bidbox"><p>' + roomEscape(player.name) + ': how many tricks will you win?</p><div class="bids">';
-      for (var n = 1; n <= 13; n++) html += '<button class="btn" data-m="bid:' + n + '">' + n + '</button>';
+      for (var n = 1; n <= S.handSize; n++) html += '<button class="btn" data-m="bid:' + n + '">' + n + '</button>';
       html += '</div></div>';
     }
     var hint = S.over ? 'Use Restart to play again.' : S.phase === 'roundend' ?
@@ -480,7 +550,7 @@
           '</b></td></tr>'; }).join('') + '</table>' + (active && !S.over ?
           '<button class="btn" data-m="next">Next round</button>' : '') + '</div>';
     }
-    return ['<div class="cb">' + html + '</div>', S.msg || ''];
+    return ['<div class="cb players-' + S.players.length + '">' + html + '</div>', S.msg || ''];
   }
   function roomSeatHTML(i) {
     var p = S.players[i], on = S.t === i && !S.over;
@@ -493,7 +563,8 @@
   function roomClick(element) {
     if (!element || !element.dataset || !element.dataset.m || !S || S.over) return;
     var command = element.dataset.m, action;
-    if (command.indexOf('bid:') === 0) action = { type: 'bid', value: Number(command.slice(4)), player: S.t };
+    if (command.indexOf('players:') === 0) action = { type: 'players', count: Number(command.slice(8)), player: S.t };
+    else if (command.indexOf('bid:') === 0) action = { type: 'bid', value: Number(command.slice(4)), player: S.t };
     else if (command.indexOf('card:') === 0) action = { type: 'play', cardId: Number(command.slice(5)), player: S.t };
     else if (command === 'collect') action = { type: 'collect', player: S.t };
     else if (command === 'next') action = { type: 'next', player: S.t };
@@ -532,19 +603,21 @@
     'font-family:"Trebuchet MS","Avenir Next",system-ui,sans-serif;--w:clamp(44px,min(12.2vw,15vh),92px);' +
     'background:radial-gradient(ellipse at 50% 40%,#1f6b49 0,#134a33 60%,#0b2e20 100%)}.cb *{box-sizing:border-box}' +
     '.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 14px;flex:none;font-size:13px}.bar .logo{font-size:20px;font-weight:800}' +
+    '.setup-panel{display:grid;flex:1;align-content:center;justify-items:center;gap:12px;padding:16px;text-align:center}.setup-panel h3,.setup-panel p{margin:0}.setup-options{display:flex;justify-content:center;gap:10px}.setup-choice{display:grid;min-width:76px;justify-items:center;padding:12px 16px}.setup-choice small{font-size:11px;opacity:.8}' +
     '.bar span{opacity:.85;text-align:center}.btn{font:inherit;font-weight:800;padding:.55em 1.1em;border:0;border-radius:999px;background:#ffd45c;color:#16251d;cursor:pointer}' +
     '.table{position:relative;flex:1;min-height:0;display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto 1fr;padding:0 8px}' +
     '.seat{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 8px;border-radius:12px;font-size:12px;border:2px solid transparent;min-width:64px;min-height:84px}' +
     '.seat.on{border-color:#ffd45c;background:rgba(255,212,92,.14)}.seat .st{opacity:.85;font-size:11px;text-align:center}.seat .nm{font-weight:800;font-size:13px}' +
     '.s2{grid-column:1/-1;justify-self:center}.s1{grid-column:1;grid-row:2;align-self:center}.s3{grid-column:3;grid-row:2;align-self:center}' +
+    '.players-2 .s1{grid-column:1/-1;grid-row:1;justify-self:center;align-self:start}.players-2 .t1{top:0;left:50%;transform:translateX(-50%)}' +
     '.trick{grid-column:2;grid-row:2;justify-self:center;align-self:center;position:relative;width:calc(var(--w)*2.9);height:calc(var(--w)*2.7)}' +
     '.trick .card{--cw:calc(var(--w)*.8);position:absolute}.t0{bottom:0;left:50%;transform:translateX(-50%)}.t2{top:0;left:50%;transform:translateX(-50%)}' +
     '.t1{left:0;top:50%;transform:translateY(-50%)}.t3{right:0;top:50%;transform:translateY(-50%)}.trick .win{box-shadow:0 0 0 4px #ffd45c,0 6px 14px rgba(0,0,0,.5)}' +
-    '.card{--cw:var(--w);position:relative;flex:none;width:var(--cw);height:calc(var(--cw)*1.45);padding:0;border-radius:calc(var(--cw)*.1);background:#fff;' +
-    'border:1px solid #c9ccd6;color:var(--k);font:inherit;box-shadow:0 3px 8px rgba(0,0,0,.4);overflow:hidden}.card.r{--k:#d02b3a}.card.b{--k:#1b1f2a}' +
-    '.rk{position:absolute;top:5%;left:9%;font-style:normal;font-weight:800;font-size:calc(var(--cw)*.27);line-height:1.05;text-align:center}' +
-    '.su{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--cw)*.6);padding-top:10%}' +
-    '.back{background:repeating-linear-gradient(45deg,#24408e 0 6px,#2d4fa8 6px 12px);border:2px solid #fff;color:#fff}' +
+    '.card{--cw:var(--w);--k:#171a24;--face:linear-gradient(158deg,#fffefa,#fbf8f1 52%,#eee6d4);--edge:1px solid rgba(23,26,36,.2);--sh:0 1px 1px rgba(0,0,0,.28),0 5px 12px rgba(0,0,0,.34);position:relative;flex:none;width:var(--cw);height:calc(var(--cw)*1.45);padding:0;border-radius:calc(var(--cw)*.09);background:var(--face);border:var(--edge);color:var(--k);font:inherit;box-shadow:var(--sh);overflow:hidden}.card.r{--k:#c4202f}.card.b{--k:#171a24}.card svg{display:block;fill:currentColor}' +
+    '.ix{position:absolute;left:7%;top:4.5%;display:flex;flex-direction:column;align-items:center;font-family:Georgia,"Times New Roman",serif;font-weight:800;font-style:normal;font-size:calc(var(--cw)*.22);line-height:1}.ix svg{width:calc(var(--cw)*.17);height:calc(var(--cw)*.17);margin-top:calc(var(--cw)*.03)}.ix.ten{letter-spacing:-.09em}.ix.br{left:auto;top:auto;right:7%;bottom:4.5%;transform:rotate(180deg)}' +
+    '.pp{position:absolute;inset:0}.pp span{position:absolute;width:calc(var(--cw)*.17);height:calc(var(--cw)*.17);transform:translate(-50%,-50%)}.pp span.f{transform:translate(-50%,-50%) rotate(180deg)}.pp span.big{width:calc(var(--cw)*.5);height:calc(var(--cw)*.5)}.pp svg{width:100%;height:100%}' +
+    '.ct{position:absolute;inset:15% 23%;display:flex;align-items:center;justify-content:center;border:1.5px solid currentColor;border-radius:calc(var(--cw)*.05);background:linear-gradient(135deg,rgba(233,185,73,.3),rgba(233,185,73,0) 62%),repeating-linear-gradient(45deg,rgba(23,26,36,.05) 0 2px,transparent 2px 6px)}.ct b{font-family:Georgia,"Times New Roman",serif;font-size:calc(var(--cw)*.5);line-height:1}.ct svg{position:absolute;width:calc(var(--cw)*.15);height:calc(var(--cw)*.15)}.ct b+svg{left:8%;top:5%}.ct svg+svg{right:8%;bottom:5%;transform:rotate(180deg)}' +
+    '.back{background:repeating-linear-gradient(45deg,rgba(255,226,160,.24) 0 1px,transparent 1px 5px),repeating-linear-gradient(-45deg,rgba(255,226,160,.24) 0 1px,transparent 1px 5px),#9c1f2e;border:max(2px,calc(var(--cw)*.05)) solid #fbf8f1;color:#fff}.back::after{content:\"\";position:absolute;inset:calc(var(--cw)*.045);border:1px solid rgba(233,185,73,.85);border-radius:calc(var(--cw)*.05);pointer-events:none}' +
     '.mini{--cw:calc(var(--w)*.5);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--w)*.26)}' +
     '.bidbox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;width:min(88vw,330px);padding:14px;border-radius:16px;background:rgba(8,24,16,.94);text-align:center}' +
     '.bidbox p{margin:0 0 10px;font-size:14px}.bids{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.bids .btn{box-sizing:border-box;width:100%;min-width:0;padding:.6em 0}' +
@@ -586,8 +659,8 @@
 
   var api = {
     id: 'callbreak', name: 'Call Break', t: 'Call Break', i: '♠️',
-    d: 'Bid for tricks, follow suit, and use spades as trump in this four-player card game.',
-    minPlayers: 2, maxPlayers: 4, max: 4, cat: 'classic strategy', tag: 'Bid & trump',
+    d: 'Bid for tricks, follow suit, and use spades as trump. Play with 2–4 total players.',
+    minPlayers: 2, playerCountMin: 4, maxPlayers: 4, max: 4, cat: 'classic strategy', tag: 'Bid & trump',
     diff: 'Medium', art: 'art-cards', logo: 'callbreak.svg',
     init: roomInit, valid: roomValid, apply: roomApply, bot: roomBot, draw: roomDraw, click: roomClick,
     mount: mount, start: start, _t: { get G() { return G; }, botBid: botBid, botPlay: botPlay, resolve: resolve, next: next, legal: legal },

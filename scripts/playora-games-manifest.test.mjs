@@ -60,11 +60,13 @@ test("the lazy-load catalog maps every game script exactly once", () => {
   const root = fileURLToPath(new URL("..", import.meta.url));
   const catalogPath = new URL("../public/playora/games/catalog.json", import.meta.url);
   const catalog = JSON.parse(readFileSync(catalogPath, "utf8"));
-  const scripts = discoverPlayoraGames(root);
+  const scripts = discoverPlayoraGames(root).filter((file) => file !== "blackjack.js");
   const files = catalog.map((game) => game.file);
   const ids = catalog.map((game) => game.id);
 
   assert.deepEqual([...files].sort(), scripts);
+  assert.ok(existsSync(join(root, "public", "playora", "games", "blackjack.js")),
+    "the legacy standalone Blackjack script is not a registered Playora game");
   assert.equal(new Set(files).size, files.length);
   assert.equal(new Set(ids).size, ids.length);
   assert.equal(catalog.find((game) => game.id === "carrom")?.i, "\u{1F7EB}");
@@ -296,7 +298,7 @@ test("previously unlisted card games complete multiplayer bot matches", async (t
   for (const file of games) {
     await t.test(file, () => {
       const { game, context } = createGame(file, {
-        np: 2,
+        np: 4,
         seat: 0,
         ids: ["player-1", "player-2"],
       });
@@ -396,10 +398,90 @@ test("Crazy Eights lets the player play a drawn wild eight", () => {
   assert.equal(state.t, 1);
 });
 
+test("Call Break lets a local player choose the total player count", () => {
+  for (const count of [2, 3, 4]) {
+    const { game, context } = createGame("callbreak.js", { localBot: true, np: 1 });
+    const state = game.init();
+    context.S = state;
+
+    assert.equal(state.phase, "setup");
+    assert.match(game.draw()[0], new RegExp('data-m="players:' + count + '"'));
+    assert.equal(game.valid({ type: "players", player: 0, count }), true);
+    game.apply({ type: "players", player: 0, count });
+
+    assert.equal(state.phase, "bid");
+    assert.equal(state.players.length, count);
+    assert.equal(state.handSize, Math.floor(52 / count));
+    assert.deepEqual(Array.from(state.players, (player) => player.bot),
+      [false, ...Array(count - 1).fill(true)]);
+    assert.ok(state.players.every((player) => player.hand.length === state.handSize));
+  }
+});
+
+test("Crazy Eights renders the refreshed card faces, score chips, and felt table", () => {
+  const { game, context, styles } = createGame("crazyeights.js", { np: 4, ids: ["host"], seat: 0 });
+  context.S = game.init();
+  const wildEight = { id: 1000, s: "H", r: 8 };
+  context.S.players[0].hand[0] = wildEight;
+  context.S.disc = [wildEight];
+  context.S.color = wildEight.s;
+  const [html] = game.draw();
+  const style = styles.find((item) => item.id === "crazyeights-room-style");
+
+  assert.ok(style, "room-specific Crazy Eights styles should be injected");
+  assert.match(html, /class="pl on"/, "the current player should have a highlighted score chip");
+  assert.match(html, /class="card[^"]*w8/, "wild eights should receive their highlighted card face");
+  assert.match(html, /class="ix[^"]*"/, "cards should show corner rank and suit indices");
+  assert.match(html, /class="pp"/, "number cards should render suit pips");
+  assert.match(html, /<svg viewBox="0 0 24 24"/, "suits should use consistent vector artwork");
+  assert.match(style.textContent, /#0d4651/, "the table should use the supplied felt palette");
+  assert.match(style.textContent, /--brass:#e9b949/, "turn highlights should use the brass accent");
+  assert.match(style.textContent, /card-land/, "card movement animation should remain available");
+  assert.match(style.textContent, /prefers-reduced-motion:reduce/,
+    "animations should respect reduced-motion preferences");
+});
+
+test("playing-card games share the Crazy Eights face treatment, excluding UNO", () => {
+  const files = [
+    "blackjack.js", "bluff.js", "callbreak.js", "crazyeights.js", "hearts.js",
+    "joker-duel.js", "poker-game.js", "rummy.js", "spades.js", "teenpatti.js",
+  ];
+  for (const file of files) {
+    const source = readFileSync(join(projectRoot, "public", "playora", "games", file), "utf8");
+    assert.match(source, /class="pp"/, `${file} renders pip-based number cards`);
+    assert.match(source, /class="ct"/, `${file} renders illustrated court cards`);
+    assert.match(source, /<svg viewBox="0 0 24 24"/, `${file} uses the shared SVG suit artwork`);
+    assert.match(source, /linear-gradient\(158deg/, `${file} keeps the shared ivory card face`);
+  }
+});
+
+test("Call Break completes bot matches with each selectable seat count", () => {
+  for (const count of [2, 3, 4]) {
+    const { game, context } = createGame("callbreak.js", { localBot: true, np: 1 });
+    const state = game.init();
+    context.S = state;
+    game.apply({ type: "players", player: 0, count });
+    state.players.forEach((player) => { player.bot = true; });
+
+    let actions = 0;
+    while (!state.over && actions < 2000) {
+      const action = game.bot();
+      assert.ok(action, `bot should act during ${state.phase} with ${count} players`);
+      assert.equal(game.valid(action), true, `bot action should be valid: ${JSON.stringify(action)}`);
+      game.apply(action);
+      actions++;
+    }
+
+    assert.equal(state.over, true, `${count}-player bot match should finish`);
+    assert.ok(actions < 2000);
+  }
+});
+
 test("Call Break keeps the local player's hand visible while bots play", () => {
   const { game, context } = createGame("callbreak.js", { localBot: true, np: 1 });
   const state = game.init();
   context.S = state;
+  game.apply({ type: "players", player: 0, count: 4 });
   const handSize = state.players[0].hand.length;
 
   assert.equal(handSize, 13);
@@ -432,6 +514,9 @@ test("local card games keep the human hand visible during bot turns", () => {
     const { game, context } = createGame(file, { localBot: true, np: 1 });
     const state = game.init();
     context.S = state;
+    if ((file === "bluff.js" || file === "callbreak.js") && state.phase === "setup") {
+      game.apply({ type: "players", player: 0, count: 4 });
+    }
     state.t = 1;
     if ("turn" in state) state.turn = 1;
     if ("phase" in state && file !== "hearts.js") state.phase = "play";
@@ -476,6 +561,8 @@ test("UNO animates a newly drawn card and a card played to the discard pile", ()
   uno.context.S = uno.game.init();
   const drawCard = uno.context.S.draw.find((card) => card.c === uno.context.S.color);
   assert.ok(drawCard);
+  uno.context.S.turn = 0;
+  uno.context.S.t = 0;
   uno.context.S.draw = [drawCard];
   uno.game.apply({ type: "draw", player: 0 });
   assert.equal(uno.context.S.animation.type, "draw");
@@ -487,6 +574,8 @@ test("UNO animates a newly drawn card and a card played to the discard pile", ()
   assert.match(unoStyle.textContent, /prefers-reduced-motion:reduce/);
 
   uno.context.S = uno.game.init();
+  uno.context.S.turn = 0;
+  uno.context.S.t = 0;
   const player = uno.context.S.players[0];
   const playCard = { id: 1000, c: uno.context.S.color, v: "5" };
   player.hand[0] = playCard;

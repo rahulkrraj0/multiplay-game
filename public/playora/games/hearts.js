@@ -1,3 +1,4 @@
+/* global S, ids, np, localBot, gamePlayerNames, nm, canAct, seat, act, registerGame */
 /* hearts.js - Hearts (4 players: you + 3 bots). Lowest score when someone reaches 100 wins.
    Add <script src="hearts.js"></script> to any page. Progress is saved in the browser. */
 (function (global) {
@@ -170,9 +171,35 @@
   /* ---------- UI ---------- */
   function cardHTML(c, cls, attrs) {
     var tag = attrs && /data-(?:a|m)=/.test(attrs) ? 'button type="button"' : 'div';
-    var col = c.s === 'H' || c.s === 'D' ? ' r' : ' b';
-    return '<' + tag + ' class="card' + col + (cls || '') + '" ' + (attrs || '') + ' aria-label="' + cname(c) + '"><i class="rk">' +
-      rk(c.r) + '<br>' + SYM[c.s] + '</i><span class="su">' + SYM[c.s] + '</span></' + tag.split(' ')[0] + '>';
+    var col = c.s === 'H' || c.s === 'D' ? ' r' : ' b', rank = c.r === 14 ? 1 : c.r, label = rk(c.r), face;
+    function suitSvg(suit) {
+      var path = {
+        S: '<path d="M12 2C12 2 3 8.5 3 14.2c0 3 2.3 5 4.9 5 1.5 0 2.8-.6 3.6-1.7-.2 2.2-.9 3.7-2.1 4.9h5.2c-1.2-1.2-1.9-2.7-2.1-4.9.8 1.1 2.1 1.7 3.6 1.7 2.6 0 4.9-2 4.9-5C21 8.5 12 2 12 2z"/>',
+        H: '<path d="M12 21C4 15 2 11.5 2 8.2 2 5.4 4.2 3.2 6.9 3.2c2.2 0 4.1 1.2 5.1 3.2 1-2 2.9-3.2 5.1-3.2 2.7 0 4.9 2.2 4.9 5C22 11.5 20 15 12 21z"/>',
+        C: '<circle cx="12" cy="7.3" r="4.7"/><circle cx="6.9" cy="14.2" r="4.7"/><circle cx="17.1" cy="14.2" r="4.7"/><circle cx="12" cy="12.3" r="3.2"/><path d="M12 11c0 5-1.4 8.7-3.4 11.5h6.8C13.4 19.7 12 16 12 11z"/>',
+        D: '<path d="M12 1.5l8 10.5-8 10.5L4 12z"/>'
+      }[suit];
+      return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + path + '</svg>';
+    }
+    function index(extra) { return '<i class="ix' + extra + '">' + label + suitSvg(c.s) + '</i>'; }
+    if (rank >= 11) face = '<span class="ct"><b>' + label + '</b>' + suitSvg(c.s) + suitSvg(c.s) + '</span>';
+    else if (rank === 1) face = '<span class="pp"><span class="big" style="left:50%;top:50%">' + suitSvg(c.s) + '</span></span>';
+    else {
+      var layouts = {
+        2: [[1, 0], [1, 1]], 3: [[1, 0], [1, .5], [1, 1]], 4: [[0, 0], [2, 0], [0, 1], [2, 1]],
+        5: [[0, 0], [2, 0], [1, .5], [0, 1], [2, 1]], 6: [[0, 0], [2, 0], [0, .5], [2, .5], [0, 1], [2, 1]],
+        7: [[0, 0], [2, 0], [0, .5], [2, .5], [0, 1], [2, 1], [1, .25]],
+        8: [[0, 0], [2, 0], [0, .5], [2, .5], [0, 1], [2, 1], [1, .25], [1, .75]],
+        9: [[0, 0], [2, 0], [0, 1 / 3], [2, 1 / 3], [0, 2 / 3], [2, 2 / 3], [0, 1], [2, 1], [1, .5]],
+        10: [[0, 0], [2, 0], [0, 1 / 3], [2, 1 / 3], [0, 2 / 3], [2, 2 / 3], [0, 1], [2, 1], [1, 1 / 6], [1, 5 / 6]]
+      };
+      face = '<span class="pp">' + layouts[rank].map(function (position) {
+        return '<span' + (position[1] > .5 ? ' class="f"' : '') + ' style="left:' + [32, 50, 68][position[0]] +
+          '%;top:' + (23 + position[1] * 54).toFixed(1) + '%">' + suitSvg(c.s) + '</span>';
+      }).join('') + '</span>';
+    }
+    return '<' + tag + ' class="card' + col + (cls || '') + '" ' + (attrs || '') + ' aria-label="' + cname(c) + '">' +
+      index(label === '10' ? ' ten' : '') + face + index((label === '10' ? ' ten' : '') + ' br') + '</' + tag.split(' ')[0] + '>';
   }
   function taken(p) { return p.taken.reduce(function (s, c) { return s + cpts(c); }, 0); }
   function seat(i) {
@@ -246,9 +273,21 @@
   /* ---------- shared-room contract ---------- */
   function roomCount() {
     var online = typeof ids !== 'undefined' && Array.isArray(ids) && ids.length > 0;
-    var humans = typeof np === 'number' ? Math.max(2, Math.min(4, np)) : 2;
+    var humans = online ? Math.min(4, ids.length) : typeof np === 'number' ? Math.max(2, Math.min(4, np)) : 2;
     var computerGame = typeof localBot !== 'undefined' && localBot;
-    return { online: online, humans: humans, count: online || computerGame ? 4 : humans, computerGame: computerGame };
+    var count = online ? Math.max(2, Math.min(4, Number(np) || 2)) : computerGame ? 4 : humans;
+    return { online: online, humans: humans, count: count, computerGame: computerGame };
+  }
+  function roomRandom() {
+    G.rng = (Math.imul(G.rng >>> 0, 1664525) + 1013904223) >>> 0;
+    return G.rng / 4294967296;
+  }
+  function roomShuffle(cards) {
+    for (var i = cards.length - 1; i > 0; i--) {
+      var j = Math.floor(roomRandom() * (i + 1)), card = cards[i];
+      cards[i] = cards[j]; cards[j] = card;
+    }
+    return cards;
   }
   function roomName(index, info) {
     if ((info.online && index >= info.humans) || (info.computerGame && index > 0))
@@ -262,6 +301,9 @@
     return 'Player ' + (index + 1);
   }
   function roomSetTurn(index) { G.turn = index; G.t = index; }
+  function syncRoomState() {
+    if (typeof S !== 'undefined' && S && S !== G && Array.isArray(S.players)) G = S;
+  }
   function roomBeginPlay(prefix) {
     var first = 0;
     G.players.forEach(function (player, index) {
@@ -274,7 +316,7 @@
     G.msg = (prefix || '') + G.players[first].name + (first ? ' has the 2 of clubs and leads.' : ' has the 2 of clubs and leads.');
   }
   function roomNewRound() {
-    var count = G.players.length, cards = shuffle(deck()), perPlayer = Math.floor(cards.length / count);
+    var count = G.players.length, cards = roomShuffle(deck()), perPlayer = Math.floor(cards.length / count);
     var direction = DIRS[(G.round - 1) % DIRS.length];
     G.players.forEach(function (player, index) {
       player.hand = cards.slice(index * perPlayer, (index + 1) * perPlayer);
@@ -308,6 +350,7 @@
     }).slice(0, 3).map(function (c) { return c.id; });
   }
   function roomValid(action) {
+    syncRoomState();
     if (!action || typeof action !== 'object' || G.over || action.player !== G.t) return false;
     var player = G.players[G.t];
     if (!player) return false;
@@ -328,6 +371,7 @@
     return action.type === 'next' && G.phase === 'roundend' && !G.over;
   }
   function roomApply(action) {
+    syncRoomState();
     if (!roomValid(action)) return;
     var pi = G.t, player = G.players[pi];
     if (action.type === 'select') {
@@ -410,6 +454,7 @@
     roomNewRound();
   }
   function roomBot() {
+    syncRoomState();
     var pi = G.t, player = G.players[pi];
     if (!player || !player.bot || G.over) return null;
     if (G.phase === 'pass') return { type: 'pass', player: pi, cardIds: roomPassCards(player) };
@@ -454,7 +499,7 @@
     style.id = 'hearts-room-style';
     style.textContent = scopeRoomCss(CSS.replace(/card-land/g, 'hearts-card-land')
       .replace(/card-deal/g, 'hearts-card-deal').replace(/win-glow/g, 'hearts-win-glow')) +
-      `#room #bd .hr button.card{width:var(--cw);height:calc(var(--cw)*1.45);flex:0 0 var(--cw);margin:0;padding:0;border:1px solid #c9ccd6;border-radius:calc(var(--cw)*.1);background:#fff;color:var(--k);font:inherit;text-align:left;box-shadow:0 3px 8px rgba(0,0,0,.4);appearance:none;-webkit-appearance:none;overflow:hidden}
+      `#room #bd .hr button.card{width:var(--cw);height:calc(var(--cw)*1.45);flex:0 0 var(--cw);margin:0;padding:0;border:var(--edge);border-radius:calc(var(--cw)*.09);background:var(--face);color:var(--k);font:inherit;text-align:left;box-shadow:var(--sh);appearance:none;-webkit-appearance:none;overflow:hidden}
 #room #bd .hr .hand button.card:first-child{margin-left:auto}#room #bd .hr .hand button.card:last-child{margin-right:auto}
 #room #bd .hr .hand{padding-top:28px;padding-bottom:20px;margin-top:5px}
 #room #bd .hr .hand button.card+button.card{margin-left:calc(var(--w)*-.45)}
@@ -483,6 +528,7 @@
       (startColumn + (index - lastRowStart) * 2) + '"';
   }
   function roomDraw() {
+    syncRoomState();
     injectRoomStyles();
     var online = typeof ids !== 'undefined' && Array.isArray(ids) && ids.length > 0;
     var viewer = typeof seat === 'number' && seat >= 0 && seat < G.players.length ? seat :
@@ -554,7 +600,8 @@
         hand: [], taken: [], pts: 0, total: 0, recv: []
       });
     }
-    G = { phase: 'pass', round: 1, players: players, trick: [], collect: false, selected: [], passed: [] };
+    G = { phase: 'pass', round: 1, players: players, trick: [], collect: false, selected: [], passed: [],
+      rng: (Math.floor(Math.random() * 4294967296) >>> 0) || 1 };
     roomNewRound();
     return G;
   }
@@ -572,11 +619,11 @@
     '.trick{grid-column:2;grid-row:2;justify-self:center;align-self:center;position:relative;width:calc(var(--w)*.9);height:min(calc(var(--w)*1.2),100%)}' +
     '.trick .card{--cw:calc(var(--w)*.38);position:absolute}.t0{bottom:0;left:50%;transform:translateX(-50%)}.t2{top:0;left:50%;transform:translateX(-50%)}' +
     '.t1{left:0;top:50%;transform:translateY(-50%)}.t3{right:0;top:50%;transform:translateY(-50%)}.trick .win{box-shadow:0 0 0 4px #ffd45c,0 6px 14px rgba(0,0,0,.5)}' +
-    '.card{--cw:var(--w);position:relative;flex:none;width:var(--cw);height:calc(var(--cw)*1.45);padding:0;border-radius:calc(var(--cw)*.1);background:#fff;' +
-    'border:1px solid #c9ccd6;color:var(--k);font:inherit;box-shadow:0 3px 8px rgba(0,0,0,.4);overflow:hidden}.card.r{--k:#d02b3a}.card.b{--k:#1b1f2a}' +
-    '.rk{position:absolute;top:5%;left:9%;font-style:normal;font-weight:800;font-size:calc(var(--cw)*.27);line-height:1.05;text-align:center}' +
-    '.su{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--cw)*.6);padding-top:10%}' +
-    '.back{background:repeating-linear-gradient(45deg,#1f3c88 0 6px,#2a4fb0 6px 12px);border:2px solid #fff;color:#fff}' +
+    '.card{--cw:var(--w);--k:#171a24;--face:linear-gradient(158deg,#fffefa,#fbf8f1 52%,#eee6d4);--edge:1px solid rgba(23,26,36,.2);--sh:0 1px 1px rgba(0,0,0,.28),0 5px 12px rgba(0,0,0,.34);position:relative;flex:none;width:var(--cw);height:calc(var(--cw)*1.45);padding:0;border-radius:calc(var(--cw)*.09);background:var(--face);border:var(--edge);color:var(--k);font:inherit;box-shadow:var(--sh);overflow:hidden}.card.r{--k:#c4202f}.card.b{--k:#171a24}.card svg{display:block;fill:currentColor}' +
+    '.ix{position:absolute;left:7%;top:4.5%;display:flex;flex-direction:column;align-items:center;font-family:Georgia,"Times New Roman",serif;font-weight:800;font-style:normal;font-size:calc(var(--cw)*.22);line-height:1}.ix svg{width:calc(var(--cw)*.17);height:calc(var(--cw)*.17);margin-top:calc(var(--cw)*.03)}.ix.ten{letter-spacing:-.09em}.ix.br{left:auto;top:auto;right:7%;bottom:4.5%;transform:rotate(180deg)}' +
+    '.pp{position:absolute;inset:0}.pp span{position:absolute;width:calc(var(--cw)*.17);height:calc(var(--cw)*.17);transform:translate(-50%,-50%)}.pp span.f{transform:translate(-50%,-50%) rotate(180deg)}.pp span.big{width:calc(var(--cw)*.5);height:calc(var(--cw)*.5)}.pp svg{width:100%;height:100%}' +
+    '.ct{position:absolute;inset:15% 23%;display:flex;align-items:center;justify-content:center;border:1.5px solid currentColor;border-radius:calc(var(--cw)*.05);background:linear-gradient(135deg,rgba(233,185,73,.3),rgba(233,185,73,0) 62%),repeating-linear-gradient(45deg,rgba(23,26,36,.05) 0 2px,transparent 2px 6px)}.ct b{font-family:Georgia,"Times New Roman",serif;font-size:calc(var(--cw)*.5);line-height:1}.ct svg{position:absolute;width:calc(var(--cw)*.15);height:calc(var(--cw)*.15)}.ct b+svg{left:8%;top:5%}.ct svg+svg{right:8%;bottom:5%;transform:rotate(180deg)}' +
+    '.back{background:repeating-linear-gradient(45deg,rgba(255,226,160,.24) 0 1px,transparent 1px 5px),repeating-linear-gradient(-45deg,rgba(255,226,160,.24) 0 1px,transparent 1px 5px),#9c1f2e;border:max(2px,calc(var(--cw)*.05)) solid #fbf8f1;color:#fff}.back::after{content:\"\";position:absolute;inset:calc(var(--cw)*.045);border:1px solid rgba(233,185,73,.85);border-radius:calc(var(--cw)*.05);pointer-events:none}' +
     '.mini{--cw:calc(var(--w)*.5);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--w)*.26)}' +
     '.msg{text-align:center;font-size:14px;padding:4px 12px;min-height:3.2em;flex:none}.msg small{display:block;opacity:.8;margin-top:2px}' +
     '.acts{position:relative;z-index:6;display:flex;justify-content:center;min-height:44px;flex:none}.acts .btn{font-size:16px}' +

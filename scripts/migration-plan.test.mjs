@@ -60,6 +60,7 @@ test("only app-owned schemas ship in the globbed directory", () => {
   const migrationsDir = join(projectRoot(), "migrations");
   assert.deepEqual(pendingMigrations(readdirSync(migrationsDir), []), [
     { name: "0002_webrtc_signaling.sql", path: "0002_webrtc_signaling.sql" },
+    { name: "0003_webrtc_expiry_indexes.sql", path: "0003_webrtc_expiry_indexes.sql" },
   ]);
   assert.ok(readdirSync(join(migrationsDir, "auth")).includes("0001_auth.sql"));
 });

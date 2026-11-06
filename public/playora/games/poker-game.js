@@ -152,9 +152,10 @@
   height: 1.55rem;
   border: 2px solid #fff;
   border-radius: 0.22rem;
-  background: repeating-linear-gradient(45deg, #7f1d1d 0 0.25rem, #dc2626 0.25rem 0.5rem);
+  background: repeating-linear-gradient(45deg, rgba(255,226,160,.24) 0 1px, transparent 1px 5px), repeating-linear-gradient(-45deg, rgba(255,226,160,.24) 0 1px, transparent 1px 5px), #9c1f2e;
   box-shadow: 0 0.1rem 0.25rem rgba(0, 0, 0, 0.45);
 }
+.poker .pk-back::after { content: ""; position: absolute; inset: 4.5%; border: 1px solid rgba(233,185,73,.85); border-radius: 5%; }
 
 .poker .pk-chip {
   display: inline-block;
@@ -169,19 +170,38 @@
 
 /* ---------- cards ---------- */
 .poker .pk-card {
+  --face: linear-gradient(158deg, #fffefa, #fbf8f1 52%, #eee6d4);
+  --edge: 1px solid rgba(23, 26, 36, 0.2);
+  --sh: 0 1px 1px rgba(0, 0, 0, 0.28), 0 5px 12px rgba(0, 0, 0, 0.34);
   position: relative;
   display: block;
   flex: none;
   width: var(--cw);
   height: calc(var(--cw) * 1.42);
-  border-radius: calc(var(--cw) * 0.14);
-  background: linear-gradient(160deg, #ffffff, #efe8d8);
+  border: var(--edge);
+  border-radius: calc(var(--cw) * 0.09);
+  background: var(--face);
   color: #1c1917;
   font-size: calc(var(--cw) * 0.34);
   font-weight: 800;
-  box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.45);
+  box-shadow: var(--sh);
+  overflow: hidden;
 }
-.poker .pk-red { color: #dc2626; }
+.poker .pk-red { color: #c4202f; }
+.poker .pk-card svg { display: block; fill: currentColor; }
+.poker .pk-card .ix { position: absolute; left: 7%; top: 4.5%; display: flex; flex-direction: column; align-items: center; font: 800 calc(var(--cw) * 0.22)/1 Georgia, "Times New Roman", serif; }
+.poker .pk-card .ix svg { width: calc(var(--cw) * 0.17); height: calc(var(--cw) * 0.17); margin-top: calc(var(--cw) * 0.03); }
+.poker .pk-card .ix.br { left: auto; top: auto; right: 7%; bottom: 4.5%; transform: rotate(180deg); }
+.poker .pk-card .pp { position: absolute; inset: 0; }
+.poker .pk-card .pp span { position: absolute; width: calc(var(--cw) * 0.17); height: calc(var(--cw) * 0.17); transform: translate(-50%, -50%); }
+.poker .pk-card .pp span.f { transform: translate(-50%, -50%) rotate(180deg); }
+.poker .pk-card .pp span.big { width: calc(var(--cw) * 0.5); height: calc(var(--cw) * 0.5); }
+.poker .pk-card .pp svg { width: 100%; height: 100%; }
+.poker .pk-card .ct { position: absolute; inset: 15% 23%; display: flex; align-items: center; justify-content: center; border: 1.5px solid currentColor; border-radius: calc(var(--cw) * 0.05); background: linear-gradient(135deg, rgba(233,185,73,.3), transparent 62%), repeating-linear-gradient(45deg, rgba(23,26,36,.05) 0 2px, transparent 2px 6px); }
+.poker .pk-card .ct b { font: 800 calc(var(--cw) * 0.5)/1 Georgia, "Times New Roman", serif; }
+.poker .pk-card .ct svg { position: absolute; width: calc(var(--cw) * 0.15); height: calc(var(--cw) * 0.15); }
+.poker .pk-card .ct b + svg { left: 8%; top: 5%; }
+.poker .pk-card .ct svg + svg { right: 8%; bottom: 5%; transform: rotate(180deg); }
 .poker .pk-card__c { position: absolute; display: flex; flex-direction: column; align-items: center; line-height: 1; font-size: 0.95em; }
 .poker .pk-card__c i { font-style: normal; font-size: 0.85em; }
 .poker .pk-card__c--tl { top: 7%; left: 9%; }
@@ -904,11 +924,32 @@
   }
 
   function face(id) {
-    const r = RANK_LABELS[rank(id) - 2];
-    const s = SUITS[suit(id)];
-    return '<span class="pk-card__c pk-card__c--tl"><b>' + r + "</b><i>" + s + "</i></span>" +
-      '<span class="pk-card__pip" aria-hidden="true">' + s + "</span>" +
-      '<span class="pk-card__c pk-card__c--br" aria-hidden="true"><b>' + r + "</b><i>" + s + "</i></span>";
+    const value = rank(id), r = RANK_LABELS[value - 2], symbol = SUITS[suit(id)];
+    const key = { "♠": "S", "♥": "H", "♦": "D", "♣": "C" }[symbol];
+    const path = {
+      S: '<path d="M12 2C12 2 3 8.5 3 14.2c0 3 2.3 5 4.9 5 1.5 0 2.8-.6 3.6-1.7-.2 2.2-.9 3.7-2.1 4.9h5.2c-1.2-1.2-1.9-2.7-2.1-4.9.8 1.1 2.1 1.7 3.6 1.7 2.6 0 4.9-2 4.9-5C21 8.5 12 2 12 2z"/>',
+      H: '<path d="M12 21C4 15 2 11.5 2 8.2 2 5.4 4.2 3.2 6.9 3.2c2.2 0 4.1 1.2 5.1 3.2 1-2 2.9-3.2 5.1-3.2 2.7 0 4.9 2.2 4.9 5C22 11.5 20 15 12 21z"/>',
+      C: '<circle cx="12" cy="7.3" r="4.7"/><circle cx="6.9" cy="14.2" r="4.7"/><circle cx="17.1" cy="14.2" r="4.7"/><circle cx="12" cy="12.3" r="3.2"/><path d="M12 11c0 5-1.4 8.7-3.4 11.5h6.8C13.4 19.7 12 16 12 11z"/>',
+      D: '<path d="M12 1.5l8 10.5-8 10.5L4 12z"/>'
+    }[key];
+    const suitArt = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + path + "</svg>";
+    let middle;
+    if (value >= 11 && value < 14) middle = '<span class="ct"><b>' + r + "</b>" + suitArt + suitArt + "</span>";
+    else if (value === 14) middle = '<span class="pp"><span class="big" style="left:50%;top:50%">' + suitArt + "</span></span>";
+    else {
+      const layouts = {
+        2: [[1, 0], [1, 1]], 3: [[1, 0], [1, .5], [1, 1]], 4: [[0, 0], [2, 0], [0, 1], [2, 1]],
+        5: [[0, 0], [2, 0], [1, .5], [0, 1], [2, 1]], 6: [[0, 0], [2, 0], [0, .5], [2, .5], [0, 1], [2, 1]],
+        7: [[0, 0], [2, 0], [0, .5], [2, .5], [0, 1], [2, 1], [1, .25]],
+        8: [[0, 0], [2, 0], [0, .5], [2, .5], [0, 1], [2, 1], [1, .25], [1, .75]],
+        9: [[0, 0], [2, 0], [0, 1 / 3], [2, 1 / 3], [0, 2 / 3], [2, 2 / 3], [0, 1], [2, 1], [1, .5]],
+        10: [[0, 0], [2, 0], [0, 1 / 3], [2, 1 / 3], [0, 2 / 3], [2, 2 / 3], [0, 1], [2, 1], [1, 1 / 6], [1, 5 / 6]]
+      };
+      middle = '<span class="pp">' + layouts[value].map(([x, y]) =>
+        '<span' + (y > .5 ? ' class="f"' : '') + ' style="left:' + [32, 50, 68][x] + "%;top:" + (23 + y * 54).toFixed(1) + "%>" + suitArt + "</span>"
+      ).join("") + "</span>";
+    }
+    return '<i class="ix br" aria-hidden="true">' + r + suitArt + "</i><i class=\"ix\">" + r + suitArt + "</i>" + middle;
   }
 
   function mini(id) {
@@ -1209,7 +1250,8 @@
 
       const raw = typeof opts === "number" ? opts
         : opts && typeof opts === "object" ? (opts.players || opts.n || opts.count || opts.np) : 0;
-      const hinted = Number.isInteger(raw) && raw >= MIN_P && raw <= MAX_P ? raw : 0;
+      const hinted = Number.isInteger(raw) && raw >= MIN_P && raw <= MAX_P ? raw
+        : typeof ids !== "undefined" && ids.length && Number.isInteger(np) && np >= MIN_P && np <= MAX_P ? np : 0;
       return blank(hinted || 2, hinted ? "deal" : "setup");
     },
 

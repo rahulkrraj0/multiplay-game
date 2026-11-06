@@ -4,7 +4,7 @@
    peer-to-peer. Manual copy-paste codes still work as a fallback. */
 const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789",
   ROOM_MAX = 8;
-const room = { code: "", ws: null, pend: {}, jt: 0, jws: null, jc: null, rejoinId: null };
+const room = { code: "", ws: null, pend: {}, jt: 0, jws: null, jc: null, rejoinId: null, reconnectInPlace: false, claiming: false, claimingCode: "" };
 const hostId = (c) => "h" + c,
   rtcKey = (c) => "g" + c,
   joinId = () => "j" + myId + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -192,16 +192,52 @@ async function startRoom(preferredCode) {
   $("mi").open = true;
 }
 async function claimRoom() {
-  if (!room.code || room.ws) return;
+  if (!room.code || (room.claiming && room.claimingCode === room.code)) return;
+  if (room.ws) {
+    if (room.reconnectInPlace) {
+      room.reconnectInPlace = false;
+      $("lg").textContent = "You’re already connected to the room.";
+      window.playoraSetReconnectControls(false);
+    }
+    return;
+  }
   const c = room.code;
-  for (let i = 0; i < 10 && room.code === c && amHost(); i++) {
-    try {
-      room.ws = await sigOpen(hostId(c), hostMsg, rtcKey(c));
-      watch(room.ws);
-      lobbyUp();
-      return roomUI("ok", "You are now the host – the Room ID still works.");
-    } catch {
-      await new Promise((r) => setTimeout(r, 3000));
+  room.claiming = true;
+  room.claimingCode = c;
+  try {
+    for (let i = 0; i < 10 && room.code === c && room.claimingCode === c && amHost(); i++) {
+      try {
+        const ws = await sigOpen(hostId(c), hostMsg, rtcKey(c));
+        if (room.code !== c || room.claimingCode !== c || room.ws || !amHost()) {
+          sigClose(ws);
+          return;
+        }
+        room.ws = ws;
+        watch(ws);
+        lobbyUp();
+        roomUI("ok", "You are now the host – the Room ID still works.");
+        if (room.reconnectInPlace) {
+          room.reconnectInPlace = false;
+          $("lg").textContent = "Connection restored. Your game is ready.";
+          window.playoraSetReconnectControls(false);
+          updateGameControls();
+        }
+        return;
+      } catch {
+        if (room.code !== c || room.claimingCode !== c) return;
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+    }
+    if (room.code === c && room.claimingCode === c && room.reconnectInPlace) {
+      room.reconnectInPlace = false;
+      $("lg").textContent = "Couldn’t reconnect yet. Your game is still here—try again when you’re ready.";
+      window.playoraSetReconnectControls(false);
+      updateGameControls();
+    }
+  } finally {
+    if (room.claimingCode === c) {
+      room.claiming = false;
+      room.claimingCode = "";
     }
   }
 }
@@ -290,6 +326,7 @@ function roomStop() {
   room.jws = null;
   room.jc = null;
   room.rejoinId = null;
+  room.reconnectInPlace = false;
   if ($("rm")) roomUI("");
 }
 
@@ -333,9 +370,11 @@ const jmsg = (t, bad) => {
   if (document.body.classList.contains("invite-mode")) $("inviteStatus").textContent = t || "";
 };
 function jfail(t) {
+  const reconnectInPlace = room.reconnectInPlace;
   clearTimeout(room.jt);
   room.jt = 0;
   room.rejoinId = null;
+  room.reconnectInPlace = false;
   sigClose(room.jws);
   room.jws = null;
   if (room.jc) {
@@ -347,8 +386,18 @@ function jfail(t) {
   }
   $("jgo").disabled = false;
   $("jid").disabled = false;
-  room.code = "";
-  jmsg(t, 1);
+  if (!reconnectInPlace) room.code = "";
+  jmsg(
+    reconnectInPlace
+      ? "Couldn’t reconnect just now. Your game is still here—check your connection and try again."
+      : t,
+    1,
+  );
+  if (reconnectInPlace) {
+    $("lg").textContent = "Couldn’t reconnect just now. Your game is still here—try again when you’re ready.";
+    window.playoraSetReconnectControls(false);
+    updateGameControls();
+  }
 }
 function roomJoined() {
   clearTimeout(room.jt);
@@ -360,9 +409,13 @@ function roomJoined() {
   $("jid").disabled = false;
   setJoinProgress(false);
   jmsg("");
+  if (room.reconnectInPlace) {
+    $("lg").textContent = "Connected. Restoring your place in the game…";
+  }
 }
-async function joinRoom(raw) {
-  if (!requireDisplayName(() => joinRoom(raw))) return;
+async function joinRoom(raw, reconnectInPlace = false) {
+  if (!requireDisplayName(() => joinRoom(raw, reconnectInPlace))) return;
+  room.reconnectInPlace = reconnectInPlace;
   const code = parseCode(raw);
   if (code.length < 4) {
     setJoinProgress(false);
@@ -442,6 +495,25 @@ async function rejoinLastRoom() {
     typeof saved.playerId === "string" && /^[a-z0-9]{1,32}$/i.test(saved.playerId)
       ? saved.playerId
       : null;
+  const reconnectCurrentGame =
+    saved.code === room.code &&
+    !!G &&
+    !!S &&
+    ids.length > 0 &&
+    !$("gm").classList.contains("hide");
+  if (reconnectCurrentGame) {
+    if (room.reconnectInPlace || (room.claiming && room.claimingCode === room.code) || room.jt) return;
+    room.reconnectInPlace = true;
+    room.rejoinId = savedPlayerId;
+    $("lg").textContent = "Reconnecting… Your game will stay open.";
+    window.playoraSetReconnectControls(true);
+    if (amHost()) {
+      void claimRoom();
+    } else {
+      void joinRoom(saved.code, true);
+    }
+    return;
+  }
   if (saved.host) {
     openRoom("join");
     $("jid").value = saved.code;
@@ -502,7 +574,12 @@ window.addEventListener("online", () => {
       return;
     }
     if (amHost()) {
-      if (!room.ws) void claimRoom();
+      if (!room.ws) {
+        room.reconnectInPlace = true;
+        $("lg").textContent = "Reconnecting to the room… Your game will stay open.";
+        window.playoraSetReconnectControls(true);
+        void claimRoom();
+      }
       return;
     }
     const saved = readLastRoom();

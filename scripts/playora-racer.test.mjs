@@ -15,16 +15,24 @@ function createRacer({ localSeat = 0, host = true, computer = false } = {}) {
   const sent = [];
   const soundEvents = [];
   const status = { textContent: "" };
-  const context = new Proxy({}, { get: (_, key) => (..._args) => key });
+  const race = { style: {} };
+  const board = { clientHeight: 600, clientWidth: 960 };
+  const context = new Proxy({}, {
+    get: (_, key) => key === "createRadialGradient" || key === "createLinearGradient"
+      ? () => ({ addColorStop() {} })
+      : (..._args) => key,
+  });
   const canvas = {
     isConnected: true,
     width: 960,
     height: 600,
+    closest: (selector) => selector === ".race" ? race : null,
     getBoundingClientRect: () => ({ width: 960, height: 600 }),
     getContext: () => context,
   };
   const document = {
-    querySelector: () => canvas,
+    querySelector: (selector) => selector === ".race-canvas" ? canvas :
+      selector === "#room #bd" ? board : null,
     querySelectorAll: () => [],
     getElementById: () => status,
     addEventListener: (type, callback) => documentEvents.set(type, callback),
@@ -32,6 +40,8 @@ function createRacer({ localSeat = 0, host = true, computer = false } = {}) {
   };
   const fakeWindow = {
     devicePixelRatio: 1,
+    innerHeight: 600,
+    matchMedia: () => ({ matches: false }),
     addEventListener() {},
     removeEventListener() {},
     playoraSound: { playGame: (gameId, event) => soundEvents.push([gameId, event]) },

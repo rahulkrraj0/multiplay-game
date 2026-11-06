@@ -88,6 +88,8 @@ implementation private, and register one game object.
   Three-player rooms use individual play. Four-player rooms can use individual
   play or teams; the host selects a partner, and that pairing persists across
   point-game boards.
+- Call Break's online rooms use four seats, with bots filling empty seats.
+  Local User vs Computer games let the player choose 2–4 total seats.
 - A game may set `hostSetup: true` when its synchronized setup actions must be
   chosen by the online host before turns begin. Keep those actions constrained
   by `valid()` to the setup phase.
@@ -148,6 +150,13 @@ generating it separately in `apply()`. Validate that result in `valid()`.
 Keep state compact and serializable. Games are limited by the room's eight
 attendee cap; `max` is the number who actively play, while additional attendees
 can spectate.
+If fewer people are assigned to play than the host-selected player count, the
+empty seats are filled by computer players as long as the game's minimum human
+player count is met. The host runs and broadcasts those bot turns; bots are not
+room attendees and cannot take over a disconnected player's seat. Set
+`minPlayers` for the minimum number of human players required to start; use
+`playerCountMin` when the game requires a fixed number of total seats, even if
+some seats can be filled by bots.
 
 The shared room runtime owns connection recovery. On a player disconnect, it
 pauses game actions without setting `S.over`, keeps the current game state, and
