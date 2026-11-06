@@ -65,7 +65,10 @@
 .poker *::before,
 .poker *::after { box-sizing: border-box; }
 
-#room .poker .sel { outline: none; }
+#room .poker.sel,
+#room .poker .sel { outline: none !important; }
+#room .poker.mv,
+#room .poker .mv { animation: none !important; box-shadow: none !important; }
 
 .poker .pk-sr {
   position: absolute;
@@ -342,7 +345,7 @@
 .poker .pk-btn:focus-visible,
 .poker .pk-mb:focus-visible,
 .poker .pk-iconbtn:focus-visible,
-.poker .pk-pn:focus-visible { z-index: 3; outline: 3px solid #f59e0b; outline-offset: 3px; }
+.poker .pk-pn:focus-visible { z-index: 3; outline: 3px solid #a78bfa; outline-offset: 3px; }
 
 /* ---------- seat colours ---------- */
 .poker .pk-s0 { --sc: #fca5a5; }
