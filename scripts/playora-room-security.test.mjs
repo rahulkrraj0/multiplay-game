@@ -21,12 +21,13 @@ test("host approval happens before a new peer connection offer", () => {
   assert.match(room, /Could not prepare the approved player's connection/);
 });
 
-test("relay-only privacy mode is opt-in and requires working TURN", () => {
+test("online connections automatically allow direct and TURN relay candidates", () => {
   assert.match(net, /iceTransportPolicy:'all'/);
-  assert.match(room, /window\.playoraTurnAvailable = config\.turnConfigured === true/);
-  assert.match(room, /CFG\.iceTransportPolicy = active \? "relay" : "all"/);
-  assert.match(markup, /id="relayModeLobby"/);
-  assert.match(markup, /id="relayModeJoin"/);
+  assert.match(room, /CFG\.iceServers = config\.iceServers/);
+  assert.doesNotMatch(room, /setRelayOnly|relayModeLobby|relayModeJoin|iceTransportPolicy = "relay"/);
+  assert.doesNotMatch(markup, /relayModeLobby|relayModeJoin|Hide your public IP/);
+  assert.match(room, /connection services may be busy because many players are active/);
+  assert.match(room, /Please try again in a little while/);
 });
 
 test("security headers include a CSP, HSTS, no-sniff and referrer policy", () => {

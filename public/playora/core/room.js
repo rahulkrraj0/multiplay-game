@@ -58,29 +58,10 @@ const iceReady = (async () => {
     if (Array.isArray(config.iceServers) && config.iceServers.length) {
       CFG.iceServers = config.iceServers;
     }
-    window.playoraTurnAvailable = config.turnConfigured === true;
   } catch (error) {
     console.warn("[playora] Could not load TURN configuration; direct connections may still work.", error);
   }
 })();
-async function setRelayOnly(enabled) {
-  await iceReady;
-  const active = Boolean(enabled && window.playoraTurnAvailable);
-  if (enabled && !active) {
-    alert("Privacy mode needs a working TURN server. It is not available right now.");
-  }
-  CFG.iceTransportPolicy = active ? "relay" : "all";
-  ["relayModeLobby", "relayModeJoin"].forEach((id) => {
-    const input = $(id);
-    if (input) input.checked = active;
-  });
-  return active;
-}
-window.playoraSetRelayOnly = setRelayOnly;
-["relayModeLobby", "relayModeJoin"].forEach((id) => {
-  const input = $(id);
-  if (input) input.addEventListener("change", () => void setRelayOnly(input.checked));
-});
 async function sgn(ws, type, dst, payload) {
   if (!ws || ws.closed) return;
   const body = JSON.stringify({
@@ -210,7 +191,6 @@ async function startRoom(preferredCode) {
   roomStop();
   room.code = preferredCode || newCode();
   await iceReady;
-  await setRelayOnly($("relayModeLobby")?.checked);
   roomUI("wait", "Creating room…");
   let failure = null;
   for (let i = 0; i < 4; i++) {
@@ -397,9 +377,7 @@ function roomStop() {
 
 const hasTurn = () => CFG.iceServers.some((x) => [].concat(x.urls).some((u) => /^turns?:/i.test(u)));
 const strictMsg = () =>
-  hasTurn()
-    ? "Reached the room, but no connection could be made even through the relay. Try a different network (for example Wi-Fi instead of mobile data)."
-    : "Reached the room, but a direct connection could not be made. This usually means one of you is on a strict network (some mobile data or office Wi-Fi). Try another network, or configure METERED_DOMAIN and METERED_API_KEY in Vercel.";
+  "Could not connect right now. The other player may be unavailable, or connection services may be busy because many players are active. Please try again in a little while.";
 function linkFailed(C) {
   if (C === room.jc)
     return jfail(strictMsg());
@@ -511,7 +489,6 @@ async function joinRoom(raw, reconnectInPlace = false) {
   );
   await iceReady;
   if (room.code !== code || !room.jt) return;
-  await setRelayOnly($("relayModeJoin")?.checked);
   let ws;
   try {
     ws = room.jws = await sigOpen(
