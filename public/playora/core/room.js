@@ -623,7 +623,7 @@ const copyTxt = (b, t) => {
 $("rcp").onclick = () => copyTxt($("rcp"), room.code);
 $("rcl").onclick = () => copyTxt($("rcl"), roomLink());
 $("rsh").onclick = () => {
-  const t = "Join my game on Playora! Room ID: " + room.code;
+  const t = "Join my game on GamesLord! Room ID: " + room.code;
   if (navigator.share) navigator.share({ title: "Join my game", text: t, url: roomLink() }).catch(() => {});
   else {
     try {

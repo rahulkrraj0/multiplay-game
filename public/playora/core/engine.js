@@ -1,6 +1,6 @@
 /* engine: screens, turn handling, rendering. Games plug in through registerGame(). */
 const $=i=>document.getElementById(i),SC=['mode','net','lobby','gm'],show=id=>{SC.forEach(x=>$(x).classList.toggle('hide',x!==id));const room=$('room');if(room){room.classList.toggle('game-active',id==='gm');if(id==='gm')room.scrollTop=0}};
-const COL=['#e0463c','#2fa05a','#2f6fd6','#e0b020'];let G,S,seat=-1,pick,sel=-1,np=2,ids=[],dead=new Set(),localBot=false,aiTimer,disconnectPending=false,displayName=readDisplayName(),gamePlayerNames=[];
+const COL=['#e0463c','#2fa05a','#2f6fd6','#e0b020'];let G,S,seat=-1,pick,sel=-1,np=2,ids=[],dead=new Set(),localBot=false,aiTimer,disconnectPending=false,displayName=readDisplayName(),gamePlayerNames=[],homeScrollY=0;
 const DISPLAY_NAME_KEY='playora.display-name.v1';
 function cleanPlayerName(value){return Array.from(String(value||'').normalize('NFC').replace(/[^\p{L}\p{M}\p{N} ._'-]/gu,'').replace(/\s+/g,' ').trim()).slice(0,24).join('')}
 function readDisplayName(){try{return cleanPlayerName(localStorage.getItem('playora.display-name.v1'))}catch(error){console.warn('[playora] Could not read the saved display name.',error);return''}}
@@ -24,7 +24,7 @@ const GAMES={};const registerGame=g=>GAMES[g.id]=g;
 let activeStandaloneCleanup=null;
 function disposeStandaloneGame(){const cleanup=activeStandaloneCleanup;activeStandaloneCleanup=null;if(cleanup)cleanup()}
 /* the game room is a full-screen panel over the homepage */
-function openRoom(g){if(GAMES[g]?.catalogOnly){void window.ensurePlayoraGame(g).then(()=>openRoom(g)).catch(error=>{console.error('[playora] Could not load game:',error);$('playora-boot').textContent='Could not load this game. Check your connection and try again.'});return}$('topMic').classList.add('hide');$('topVideo').classList.add('hide');$('topMenu').classList.add('hide');$('room').classList.add('open');$('room').classList.toggle('ludo-game',g==='ludo');$('room').scrollTop=0;document.body.style.overflow='hidden';
+function openRoom(g){if(GAMES[g]?.catalogOnly){void window.ensurePlayoraGame(g).then(()=>openRoom(g)).catch(error=>{console.error('[playora] Could not load game:',error);$('playora-boot').textContent='Could not load this game. Check your connection and try again.'});return}if(!$('room').classList.contains('open'))homeScrollY=window.scrollY;$('topMic').classList.add('hide');$('topVideo').classList.add('hide');$('topMenu').classList.add('hide');$('room').classList.add('open');$('room').classList.toggle('ludo-game',g==='ludo');$('room').scrollTop=0;document.body.style.overflow='hidden';
  $('room').classList.remove('embedded-game');
  $('bd').classList.remove('embedded-game-board');
  if(g==='join'){$('rt').textContent='Join a game';if(typeof resetJoinScreen==='function')resetJoinScreen();show('net');return}
@@ -42,7 +42,7 @@ function openRoom(g){if(GAMES[g]?.catalogOnly){void window.ensurePlayoraGame(g).
  const options=[];if(hasComputerOpponent)options.push('play against the computer');if(max>=2)options.push('take turns on this device','create an online lobby');
  $('modeHint').textContent='Choose how to play: '+options.join(', or ')+'.';
  show('mode')}
-function closeRoom(){const wasStandalone=$('room').classList.contains('standalone-game');disposeStandaloneGame();clearTimeout(aiTimer);aiTimer=undefined;localBot=false;$('room').classList.remove('standalone-game','embedded-game','game-active');$('bd').classList.remove('embedded-game-board');if(wasStandalone)$('bd').innerHTML='';if(typeof saveLastRoom==='function')saveLastRoom();if(typeof clearAutoRejoin==='function')clearAutoRejoin();leave();$('dice').classList.add('hide');$('topMic').classList.add('hide');$('topVideo').classList.add('hide');$('topMenu').classList.add('hide');$('room').classList.remove('open','ludo-game','chess-game','spades-game');document.body.style.overflow='';history.replaceState(null,'',location.pathname);window.scrollTo(0,0)}
+function closeRoom(){const wasStandalone=$('room').classList.contains('standalone-game');disposeStandaloneGame();clearTimeout(aiTimer);aiTimer=undefined;localBot=false;$('room').classList.remove('standalone-game','embedded-game','game-active');$('bd').classList.remove('embedded-game-board');if(wasStandalone)$('bd').innerHTML='';if(typeof saveLastRoom==='function')saveLastRoom();if(typeof clearAutoRejoin==='function')clearAutoRejoin();leave();$('dice').classList.add('hide');$('topMic').classList.add('hide');$('topVideo').classList.add('hide');$('topMenu').classList.add('hide');$('room').classList.remove('open','ludo-game','chess-game','spades-game');document.body.style.overflow='';history.replaceState(null,'',location.pathname);requestAnimationFrame(()=>window.scrollTo({top:homeScrollY,behavior:'instant'}))}
 /* ---------- CORE ---------- */
 function stackHandCards(root){root.querySelectorAll('.hand').forEach(hand=>hand.querySelectorAll('.card').forEach((card,index)=>{const order=Number(card.dataset.selectedOrder);card.style.zIndex=String(card.classList.contains('sel')?(Number.isInteger(order)?100000+order:100000+index):card.classList.contains('ok')?10000+index:index+1)}))}
 window.playoraStackHandCards=stackHandCards;

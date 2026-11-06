@@ -25,21 +25,21 @@ const pages: Record<SeoPageId, SeoPageContent> = {
   "privacy-policy": {
     title: "Privacy Policy",
     description:
-      "Learn what information Playora handles for browser games, online lobbies, voice and video, and optional advertising.",
+      "Learn what information GamesLord handles for browser games, online lobbies, voice and video, and optional advertising.",
     intro:
-      "This policy explains the information handled when you use Playora, including online multiplayer, device permissions and optional advertising.",
+      "This policy explains the information handled when you use GamesLord, including online multiplayer, device permissions and optional advertising.",
     sections: [
       {
         heading: "Information used to run the site",
         paragraphs: [
-          "You can play local games without creating a Playora account. If you join an online lobby, the service processes the room code, a temporary player identifier, the display name you provide, and WebRTC connection-signaling messages needed to connect players. Signaling messages are intended to expire after about 60 seconds, and inactive lobby records are intended to expire after about 30 seconds; periodic cleanup can make actual deletion later.",
-          "Game moves and chat are exchanged between participants through the online game connection and are not intended to be stored as a game history by Playora. Your browser may store the most recent room details locally so you can use the rejoin feature. You can clear this information using your browser's site-data controls.",
+          "You can play local games without creating a GamesLord account. If you join an online lobby, the service processes the room code, a temporary player identifier, the display name you provide, and WebRTC connection-signaling messages needed to connect players. Signaling messages are intended to expire after about 60 seconds, and inactive lobby records are intended to expire after about 30 seconds; periodic cleanup can make actual deletion later.",
+          "Game moves and chat are exchanged between participants through the online game connection and are not intended to be stored as a game history by GamesLord. Your browser may store the most recent room details locally so you can use the rejoin feature. You can clear this information using your browser's site-data controls.",
         ],
       },
       {
         heading: "Camera, microphone and online connections",
         paragraphs: [
-          "Voice and video are optional. The browser asks for permission before Playora can access your camera or microphone. Media is sent to other participants over WebRTC; when a direct connection cannot be established, a TURN relay provider may relay the connection. You can deny permission or turn off your camera and microphone in the game controls or browser settings.",
+          "Voice and video are optional. The browser asks for permission before GamesLord can access your camera or microphone. Media is sent to other participants over WebRTC; when a direct connection cannot be established, a TURN relay provider may relay the connection. You can deny permission or turn off your camera and microphone in the game controls or browser settings.",
           "Online multiplayer requires exchanging connection information through the site's signaling service. The app uses hosting, database and, when configured, TURN providers to operate these features. Those providers process technical data as needed to provide their services.",
         ],
       },
@@ -60,7 +60,7 @@ const pages: Record<SeoPageId, SeoPageContent> = {
       {
         heading: "Policy changes and contact",
         paragraphs: [
-          "This policy may be updated when Playora's features, providers or legal requirements change. The site operator is identified below using the public deployment settings. This general information is not legal advice; the operator should review it for the jurisdictions and services in which the site is offered.",
+          "This policy may be updated when GamesLord's features, providers or legal requirements change. The site operator is identified below using the public deployment settings. This general information is not legal advice; the operator should review it for the jurisdictions and services in which the site is offered.",
         ],
       },
     ],
@@ -70,10 +70,10 @@ const pages: Record<SeoPageId, SeoPageContent> = {
   chess: {
     title: "Play Chess Online",
     description:
-      "Play Chess in your browser on Playora. Start a local game against the computer or create an online lobby and invite a friend.",
+      "Play Chess in your browser on GamesLord. Start a local game against the computer or create an online lobby and invite a friend.",
     playHref: "/?play=chess#games",
     intro:
-      "Chess is a two-player strategy game where every move changes the position and the plans available to both sides. Playora lets you start a game in your browser, practice locally against the computer, or invite someone to an online lobby.",
+      "Chess is a two-player strategy game where every move changes the position and the plans available to both sides. GamesLord lets you start a game in your browser, practice locally against the computer, or invite someone to an online lobby.",
     sections: [
       {
         heading: "How a Chess game works",
@@ -83,7 +83,7 @@ const pages: Record<SeoPageId, SeoPageContent> = {
         ],
       },
       {
-        heading: "Start a game on Playora",
+        heading: "Start a game on GamesLord",
         paragraphs: [
           "Choose Chess from the games list. For a solo practice session, select the computer option when it is offered. To play with another person, create an online lobby and share its invitation link or room code. Chess is a two-player game, so the host can set two active seats.",
           "Take a moment to check that the board is ready before making a move. If you are new to Chess, focus on developing pieces, keeping the king safe and avoiding moves that leave a piece undefended.",
@@ -116,13 +116,13 @@ const pages: Record<SeoPageId, SeoPageContent> = {
     ],
     related: [
       { href: "/online-multiplayer", label: "How online multiplayer lobbies work" },
-      { href: "/how-to-play", label: "Getting started with Playora" },
+      { href: "/how-to-play", label: "Getting started with GamesLord" },
     ],
   },
   "tic-tac-toe": {
     title: "Play Tic-Tac-Toe Online",
     description:
-      "Play Tic-Tac-Toe free in your browser. Practice against the computer on one device or invite a friend to a Playora online lobby.",
+      "Play Tic-Tac-Toe free in your browser. Practice against the computer on one device or invite a friend to a GamesLord online lobby.",
     playHref: "/?play=ttt#games",
     intro:
       "Tic-Tac-Toe is a quick, two-player game with simple rules and room for clever decisions. Play a local round against the computer or invite a friend online, with no download required.",
@@ -137,7 +137,7 @@ const pages: Record<SeoPageId, SeoPageContent> = {
       {
         heading: "Play locally or invite someone",
         paragraphs: [
-          "Select Tic-Tac-Toe from the Playora games list. You can choose the local computer option for a one-device game, or create an online lobby and share the room code or invitation link with a friend.",
+          "Select Tic-Tac-Toe from the GamesLord games list. You can choose the local computer option for a one-device game, or create an online lobby and share the room code or invitation link with a friend.",
           "Tic-Tac-Toe uses two active seats. In an online lobby the host starts the round after choosing the game and deciding how many attendees should play; extra attendees can follow along as viewers.",
         ],
       },
@@ -151,7 +151,7 @@ const pages: Record<SeoPageId, SeoPageContent> = {
     ],
     faqs: [
       {
-        question: "Is Playora Tic-Tac-Toe free?",
+        question: "Is GamesLord Tic-Tac-Toe free?",
         answer:
           "Yes. You can open the game in a browser and start a local round or an online lobby without downloading a separate game.",
       },
@@ -168,13 +168,13 @@ const pages: Record<SeoPageId, SeoPageContent> = {
     ],
     related: [
       { href: "/snakes-and-ladders", label: "Play Snakes & Ladders" },
-      { href: "/how-to-play", label: "Getting started with Playora" },
+      { href: "/how-to-play", label: "Getting started with GamesLord" },
     ],
   },
   "snakes-and-ladders": {
     title: "Play Snakes & Ladders Online",
     description:
-      "Play Snakes & Ladders in your browser on Playora. Roll the die, race up ladders and down snakes, or invite a friend to your lobby.",
+      "Play Snakes & Ladders in your browser on GamesLord. Roll the die, race up ladders and down snakes, or invite a friend to your lobby.",
     playHref: "/?play=snl#games",
     intro:
       "Snakes & Ladders is a turn-based race where a die roll moves each player along the board. Ladders help you climb and snakes send you back, making every turn a surprise. Start a local game against the computer or invite a friend online.",
@@ -189,7 +189,7 @@ const pages: Record<SeoPageId, SeoPageContent> = {
       {
         heading: "Choose your way to play",
         paragraphs: [
-          "Open Snakes & Ladders from the Playora games list. Select local play against the computer for a game on one device, or create an online lobby and invite friends with a room code or a shareable link.",
+          "Open Snakes & Ladders from the GamesLord games list. Select local play against the computer for a game on one device, or create an online lobby and invite friends with a room code or a shareable link.",
           "The host can set the number of active players before starting. If more people join than the game needs, the others can watch the match from the lobby. Snakes & Ladders is a casual game that works well for mixed ages and quick game-night rounds.",
         ],
       },
@@ -226,14 +226,14 @@ const pages: Record<SeoPageId, SeoPageContent> = {
   "online-multiplayer": {
     title: "Online Multiplayer Games with Friends",
     description:
-      "Create a Playora game lobby, share an invite link or room code, choose active players and let friends join online from their browsers.",
+      "Create a GamesLord game lobby, share an invite link or room code, choose active players and let friends join online from their browsers.",
     intro:
-      "Playora makes it easy to bring a group together for browser games. The host creates a lobby first, shares a link or room code, and chooses the game after friends arrive. Attendees who are not playing can watch.",
+      "GamesLord makes it easy to bring a group together for browser games. The host creates a lobby first, shares a link or room code, and chooses the game after friends arrive. Attendees who are not playing can watch.",
     sections: [
       {
         heading: "Create a lobby and invite friends",
         paragraphs: [
-          "Choose a game and select the online lobby option. Once the room is ready, copy its invitation link or room code and send it to your group. Friends can open the link or enter the code from Playora’s join screen.",
+          "Choose a game and select the online lobby option. Once the room is ready, copy its invitation link or room code and send it to your group. Friends can open the link or enter the code from GamesLord’s join screen.",
           "Wait for attendees to connect before choosing the game setup. The host controls the game selection and the number of active players, so the group can decide who will play and who would rather watch.",
         ],
       },
@@ -241,7 +241,7 @@ const pages: Record<SeoPageId, SeoPageContent> = {
         heading: "Players and viewers share one room",
         paragraphs: [
           "A game may need fewer active players than the number of people who want to join the call. In that case, the host can assign the available player seats and let the remaining attendees spectate. Spectators stay in the lobby and can follow the same match.",
-          "Playora currently supports up to eight total attendees in a room. The number of active seats depends on the selected game: Chess and Tic-Tac-Toe use two, while other games may allow more. The host can change the game from the lobby.",
+          "GamesLord currently supports up to eight total attendees in a room. The number of active seats depends on the selected game: Chess and Tic-Tac-Toe use two, while other games may allow more. The host can change the game from the lobby.",
         ],
       },
       {
@@ -254,7 +254,7 @@ const pages: Record<SeoPageId, SeoPageContent> = {
     ],
     faqs: [
       {
-        question: "How do I invite someone to a Playora game?",
+        question: "How do I invite someone to a GamesLord game?",
         answer:
           "Create an online lobby, then share its invitation link or room code. Your friend can use either one to join.",
       },
@@ -266,20 +266,20 @@ const pages: Record<SeoPageId, SeoPageContent> = {
       {
         question: "How many people can join one lobby?",
         answer:
-          "A Playora room currently supports up to eight attendees total, including the host. The active player count is set for the selected game.",
+          "A GamesLord room currently supports up to eight attendees total, including the host. The active player count is set for the selected game.",
       },
     ],
     related: [
-      { href: "/how-to-play", label: "Step-by-step Playora instructions" },
+      { href: "/how-to-play", label: "Step-by-step GamesLord instructions" },
       { href: "/games/chess", label: "Play Chess with a friend" },
     ],
   },
   "how-to-play": {
     title: "How to Play Online Games",
     description:
-      "Learn how to play Playora games: challenge the computer, take turns with a friend on one device, or create an online lobby and invite friends.",
+      "Learn how to play GamesLord games: challenge the computer, take turns with a friend on one device, or create an online lobby and invite friends.",
     intro:
-      "Playora is a browser-based game room for quick solo sessions and online game nights. Use this guide to choose a game, start locally or invite friends, and understand how player seats and viewers work.",
+      "GamesLord is a browser-based game room for quick solo sessions and online game nights. Use this guide to choose a game, start locally or invite friends, and understand how player seats and viewers work.",
     sections: [
       {
         heading: "Start a game on one device",
@@ -307,7 +307,7 @@ const pages: Record<SeoPageId, SeoPageContent> = {
       {
         question: "Do I need to install anything?",
         answer:
-          "No. Playora games run in a modern web browser, so you can open the site and start playing without a separate app download.",
+          "No. GamesLord games run in a modern web browser, so you can open the site and start playing without a separate app download.",
       },
       {
         question: "Can I play without inviting anyone?",
@@ -346,7 +346,7 @@ export function seoHead(page: SeoPageId) {
   const canonical = canonicalUrl(pagePaths[page]);
   return {
     meta: [
-      { title: `${title} | Playora` },
+      { title: `${title} | GamesLord` },
       { name: "description", content: description },
       { name: "robots", content: "index,follow" },
     ],
@@ -405,9 +405,8 @@ export function SeoPage({ page }: { page: SeoPageId }) {
         />
       ))}
       <header className="seo-header">
-        <a className="brand" href="/" aria-label="Playora home">
-          <span className="logo" aria-hidden="true">P</span>
-          Playora<span className="gradient">.</span>
+        <a className="brand" href="/" aria-label="GamesLord home">
+          <img className="brand-mark" src="/playora/logo/gameslord-logo-dark.svg" alt="GamesLord" />
         </a>
         <nav aria-label="Main navigation">
           <a href="/#games">Games</a>
@@ -427,7 +426,7 @@ export function SeoPage({ page }: { page: SeoPageId }) {
         </nav>
         <article>
           <header className="seo-hero">
-            <p className="seo-kicker">{page === "privacy-policy" ? "SITE INFORMATION" : "PLAYORA GUIDE"}</p>
+            <p className="seo-kicker">{page === "privacy-policy" ? "SITE INFORMATION" : "GAMESLORD GUIDE"}</p>
             <h1>{content.title}</h1>
             <p>{content.intro}</p>
             {page !== "privacy-policy" ? (
@@ -472,7 +471,7 @@ export function SeoPage({ page }: { page: SeoPageId }) {
               <section aria-labelledby="privacy-contact-heading">
                 <h2 id="privacy-contact-heading">Site operator and privacy contact</h2>
                 <p>Last updated: October 25, 2026</p>
-                <p>{siteOperator || "The Playora site operator has not yet been identified in deployment settings."}</p>
+                <p>{siteOperator || "The GamesLord site operator has not yet been identified in deployment settings."}</p>
                 {privacyEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(privacyEmail) ? (
                   <p>
                     Privacy questions: <a href={`mailto:${privacyEmail}`}>{privacyEmail}</a>
@@ -496,7 +495,7 @@ export function SeoPage({ page }: { page: SeoPageId }) {
         ) : null}
       </main>
       <footer className="seo-footer">
-        <a className="brand" href="/">Playora<span className="gradient">.</span></a>
+        <a className="brand" href="/" aria-label="GamesLord home"><img className="brand-mark" src="/playora/logo/gameslord-logo-dark.svg" alt="GamesLord" /></a>
         <p>Free browser games to play solo or with friends.</p>
         <div><a href="/#game-guides">All guides</a><a href="/how-to-play">How to play</a><a href="/online-multiplayer">Online multiplayer</a><a href="/privacy-policy">Privacy policy</a></div>
       </footer>

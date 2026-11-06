@@ -183,7 +183,7 @@ function Home() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebSite",
-            name: "Playora",
+            name: "GamesLord",
             url: rootCanonical,
           }),
         }}

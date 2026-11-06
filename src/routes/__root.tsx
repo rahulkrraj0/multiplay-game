@@ -10,11 +10,18 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "Free Online Board Games | Playora" },
+      { title: "GamesLord | Free Online Multiplayer Games" },
       {
         name: "description",
         content:
-          "Play free browser games on Playora. Challenge the computer, take turns with a friend on one device, or invite friends to an online lobby.",
+          "Play free online games on GamesLord with friends. Enjoy multiplayer with free audio and video—no sign-up or download required.",
+      },
+      { name: "application-name", content: "GamesLord" },
+      { property: "og:site_name", content: "GamesLord" },
+      { property: "og:title", content: "GamesLord | Free Online Multiplayer Games" },
+      {
+        property: "og:description",
+        content: "Free online multiplayer games with audio and video. No sign-up required.",
       },
       ...(googleSiteVerification
         ? [{ name: "google-site-verification", content: googleSiteVerification }]
@@ -25,7 +32,7 @@ export const Route = createRootRoute({
       { name: "theme-color", content: "#0b1020" },
     ],
     links: [
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "icon", type: "image/svg+xml", href: "/playora/logo/gameslord-icon.svg" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
