@@ -418,6 +418,56 @@ test("Call Break lets a local player choose the total player count", () => {
   }
 });
 
+test("Spades lets a local player choose the total player count", () => {
+  for (const count of [2, 3, 4]) {
+    const { game, context } = createGame("spades.js", { localBot: true, np: 1 });
+    const state = game.init();
+    context.S = state;
+
+    assert.equal(state.phase, "setup");
+    const [setupHtml] = game.draw();
+    assert.match(setupHtml, /How many players\?/);
+    assert.match(setupHtml, /Choose 2 to 4 total players\. Computers fill the remaining seats\./);
+    assert.match(setupHtml, new RegExp('data-m="players:' + count + '"'));
+    assert.equal(game.valid({ type: "players", player: 0, count: 1 }), false);
+    assert.equal(game.valid({ type: "players", player: 0, count }), true);
+    game.apply({ type: "players", player: 0, count });
+
+    assert.equal(state.phase, "bid");
+    assert.equal(state.players.length, count);
+    assert.equal(state.round, 1);
+    assert.deepEqual(Array.from(state.players, (player) => player.bot),
+      Array.from({ length: count }, (_, index) => index > 0));
+    assert.equal(state.teams.length, count === 4 ? 2 : count);
+    assert.equal(state.handSize, Math.floor(52 / count));
+    assert.ok(state.players.every((player) => player.hand.length === state.handSize));
+    assert.deepEqual(Array.from(state.players, (player) => player.name),
+      ["Player 1", ...Array.from({ length: count - 1 }, (_, index) => "Computer " + (index + 1))]);
+  }
+});
+
+test("Spades completes bot matches with each selected player count", () => {
+  for (const count of [2, 3, 4]) {
+    const { game, context } = createGame("spades.js", { localBot: true, np: 1 });
+    const state = game.init();
+    context.S = state;
+    game.apply({ type: "players", player: 0, count });
+    state.players.forEach((player) => { player.bot = true; });
+
+    let actions = 0;
+    while (!state.over && actions < 3000) {
+      const action = game.bot();
+      assert.ok(action, `a bot should act during ${state.phase} with ${count} players`);
+      assert.equal(game.valid(action), true, `the bot action should be valid: ${JSON.stringify(action)}`);
+      game.apply(action);
+      actions++;
+    }
+
+    assert.equal(state.over, true, `${count}-player Spades should finish within ${actions} actions`);
+    assert.equal(state.teams.length, count === 4 ? 2 : count);
+  }
+});
+
 test("Crazy Eights renders the refreshed card faces, score chips, and felt table", () => {
   const { game, context, styles } = createGame("crazyeights.js", { np: 4, ids: ["host"], seat: 0 });
   context.S = game.init();
@@ -514,7 +564,7 @@ test("local card games keep the human hand visible during bot turns", () => {
     const { game, context } = createGame(file, { localBot: true, np: 1 });
     const state = game.init();
     context.S = state;
-    if ((file === "bluff.js" || file === "callbreak.js") && state.phase === "setup") {
+    if ((file === "bluff.js" || file === "callbreak.js" || file === "spades.js") && state.phase === "setup") {
       game.apply({ type: "players", player: 0, count: 4 });
     }
     state.t = 1;

@@ -52,7 +52,7 @@
   margin: 0 auto;
   padding: clamp(0.6rem, 2.5vw, 1.25rem);
   overflow: hidden;
-  border: 2px solid #1f3b2e;
+  border: 0;
   border-radius: 1.25rem;
   background:
     radial-gradient(ellipse at 50% 0, rgba(255, 255, 255, 0.07), transparent 60%),
@@ -64,6 +64,8 @@
 .poker *,
 .poker *::before,
 .poker *::after { box-sizing: border-box; }
+
+#room .poker .sel { outline: none; }
 
 .poker .pk-sr {
   position: absolute;
@@ -134,7 +136,7 @@
   text-align: left;
   transition: border-color 0.25s, box-shadow 0.25s, opacity 0.25s;
 }
-.poker .pk-seat.is-active { border-color: var(--pk-gold); border-top-color: var(--pk-gold); box-shadow: 0 0 1.1rem rgba(251, 191, 36, 0.3); }
+.poker .pk-seat.is-active { border-color: var(--sc); border-top-color: var(--sc); box-shadow: none; }
 .poker .pk-seat.is-act { animation: pk-bump 0.55s ease; animation-delay: calc(0ms - var(--el, 0ms)); }
 .poker .pk-seat.is-fold { opacity: 0.5; }
 .poker .pk-seat.is-out { opacity: 0.32; filter: grayscale(1); }

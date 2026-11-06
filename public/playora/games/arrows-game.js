@@ -151,8 +151,8 @@
 
   // ---------- UI ----------
   const CSS = `
-.ar-wrap{position:relative;box-sizing:border-box;max-width:560px;min-height:100%;margin:0 auto;padding:12px;display:flex;flex-direction:column;justify-content:center;font-family:system-ui,sans-serif}
-.ar-bar{position:absolute;top:12px;left:12px;right:12px;z-index:1;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ar-wrap{position:relative;box-sizing:border-box;max-width:560px;min-height:100%;margin:0 auto;padding:12px;display:flex;flex-direction:column;justify-content:center;gap:12px;font-family:system-ui,sans-serif}
+.ar-bar{position:relative;flex:0 0 auto;z-index:1;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ar-lv{font-weight:700;font-size:18px}
 .ar-hearts{color:#e11d48;font-size:20px;letter-spacing:2px}
 .ar-btns{margin-left:auto;display:flex;gap:6px}
@@ -217,7 +217,7 @@
       const W = Math.max(0, wrap.clientWidth - 24);
       const barH = $('.ar-bar').getBoundingClientRect().height;
       const hostH = host && host.clientHeight || window.innerHeight || 700;
-      const maxH = Math.max(1, Math.min((window.innerHeight || 700) * 0.82, hostH - barH - 24));
+      const maxH = Math.max(1, Math.min((window.innerHeight || 700) * 0.82, hostH - barH - 36));
       cell = Math.max(1, Math.floor(Math.min(64, W / s.cols, maxH / s.rows)));
       dpr = window.devicePixelRatio || 1;
       cv.width = s.cols * cell * dpr; cv.height = s.rows * cell * dpr;

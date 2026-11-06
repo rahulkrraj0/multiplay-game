@@ -59,9 +59,9 @@ test("active games fill the space below the measured toolbar without room scroll
 });
 
 test("Arrows keeps its HUD at the top and centers the board within the full-screen area", () => {
-  assert.match(arrowsSource, /\.ar-wrap\{position:relative;[^}]*min-height:100%;[^}]*display:flex;flex-direction:column;justify-content:center/);
-  assert.match(arrowsSource, /\.ar-bar\{position:absolute;top:12px;left:12px;right:12px;z-index:1;/);
-  assert.match(arrowsSource, /const maxH = Math\.max\(1, Math\.min/);
+  assert.match(arrowsSource, /\.ar-wrap\{position:relative;[^}]*min-height:100%;[^}]*display:flex;flex-direction:column;justify-content:center;gap:12px/);
+  assert.match(arrowsSource, /\.ar-bar\{position:relative;flex:0 0 auto;z-index:1;/);
+  assert.match(arrowsSource, /const maxH = Math\.max\(1, Math\.min\([^;]*hostH - barH - 36\)/);
 });
 
 test("standalone games use one full-width, non-scrolling viewport", () => {
@@ -220,6 +220,7 @@ test("Call Break mobile hand centers its final row", () => {
   assert.equal(position(8, 13), 'style="--hand-row:2;--hand-column:4"');
   assert.equal(position(12, 13), 'style="--hand-row:2;--hand-column:12"');
   assert.match(callBreakSource, /@media\(max-width:600px\)\{\.hand\{display:grid;grid-template-columns:repeat\(16,minmax\(0,1fr\)\);grid-auto-rows:calc\(var\(--w\)\*\.95\);align-content:center;justify-items:center;gap:0;overflow:visible\}\.hand \.card\{grid-column:span 2;margin:0\}\.hand \.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2;translate:calc\(var\(--w\)\*\.3\) 0\}/);
+  assert.match(callBreakSource, /#room #bd \.cb \.hand button\.card\+button\.card\{margin-left:0\}/);
   assert.match(callBreakSource, /#room #bd \.cb \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2;translate:calc\(var\(--w\)\*\.3\) 0\}/);
 });
 

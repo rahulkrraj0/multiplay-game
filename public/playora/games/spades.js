@@ -309,9 +309,12 @@
   function roomSetTurn(index) { S.turn = S.t = index; }
   function roomNewRound() {
     var hands, valid = false, attempts = 0;
+    var playerCount = S.players.length, handSize = Math.floor(52 / playerCount);
     while (!valid && attempts++ < 1000) {
       var cards = roomShuffle(roomDeck());
-      hands = [0, 1, 2, 3].map(function (index) { return cards.slice(index * 13, (index + 1) * 13); });
+      hands = S.players.map(function (_, index) {
+        return cards.slice(index * handSize, (index + 1) * handSize);
+      });
       valid = hands.every(function (hand) {
         return hand.some(function (card) { return card.s === 'S'; }) &&
           hand.some(function (card) { return card.r >= 11; });
@@ -323,8 +326,9 @@
       player.bid = null;
       player.tricks = 0;
     });
-    S.dealer = (S.dealer + 1) % 4;
-    S.turn = S.lead = (S.dealer + 1) % 4;
+    S.handSize = handSize;
+    S.dealer = (S.dealer + 1) % playerCount;
+    S.turn = S.lead = (S.dealer + 1) % playerCount;
     S.trick = [];
     S.collect = false;
     S.broken = false;
@@ -336,6 +340,13 @@
   }
   function roomInit() {
     roomAnimationSeq = 0;
+    if (!roomOnline() && typeof localBot !== 'undefined' && localBot) {
+      S = {
+        phase: 'setup', players: [], turn: 0, t: 0, over: false,
+        msg: 'How many people are playing? Four seats total; computers fill the rest.'
+      };
+      return S;
+    }
     var seed = Math.floor(Math.random() * 4294967296) >>> 0;
     S = {
       phase: 'bid', round: 0, dealer: 2, trick: [], collect: false, turn: 0, t: 0, lead: 0,
@@ -362,23 +373,30 @@
     return best;
   }
   function roomContract(team) {
-    return [team, team + 2].reduce(function (sum, index) {
+    var members = S.players.length === 4 ? [team, team + 2] : [team];
+    return members.reduce(function (sum, index) {
       return sum + Math.max(0, S.players[index].bid || 0);
     }, 0);
   }
   function roomTricks(team) {
-    return [team, team + 2].reduce(function (sum, index) { return sum + S.players[index].tricks; }, 0);
+    var members = S.players.length === 4 ? [team, team + 2] : [team];
+    return members.reduce(function (sum, index) { return sum + S.players[index].tricks; }, 0);
+  }
+  function roomUnitName(index) {
+    return S.players.length === 4 ? TEAMS[index] : S.players[index].name;
   }
   function roomScoreRound() {
     S.notes = [];
     S.results = [];
-    [0, 1].forEach(function (team) {
+    var teamCount = S.players.length === 4 ? 2 : S.players.length;
+    Array.from({ length: teamCount }, function (_, index) { return index; }).forEach(function (team) {
       var contract = roomContract(team), won = roomTricks(team), score = 0, bags = 0;
+      var members = S.players.length === 4 ? [team, team + 2] : [team];
       if (contract > 0) {
         if (won >= contract) { score += contract * 10 + (won - contract); bags = won - contract; }
         else score -= contract * 10;
       } else bags = won;
-      [team, team + 2].forEach(function (index) {
+      members.forEach(function (index) {
         var player = S.players[index];
         if (player.bid === 0) {
           var madeNil = player.tricks === 0;
@@ -390,22 +408,29 @@
       while (totalBags >= 10) { totalBags -= 10; score -= 100; penalties++; }
       S.teams[team].bags = totalBags;
       S.teams[team].score += score;
-      if (penalties) S.notes.push(TEAMS[team] + ' collected 10 bags: -100');
+      if (penalties) S.notes.push(roomUnitName(team) + ' collected 10 bags: -100');
       S.results.push({ contract: contract, tricks: won, score: score });
     });
-    var homeScore = S.teams[0].score, awayScore = S.teams[1].score;
-    S.winner = homeScore >= GOAL || awayScore >= GOAL
-      ? homeScore === awayScore ? -1 : homeScore > awayScore ? 0 : 1
-      : -1;
+    var highest = Math.max.apply(null, S.teams.map(function (team) { return team.score; }));
+    var leaders = S.teams.reduce(function (list, team, index) {
+      if (team.score === highest) list.push(index);
+      return list;
+    }, []);
+    S.winner = highest >= GOAL && leaders.length === 1 ? leaders[0] : -1;
     S.over = S.winner >= 0;
     S.phase = 'roundend';
-    S.msg = S.over ? TEAMS[S.winner] + ' win the game.' : 'Round ' + S.round + ' complete.';
+    S.msg = S.over ? roomUnitName(S.winner) + (S.players.length === 4 ? ' win the game.' : ' wins the game.') :
+      'Round ' + S.round + ' complete.';
   }
   function roomValid(action) {
     if (!action || typeof action !== 'object' || S.over || action.player !== S.t ||
-        !Number.isInteger(action.player) || !S.players[action.player]) return false;
+        !Number.isInteger(action.player)) return false;
+    if (S.phase === 'setup') return !roomOnline() && typeof localBot !== 'undefined' && localBot &&
+      action.player === 0 && action.type === 'players' &&
+      Number.isInteger(action.count) && action.count >= 2 && action.count <= 4;
+    if (!S.players[action.player]) return false;
     if (S.phase === 'bid') return action.type === 'bid' && Number.isInteger(action.value) &&
-      action.value >= 0 && action.value <= 13 && S.players[action.player].bid == null;
+      action.value >= 0 && action.value <= S.handSize && S.players[action.player].bid == null;
     if (S.phase === 'roundend') return action.type === 'next' && !S.over;
     if (S.phase !== 'play') return false;
     if (S.collect) return action.type === 'collect' && action.player === S.win;
@@ -416,6 +441,34 @@
   }
   function roomApply(action) {
     if (!roomValid(action)) return;
+    if (S.phase === 'setup') {
+      S.phase = 'bid';
+      S.round = 0;
+      S.dealer = 2;
+      S.trick = [];
+      S.collect = false;
+      S.turn = S.t = 0;
+      S.lead = 0;
+      S.broken = false;
+      S.teams = Array.from({ length: action.count === 4 ? 2 : action.count }, function () {
+        return { score: 0, bags: 0 };
+      });
+      S.players = Array.from({ length: action.count }, function (_, index) {
+        var bot = index > 0;
+        return {
+          name: bot ? 'Computer ' + index : roomName(index),
+          bot: bot, hand: [], bid: null, tricks: 0
+        };
+      });
+      S.rng = (Math.floor(Math.random() * 4294967296) >>> 0) || 1;
+      S.broken = false;
+      S.over = false;
+      S.winner = -1;
+      S.animationSeq = 0;
+      S.animation = null;
+      roomNewRound();
+      return;
+    }
     var pi = action.player, player = S.players[pi];
     if (action.type === 'next') { roomNewRound(); return; }
     if (action.type === 'bid') {
@@ -448,7 +501,7 @@
     S.trick.push({ p: pi, card: card });
     if (card.s === 'S') S.broken = true;
     S.animation = { seq: ++S.animationSeq, type: 'play', player: pi, cardId: card.id };
-    if (S.trick.length === 4) {
+    if (S.trick.length === S.players.length) {
       var winningIndex = roomWinnerIdx(S.trick);
       S.win = S.trick[winningIndex].p;
       S.collect = true;
@@ -466,13 +519,15 @@
     if (S.phase === 'bid') {
       var estimateResult = estimate(player.hand);
       var estimateBid = estimateResult.e < 0.55 && estimateResult.sp <= 3 ? 0 :
-        Math.max(1, Math.min(7, Math.round(estimateResult.e)));
+        Math.max(1, Math.min(7, S.handSize, Math.round(estimateResult.e)));
       return { type: 'bid', player: pi, value: estimateBid };
     }
     if (S.phase === 'roundend') return { type: 'next', player: pi };
     if (S.phase !== 'play') return null;
     if (S.collect) return { type: 'collect', player: pi };
-    var partner = S.players[(pi + 2) % 4], needed = roomContract(pi % 2) - roomTricks(pi % 2);
+    var teams = S.players.length === 4, partnerIndex = (pi + 2) % 4;
+    var partner = teams ? S.players[partnerIndex] : null, team = teams ? pi % 2 : pi;
+    var needed = roomContract(team) - roomTricks(team);
     var cards = roomLegal(player.hand, S.trick, S.broken).slice(), nil = player.bid === 0;
     function cardCost(card) { return card.r + (card.s === 'S' ? 20 : 0); }
     cards.sort(function (a, b) { return cardCost(a) - cardCost(b); });
@@ -485,7 +540,7 @@
       var winners = cards.filter(function (card) { return beats(card, winningCard); });
       var losers = cards.filter(function (card) { return winners.indexOf(card) < 0; });
       if (nil) chosen = losers.length ? losers[losers.length - 1] : winners[0];
-      else if (S.trick[roomWinnerIdx(S.trick)].p === (pi + 2) % 4)
+      else if (teams && S.trick[roomWinnerIdx(S.trick)].p === partnerIndex)
         chosen = partner.bid === 0 && partner.tricks === 0 && winners.length ? winners[0] : cards[0];
       else if (needed > 0) chosen = winners.length ? winners[0] : cards[0];
       else chosen = losers.length ? losers[losers.length - 1] : winners[0];
@@ -554,32 +609,52 @@
 #room #bd .sp-room .sp .hand{display:flex;flex-wrap:nowrap;justify-content:center;overflow:hidden;padding-left:calc(var(--w)*.275);padding-right:calc(var(--w)*.275)}
 #room #bd .sp-room .sp .hand button.card{grid-column:auto;margin-left:calc(var(--w)*-.45)}
 #room #bd .sp-room .sp .hand button.card:first-child{margin-left:0}
-#room #bd .sp-room .sp .hand button.card:last-child{margin-right:0}` +
+#room #bd .sp-room .sp .hand button.card:last-child{margin-right:0}
+#room #bd .sp-room .sp.players-2,#room #bd .sp-room .sp.players-3{--w:clamp(28px,min(6vw,8vh),56px)}
+#room #bd .sp-room .sp.players-2 .hand,#room #bd .sp-room .sp.players-3 .hand{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));grid-auto-rows:calc(var(--w)*.95);align-content:center;justify-items:center;gap:0;overflow:visible;max-height:none;padding:12px 8px calc(10px + var(--w)*.5)}
+#room #bd .sp-room .sp.players-2 .hand button.card,#room #bd .sp-room .sp.players-3 .hand button.card{grid-column:span 2;margin:0}
+#room #bd .sp-room .sp.players-2 .hand button.card+button.card,#room #bd .sp-room .sp.players-3 .hand button.card+button.card{margin-left:0}` +
         '#bd .sp-room .sp button{width:auto;margin:0}#bd .sp-room .sp .btn{font:inherit;font-weight:800;padding:.6em 1.2em;border:0;border-radius:999px;background:#ffd45c;color:#121a2c;cursor:pointer}' +
         '@media(prefers-reduced-motion:reduce){.sp-room *,.sp-room *::before,.sp-room *::after{animation:none!important;transition:none!important}}';
       document.head.appendChild(roomStyleNode);
     }
-    var online = roomOnline(), currentIndex = online
-      ? (typeof seat === 'number' && seat >= 0 && seat < 4 ? seat : -1)
+    if (S.phase === 'setup') {
+      return ['<div class="sp-room"><div class="sp"><section class="setup-panel" aria-labelledby="spades-setup-title">' +
+        '<h3 id="spades-setup-title">Spades</h3><p>How many players?</p>' +
+        '<p>Choose 2 to 4 total players. Computers fill the remaining seats.</p><div class="setup-options">' +
+        [2, 3, 4].map(function (count) {
+          return '<button class="btn setup-choice" data-m="players:' + count + '">' + count +
+            '<small>players</small></button>';
+        }).join('') + '</div></section></div></div>', S.msg];
+    }
+    var playerCount = S.players.length, online = roomOnline(), currentIndex = online
+      ? (typeof seat === 'number' && seat >= 0 && seat < playerCount ? seat : -1)
       : 0;
-    var teamIndex = currentIndex >= 0 ? currentIndex % 2 : 0;
+    var teamIndex = currentIndex >= 0 ? (playerCount === 4 ? currentIndex % 2 : currentIndex) : 0;
     var player = currentIndex >= 0 ? S.players[currentIndex] : null;
     var active = player && currentIndex === S.t && !S.over &&
       (typeof canAct !== 'function' || canAct());
     var fresh = S.animation && S.animation.seq > roomAnimationSeq ? S.animation : null;
     if (fresh) roomAnimationSeq = fresh.seq;
-    var html = '<div class="sp-room"><div class="sp"><div class="bar"><b class="logo">Spades</b><span class="sc">' +
+    var html = '<div class="sp-room"><div class="sp players-' + playerCount + '"><div class="bar"><b class="logo">Spades</b><span class="sc">' +
       S.teams.map(function (team, index) {
-        return '<span>' + TEAMS[index] + ' <b>' + team.score + '</b> <small>(' + team.bags + ' bags)</small></span>';
+        return '<span>' + roomEscape(roomUnitName(index)) + ' <b>' + team.score + '</b> <small>(' + team.bags + ' bags)</small></span>';
       }).join('') + '</span></div><div class="sub">Round ' + S.round + ', spades ' +
-      (S.broken ? '' : 'not ') + 'broken · ' + TEAMS[teamIndex] + ': ' + roomTricks(teamIndex) +
+      (S.broken ? '' : 'not ') + 'broken · ' + roomEscape(roomUnitName(teamIndex)) + ': ' + roomTricks(teamIndex) +
       ' of ' + roomContract(teamIndex) + ' tricks</div><div class="table">';
     if (currentIndex >= 0) {
-      html += roomSeatHTML((currentIndex + 2) % 4, 2) +
-        roomSeatHTML((currentIndex + 1) % 4, 1) +
-        roomSeatHTML((currentIndex + 3) % 4, 3);
+      var positions = playerCount === 2 ? [2] : playerCount === 3 ? [2, 1] : [2, 1, 3];
+      var opponents = [];
+      for (var offset = 1; offset < playerCount; offset++)
+        opponents.push((currentIndex + offset) % playerCount);
+      opponents.forEach(function (index, position) {
+        html += roomSeatHTML(index, positions[position]);
+      });
     } else {
-      html += roomSeatHTML(2, 2) + roomSeatHTML(1, 1) + roomSeatHTML(3, 3) + roomSeatHTML(0, 0);
+      var spectatorPositions = playerCount === 2 ? [2, 0] : playerCount === 3 ? [2, 1, 3] : [2, 1, 3, 0];
+      S.players.forEach(function (_, index) {
+        html += roomSeatHTML(index, spectatorPositions[index]);
+      });
     }
     html += '<div class="trick">';
     S.trick.forEach(function (trick, index) {
@@ -589,7 +664,7 @@
     html += '</div>';
     if (active && S.phase === 'bid') {
       html += '<div class="bidbox"><p>Your bid: how many tricks will you win?</p><div class="bids">';
-      for (var bid = 0; bid <= 13; bid++)
+      for (var bid = 0; bid <= S.handSize; bid++)
         html += '<button class="btn" data-m="bid:' + bid + '">' + (bid ? bid : 'Nil') + '</button>';
       html += '</div></div>';
     }
@@ -610,11 +685,13 @@
     html += '</div>';
     if (active && S.collect) html += '<div class="acts"><button class="btn" data-m="collect">Collect trick</button></div>';
     if (S.phase === 'roundend') {
-      html += '<div class="ovl"><h1>' + (S.over ? TEAMS[S.winner] + ' win!' : 'Round ' + S.round + ' complete') +
-        '</h1><table class="sc2"><tr><th>Team</th><th>Contract</th><th>Tricks</th><th>Round</th><th>Total</th></tr>' +
+      html += '<div class="ovl"><h1>' + (S.over ? roomEscape(roomUnitName(S.winner)) +
+        (playerCount === 4 ? ' win!' : ' wins!') : 'Round ' + S.round + ' complete') +
+        '</h1><table class="sc2"><tr><th>' + (playerCount === 4 ? 'Team' : 'Player') +
+        '</th><th>Contract</th><th>Tricks</th><th>Round</th><th>Total</th></tr>' +
         S.teams.map(function (team, index) {
           var result = S.results[index];
-          return '<tr><td>' + TEAMS[index] + '</td><td>' + result.contract + '</td><td>' + result.tricks +
+          return '<tr><td>' + roomEscape(roomUnitName(index)) + '</td><td>' + result.contract + '</td><td>' + result.tricks +
             '</td><td>' + (result.score > 0 ? '+' : '') + result.score + '</td><td><b>' + team.score + '</b></td></tr>';
         }).join('') + (S.notes.length ? '<tr><td colspan="5">' + S.notes.map(roomEscape).join('<br>') + '</td></tr>' : '') +
         '</table>' + (S.over ? '<p>Use Restart to play again.</p>' : active ? '<button class="btn" data-m="next">Next round</button>' : '') +
@@ -625,7 +702,8 @@
   function roomClick(element) {
     if (!S || !element || !element.dataset || S.over) return;
     var command = element.dataset.m || '', action = null;
-    if (command.indexOf('bid:') === 0) action = { type: 'bid', player: S.t, value: Number(command.slice(4)) };
+    if (command.indexOf('players:') === 0) action = { type: 'players', player: S.t, count: Number(command.slice(8)) };
+    else if (command.indexOf('bid:') === 0) action = { type: 'bid', player: S.t, value: Number(command.slice(4)) };
     else if (command.indexOf('card:') === 0) action = { type: 'play', player: S.t, cardId: Number(command.slice(5)) };
     else if (command === 'collect' || command === 'next') action = { type: command, player: S.t };
     if (action && roomValid(action) && typeof act === 'function') act(action);
@@ -641,6 +719,7 @@
     'font-family:"Trebuchet MS","Avenir Next",system-ui,sans-serif;--w:clamp(44px,min(12.2vw,15vh),92px);' +
     'background:radial-gradient(ellipse at 50% 40%,#33456b 0,#1d2a46 60%,#0e1526 100%)}.sp *{box-sizing:border-box}' +
     '.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 14px;flex:none;font-size:13px}.bar .logo{font-size:20px;font-weight:800}' +
+    '.setup-panel{display:grid;flex:1;align-content:center;justify-items:center;gap:12px;padding:16px;text-align:center}.setup-panel h3,.setup-panel p{margin:0}.setup-options{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}.setup-choice{display:grid;min-width:76px;justify-items:center;padding:12px 16px}.setup-choice small{font-size:11px;opacity:.8}' +
     '.sc{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}.sc small{opacity:.75}.sub{text-align:center;font-size:12px;opacity:.85;flex:none}' +
     '.btn{font:inherit;font-weight:800;padding:.6em 1.2em;border:0;border-radius:999px;background:#ffd45c;color:#121a2c;cursor:pointer}.btn.small{padding:.45em 1em;font-size:13px}' +
     '.table{position:relative;z-index:1;flex:1;min-height:0;display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto 1fr;padding:0 8px}' +
