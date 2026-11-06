@@ -38,6 +38,28 @@ services:
       retries: 3
       start_period: 60s
 
+  app-db-setup:
+    image: postgres:17-alpine
+    environment:
+      PGHOST: postgres
+      PGPORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-multiplay}
+      POSTGRES_USER: ${POSTGRES_USER:-multiplay}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      APP_DB_USER: ${APP_DB_USER:-gameslord_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD}
+    volumes:
+      - ./docker/postgres/01-create-app-role.sh:/setup/01-create-app-role.sh:ro
+    command: ["sh", "/setup/01-create-app-role.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
   migrate:
     image: gameslord-app:local
     build:
@@ -49,8 +71,8 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-multiplay}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-multiplay}
     command: ["npm", "run", "db:migrate"]
     depends_on:
-      postgres:
-        condition: service_healthy
+      app-db-setup:
+        condition: service_completed_successfully
     restart: "no"
     security_opt:
       - no-new-privileges:true

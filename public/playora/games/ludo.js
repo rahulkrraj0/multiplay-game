@@ -819,6 +819,17 @@
   var winEl = null, stopFx = null;
 
   function showCelebration(o) {
+    if (typeof window.playoraPresentGameResult === "function") {
+      var winner = S && Number.isInteger(S.win) ? S.win : null;
+      var outcome = ids.length && seat === 99 ? "result" :
+        ids.length && seat >= 0 && winner !== null ? (winner === seat ? "win" : "loss") :
+          localBot && winner !== null ? (winner === 0 ? "win" : "loss") : "result";
+      window.playoraPresentGameResult({
+        gameId: "ludo", winner: winner, outcome: outcome, title: o.title,
+        message: S && S.msg || o.sub || o.title
+      });
+      return;
+    }
     hideCelebration(true);
     var pal = PAL[o.color] || GOLD;
     var el = document.createElement("div");

@@ -496,6 +496,10 @@ function closeBanner(now) {
 }
 
 function celebrate(win, title, sub) {
+  if (typeof window.playoraPresentGameResult === "function") {
+    window.playoraPresentGameResult({ gameId: "chess", winner: win, outcome: win < 0 ? "draw" : undefined, title, subtitle: sub, message: S && S.msg || sub });
+    return;
+  }
   closeBanner(true);
   const draw = win < 0;
   const base = draw ? "#64748b" : win === 0 ? "#e0a800" : "#4b3f72";

@@ -370,6 +370,17 @@ function popup(label, html) {
 
 function celebrate() {
   const end = !!S.over;
+  if (typeof window.playoraPresentGameResult === "function") {
+    window.playoraPresentGameResult({
+      gameId: "watersort", outcome: "complete", title: end ? "All " + MAXL + " levels cleared!" : "Level " + S.L + " complete!",
+      message: S.moves + " moves", actionLabel: end ? "Close" : "Next level",
+      onAction: end ? undefined : () => {
+        const action = { k: "next" };
+        if (canMove() && validOn(S, action)) act(action);
+      }
+    });
+    return;
+  }
   const el = popup("Level complete", '<div class="ws-xcard"><div class="ws-xic" aria-hidden="true">\uD83C\uDF89</div><h2 class="ws-xt"></h2><p class="ws-xs"></p><button type="button" class="ws-xb"></button></div>');
   el.querySelector(".ws-xt").textContent = end ? "All " + MAXL + " levels cleared!" : "Level " + S.L + " complete!";
   el.querySelector(".ws-xs").textContent = S.moves + " moves";

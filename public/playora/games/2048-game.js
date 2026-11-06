@@ -162,6 +162,7 @@
     let s = loadSaved() || init();
     let prev = null;
     let best = +store.get(BEST_KEY) || 0;
+    let shownResult = null;
 
     root.innerHTML =
       '<div class="g48-wrap" tabindex="0" aria-label="2048 game: use arrow keys or swipe">' +
@@ -199,6 +200,19 @@
       $('.g48-undo').disabled = !prev;
       $('.g48-msg').textContent = s.over ? 'Game over: no moves left.'
         : s.won ? 'You made 2048! Keep playing for a higher score.' : '';
+      const outcome = s.over ? 'loss' : s.won ? 'win' : null;
+      if (outcome && outcome !== shownResult) {
+        shownResult = outcome;
+        if (typeof window.playoraPresentGameResult === 'function') {
+          window.playoraPresentGameResult({
+            gameId: '2048', outcome, title: outcome === 'win' ? '2048 reached!' : 'No moves left',
+            message: outcome === 'win' ? 'You made 2048! Keep playing for a higher score.' : 'Final score: ' + s.score
+          });
+        }
+      } else if (!outcome) {
+        shownResult = null;
+        if (typeof window.playoraDismissGameResult === 'function') window.playoraDismissGameResult('2048');
+      }
     }
 
     function persist() {
@@ -245,6 +259,7 @@
     });
     $('.g48-new').addEventListener('click', () => {
       s = init(); prev = null;
+      shownResult = null;
       persist(); render(); wrap.focus();
     });
 

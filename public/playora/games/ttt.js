@@ -106,6 +106,14 @@ function closeBanner(now) {
 }
 
 function banner(winner) {
+  if (typeof window.playoraPresentGameResult === "function") {
+    window.playoraPresentGameResult({
+      gameId: "ttt", winner: winner, outcome: winner < 0 ? "draw" : undefined,
+      title: winner < 0 ? "It's a draw" : `${nm(winner)} wins!`,
+      message: winner < 0 ? "Nobody got three in a row." : "Three in a row."
+    });
+    return;
+  }
   closeBanner(true);
   const draw = winner < 0, mark = draw ? "" : ["X", "O"][winner];
   const el = document.createElement("div");

@@ -148,11 +148,19 @@
       h += '<div class="ovl"><h1>Sudoku</h1><p>Fill every row, column and 3\u00D73 box with the digits 1 to 9.</p><div class="row">' +
         Object.keys(LV).map(function (l) { return '<button class="btn" data-a="level" data-v="' + l + '">' + LV[l][0] + '</button>'; }).join('') +
         '</div>' + (G && !G.done ? '<button class="btn alt" data-a="cancel">Back to game</button>' : '') + '</div>';
-    } else if (G.done) {
+    } else if (G.done && typeof global.playoraPresentGameResult !== 'function') {
       h += '<div class="ovl"><h1>Solved!</h1><p>' + LV[G.level][0] + ' in ' + fmt(G.secs) + '. ' + G.miss + (G.miss === 1 ? ' mistake' : ' mistakes') + ', ' +
         G.hints + (G.hints === 1 ? ' hint' : ' hints') + '.</p><button class="btn" data-a="new">New game</button></div>';
     }
     root.innerHTML = h;
+    if (G && G.done && typeof global.playoraPresentGameResult === 'function') {
+      global.playoraPresentGameResult({
+        gameId: 'sudoku', outcome: 'win', title: 'Solved!',
+        message: LV[G.level][0] + ' in ' + fmt(G.secs) + '. ' + G.miss + (G.miss === 1 ? ' mistake' : ' mistakes') + ', ' +
+          G.hints + (G.hints === 1 ? ' hint' : ' hints') + '.',
+        actionLabel: 'New game', onAction: function () { G = null; menu = true; render(); }
+      });
+    } else if (typeof global.playoraDismissGameResult === 'function') global.playoraDismissGameResult('sudoku');
     if (had && sel >= 0) { var el = root.querySelector('[data-i="' + sel + '"]'); if (el) el.focus({ preventScroll: true }); }
   }
   function onClick(e) {
@@ -160,7 +168,7 @@
     if (t.hasAttribute('data-i')) { sel = +t.getAttribute('data-i'); return render(); }
     var a = t.getAttribute('data-a'), v = t.getAttribute('data-v');
     if (a === 'level') newGame(v);
-    else if (a === 'new') { menu = true; render(); }
+    else if (a === 'new') { if (G && G.done) G = null; menu = true; render(); }
     else if (a === 'cancel') { menu = false; render(); }
     else if (a === 'num') put(+v);
     else if (a === 'erase') erase();

@@ -339,6 +339,7 @@
     function load(lv) {
       clearTimeout(timer);
       timer = 0;
+      if (typeof window.playoraDismissGameResult === 'function') window.playoraDismissGameResult('arrows');
       level = lv;
       s = init(level);
       anims.clear(); hint = null;
@@ -351,12 +352,28 @@
 
     function win() {
       playSound('win');
+      if (typeof window.playoraPresentGameResult === 'function') {
+        window.playoraPresentGameResult({
+          gameId: 'arrows', outcome: 'complete', title: 'Level ' + level + ' complete!',
+          message: 'All arrows cleared.', actionLabel: 'Next level',
+          onAction: () => { clearTimeout(timer); nextLevel(); }
+        });
+        timer = setTimeout(nextLevel, 1600);
+        return;
+      }
       overlay('Level ' + level + ' complete!<button>Next level</button>', () => { clearTimeout(timer); nextLevel(); });
       timer = setTimeout(nextLevel, 1600);
     }
 
     function lose() {
       playSound('loss');
+      if (typeof window.playoraPresentGameResult === 'function') {
+        window.playoraPresentGameResult({
+          gameId: 'arrows', outcome: 'loss', title: 'Out of lives',
+          message: 'Try the level again.', actionLabel: 'Try again', onAction: () => load(level)
+        });
+        return;
+      }
       overlay('Out of lives<button>Try again</button>', () => load(level));
     }
 

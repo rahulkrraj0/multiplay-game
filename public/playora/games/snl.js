@@ -270,6 +270,13 @@ function closeBanner(now) {
 }
 
 function banner(w) {
+  if (typeof window.playoraPresentGameResult === "function") {
+    window.playoraPresentGameResult({
+      gameId: "snl", winner: w, title: nm(w) + " wins!",
+      message: S.msg || (S.placements || []).map((player, index) => (index + 1) + ordinalSuffix(index + 1) + ": " + nm(player)).join(" · ")
+    });
+    return;
+  }
   closeBanner(true);
   const el = document.createElement("div");
   el.className = "snlx-win";
