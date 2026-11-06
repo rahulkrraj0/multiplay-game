@@ -55,8 +55,35 @@ peer and 512 messages per room per minute. PostgreSQL connections and query time
 are bounded as well. These limits reduce accidental or abusive load; they do not
 replace edge protection.
 
-For a public deployment, enable your hosting provider's DDoS/WAF protections and
-rate limits for `/api/rtc`, `/api/auth/*`, and room-creation endpoints. Configure
-alerts for elevated 4xx/5xx responses, latency, memory, and database connections.
-The app's peer-based signaling limits are not a substitute for provider-level
-per-IP limits, since peer IDs are supplied by clients.
+Signaling and ICE endpoints also enforce shared-Postgres per-IP rate limits using
+Cloudflare's `CF-Connecting-IP`; hashed IP counters expire after ten minutes.
+Configure Cloudflare edge rules for `/api/rtc` and `/api/ice` as well, so abusive
+requests are blocked before they use database connections. The service expects
+Cloudflare to set `CF-Connecting-IP` in production.
+
+## Production access checklist
+
+- Protect `main` with pull requests, required reviews, and 2FA.
+- Put deployment behind the `production` GitHub Environment with required
+  reviewers. Manual dispatches from branches other than `main` fail.
+- Keep the Docker-enabled self-hosted runner isolated, dedicated, and non-root.
+- Configure your own OAuth broker credentials before setting
+  `VITE_AUTH_ENABLED=true`. Production will not fall back to the shared preview
+  OAuth client; auth is off by default in Docker.
+- The app container runs as `node`, with all Linux capabilities dropped and
+  `no-new-privileges`; database migrations run separately with the owner role.
+- Cloudflared and coturn use version-pinned images; the tunnel token is mounted
+  as a Compose secret rather than passed as a process argument.
+- Coturn blocks loopback, private, link-local, and CGNAT destinations and has
+  its CLI disabled.
+- For participant IP privacy, enable TURN-only mode on every player; direct
+  peer-to-peer connections expose public IPs to other participants.
+
+The app adds security response headers including CSP, HSTS,
+`X-Content-Type-Options`, and `Referrer-Policy`. CSP currently permits inline
+scripts to preserve existing rendering; migrate to request nonces before
+removing that exception.
+
+Game clients exchange complete game state. Hidden poker cards are only hidden
+by the UI; do not attach prizes or trusted rankings without moving game logic
+and secret state to a server-authoritative implementation.

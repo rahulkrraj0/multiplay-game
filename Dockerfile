@@ -8,8 +8,9 @@ RUN npm ci
 COPY . .
 
 ARG VITE_PUBLIC_SITE_URL
+ARG VITE_AUTH_ENABLED=false
 ENV NITRO_PRESET=node-server \
-    VITE_AUTH_ENABLED=true \
+    VITE_AUTH_ENABLED=${VITE_AUTH_ENABLED} \
     VITE_PUBLIC_SITE_URL=${VITE_PUBLIC_SITE_URL}
 
 RUN npm run build
@@ -23,13 +24,15 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/.output ./.output
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/scripts/migrate.mjs ./scripts/migrate.mjs
-COPY --from=build /app/scripts/migration-plan.mjs ./scripts/migration-plan.mjs
-COPY --from=build /app/migrations ./migrations
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/.output ./.output
+COPY --from=build --chown=node:node /app/package.json ./package.json
+COPY --from=build --chown=node:node /app/scripts/migrate.mjs ./scripts/migrate.mjs
+COPY --from=build --chown=node:node /app/scripts/migration-plan.mjs ./scripts/migration-plan.mjs
+COPY --from=build --chown=node:node /app/migrations ./migrations
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "npm run db:migrate && node .output/server/index.mjs"]
+USER node
+
+CMD ["node", ".output/server/index.mjs"]

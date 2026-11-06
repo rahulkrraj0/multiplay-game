@@ -81,7 +81,10 @@ Set these values, replacing the example domain and address with your own:
 POSTGRES_USER=multiplay
 POSTGRES_DB=multiplay
 POSTGRES_PASSWORD=YOUR_NEW_POSTGRES_SECRET
+APP_DB_USER=gameslord_app
+APP_DB_PASSWORD=YOUR_DIFFERENT_APP_ROLE_SECRET
 BETTER_AUTH_SECRET=YOUR_DIFFERENT_AUTH_SECRET
+VITE_AUTH_ENABLED=false
 
 VITE_PUBLIC_SITE_URL=https://play.yourdomain.com
 BETTER_AUTH_URL=https://play.yourdomain.com
@@ -94,6 +97,11 @@ TURN_SHARED_SECRET=YOUR_DIFFERENT_TURN_SECRET
 
 CLOUDFLARE_TUNNEL_TOKEN=YOUR_CLOUDFLARE_TUNNEL_TOKEN
 ```
+
+Authentication is disabled by default. To enable it, register an app-specific
+OAuth client with your broker, set `VITE_AUTH_ENABLED=true`, and configure
+`GROK_AUTH_ISSUER`, `GROK_AUTH_CLIENT_ID`, and `GROK_AUTH_CLIENT_SECRET`.
+Production will not fall back to the shared preview OAuth client.
 
 Use the actual public IPv4 address assigned to the Linux server for
 `TURN_EXTERNAL_IP`. Do not reuse the `.env` or database from the Windows
@@ -153,8 +161,21 @@ docker compose ps
 ```
 
 The app and database run by default; the `public` profile also starts
-`cloudflared`. Coturn starts as part of the default stack. Containers use
-`restart: unless-stopped`, so they restart with Docker after a server reboot.
+`cloudflared`. Coturn starts as part of the default stack. Containers use `restart: unless-stopped`, so they restart with Docker after a
+server reboot. The app runs as the unprivileged `node` user, drops Linux
+capabilities, and uses `no-new-privileges`. Migrations run in a separate
+one-shot service with the database owner role; the app uses the restricted
+`APP_DB_USER` role.
+
+The app-role setup runs automatically for a new PostgreSQL volume. For an
+existing `postgres_data` volume, update `.env`, start PostgreSQL, and create
+the role before starting the new app image:
+
+```sh
+docker compose up -d postgres
+docker compose exec -T postgres sh /docker-entrypoint-initdb.d/01-create-app-role.sh
+docker compose --profile public up -d --build
+```
 
 View logs if a container does not start:
 
@@ -198,10 +219,12 @@ git pull
 docker compose --profile public up -d --build
 ```
 
-The existing GitHub Actions workflow targets a **Windows** self-hosted
-runner. It will not automatically deploy to this Linux server. For automatic
-redeploys, configure a Linux self-hosted runner with Docker access and update
-the workflow's runner labels and GitHub Actions secrets for the Linux host.
+The deployment workflow targets a **Linux** self-hosted runner and only allows
+deployment from `main`. Configure a dedicated, isolated runner account with
+Docker access (not root), add the required Actions secrets, and set up the
+GitHub `production` Environment with required reviewers. Protect `main` with
+required pull requests/reviews and 2FA. These settings are enforced in GitHub
+and cannot be created by repository code alone.
 
 ## Database persistence and migration
 
@@ -211,4 +234,28 @@ does not schedule off-site backups. Back up the database separately.
 
 The Linux deployment starts a new database; it does not automatically copy
 data from the Windows Docker Desktop database. Migrate data separately if
-you need to preserve existing accounts or game records.
+you need to preserve existing accounts or game records. Back up the volume
+before applying role or schema changes.
+
+## Edge security and privacy
+
+Configure Cloudflare rate-limit rules keyed by client IP for `/api/rtc` and
+`/api/ice` (300 and 20 requests per minute, respectively). The app also uses
+shared PostgreSQL counters with one-minute windows, stores only SHA-256 hashes
+of client IPs, and prunes old counters. Edge limits protect the database from
+floods before requests reach the app.
+
+ICE can reveal a player's public IP to other peers on direct connections.
+Players can opt into TURN-only privacy in the lobby; every participant should
+enable it, and TURN must be configured. This may fail on networks where relay
+service is unavailable.
+
+The app sends CSP, HSTS, `X-Content-Type-Options`, and `Referrer-Policy`
+headers. CSP currently permits inline scripts for the existing rendering
+architecture; consider migrating to per-request script nonces before removing
+that exception.
+
+Games exchange full game state between peers. Poker hidden cards are concealed
+by the normal interface, not hidden from another participant's browser. Do not
+use the games for prizes or trusted rankings without a server-authoritative
+game implementation.

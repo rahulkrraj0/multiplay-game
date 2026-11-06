@@ -1,21 +1,32 @@
 services:
   app:
+    image: gameslord-app:local
     build:
       context: .
       args:
         VITE_PUBLIC_SITE_URL: ${VITE_PUBLIC_SITE_URL:-}
+        VITE_AUTH_ENABLED: ${VITE_AUTH_ENABLED:-false}
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-multiplay}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-multiplay}
+      DATABASE_URL: postgres://${APP_DB_USER:-gameslord_app}:${APP_DB_PASSWORD:?Set APP_DB_PASSWORD}@postgres:5432/${POSTGRES_DB:-multiplay}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:8080}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET}
+      VITE_AUTH_ENABLED: ${VITE_AUTH_ENABLED:-false}
+      GROK_AUTH_ISSUER: ${GROK_AUTH_ISSUER:-}
+      GROK_AUTH_CLIENT_ID: ${GROK_AUTH_CLIENT_ID:-}
+      GROK_AUTH_CLIENT_SECRET: ${GROK_AUTH_CLIENT_SECRET:-}
       TURN_URLS: ${TURN_URLS:-}
       TURN_SHARED_SECRET: ${TURN_SHARED_SECRET:-}
+    command: ["node", ".output/server/index.mjs"]
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     ports:
       - "127.0.0.1:8080:8080"
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     healthcheck:
       test:
         - CMD
@@ -27,14 +38,36 @@ services:
       retries: 3
       start_period: 60s
 
+  migrate:
+    image: gameslord-app:local
+    build:
+      context: .
+      args:
+        VITE_PUBLIC_SITE_URL: ${VITE_PUBLIC_SITE_URL:-}
+        VITE_AUTH_ENABLED: ${VITE_AUTH_ENABLED:-false}
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-multiplay}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-multiplay}
+    command: ["npm", "run", "db:migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
   postgres:
     image: postgres:17-alpine
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-multiplay}
       POSTGRES_USER: ${POSTGRES_USER:-multiplay}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      APP_DB_USER: ${APP_DB_USER:-gameslord_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/01-create-app-role.sh:/docker-entrypoint-initdb.d/01-create-app-role.sh:ro
     restart: unless-stopped
     healthcheck:
       test:
@@ -46,13 +79,14 @@ services:
       start_period: 10s
 
   coturn:
-    image: coturn/coturn:latest
+    image: coturn/coturn:4.18.0-r0
+    user: "65532:65532"
     command:
       - -n
       - --log-file=stdout
       - --fingerprint
       - --use-auth-secret
-      - --static-auth-secret=${TURN_SHARED_SECRET:-}
+      - --static-auth-secret=${TURN_SHARED_SECRET:?Set TURN_SHARED_SECRET}
       - --realm=${TURN_HOSTNAME:-localhost}
       - --listening-port=3478
       - --min-port=49160
@@ -65,11 +99,17 @@ services:
       - --max-bps=1000000
       - --no-tls
       - --no-multicast-peers
+      - --no-cli
+      - --denied-peer-ip=0.0.0.0-0.255.255.255
       - --denied-peer-ip=10.0.0.0-10.255.255.255
       - --denied-peer-ip=172.16.0.0-172.31.255.255
       - --denied-peer-ip=192.168.0.0-192.168.255.255
       - --denied-peer-ip=127.0.0.0-127.255.255.255
       - --denied-peer-ip=169.254.0.0-169.254.255.255
+      - --denied-peer-ip=100.64.0.0-100.127.255.255
+      - --denied-peer-ip=fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+      - --denied-peer-ip=fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+      - --denied-peer-ip=::1-::1
     ports:
       - "${TURN_BIND_IP:-127.0.0.1}:3478:3478/tcp"
       - "${TURN_BIND_IP:-127.0.0.1}:3478:3478/udp"
@@ -78,24 +118,38 @@ services:
       turn_network:
         ipv4_address: 10.255.233.10
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   cloudflared:
-    image: cloudflare/cloudflared:latest
+    image: cloudflare/cloudflared:2026.10.7
     profiles:
       - public
     command:
       - tunnel
       - --no-autoupdate
       - run
-      - --token
-      - ${CLOUDFLARE_TUNNEL_TOKEN:-}
+      - --token-file
+      - /run/secrets/cloudflare_tunnel_token
+    secrets:
+      - cloudflare_tunnel_token
     depends_on:
       app:
         condition: service_healthy
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
 volumes:
   postgres_data:
+
+secrets:
+  cloudflare_tunnel_token:
+    environment: CLOUDFLARE_TUNNEL_TOKEN
 
 networks:
   turn_network:

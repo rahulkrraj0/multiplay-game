@@ -63,6 +63,7 @@ test("only app-owned schemas ship in the globbed directory", () => {
     { name: "0003_webrtc_expiry_indexes.sql", path: "0003_webrtc_expiry_indexes.sql" },
     { name: "0004_webrtc_signaling_limits.sql", path: "0004_webrtc_signaling_limits.sql" },
     { name: "0005_webrtc_peer_credentials.sql", path: "0005_webrtc_peer_credentials.sql" },
+    { name: "0006_webrtc_access_limits.sql", path: "0006_webrtc_access_limits.sql" },
   ]);
   assert.ok(readdirSync(join(migrationsDir, "auth")).includes("0001_auth.sql"));
 });

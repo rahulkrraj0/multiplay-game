@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+
   workflow_dispatch:
 
 permissions:
@@ -15,14 +16,21 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/main'
     runs-on: [self-hosted, Linux, X64]
+    environment: production
     env:
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      APP_DB_PASSWORD: ${{ secrets.APP_DB_PASSWORD }}
       VITE_PUBLIC_SITE_URL: ${{ secrets.VITE_PUBLIC_SITE_URL }}
       BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
       BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      VITE_AUTH_ENABLED: ${{ vars.VITE_AUTH_ENABLED || 'false' }}
+      GROK_AUTH_ISSUER: ${{ secrets.GROK_AUTH_ISSUER }}
+      GROK_AUTH_CLIENT_ID: ${{ secrets.GROK_AUTH_CLIENT_ID }}
+      GROK_AUTH_CLIENT_SECRET: ${{ secrets.GROK_AUTH_CLIENT_SECRET }}
       TURN_URLS: ${{ secrets.TURN_URLS }}
       TURN_HOSTNAME: ${{ secrets.TURN_HOSTNAME }}
       TURN_EXTERNAL_IP: ${{ secrets.TURN_EXTERNAL_IP }}
@@ -36,6 +44,7 @@ jobs:
         run: |
           required=(
             POSTGRES_PASSWORD
+            APP_DB_PASSWORD
             VITE_PUBLIC_SITE_URL
             BETTER_AUTH_URL
             BETTER_AUTH_SECRET
@@ -52,6 +61,14 @@ jobs:
               exit 1
             fi
           done
+          if [[ "$VITE_AUTH_ENABLED" == "true" ]]; then
+            for name in GROK_AUTH_ISSUER GROK_AUTH_CLIENT_ID GROK_AUTH_CLIENT_SECRET; do
+              if [[ -z "${!name}" ]]; then
+                echo "GitHub Actions secret $name is required when VITE_AUTH_ENABLED=true." >&2
+                exit 1
+              fi
+            done
+          fi
       - name: Build and redeploy on Linux server
         shell: bash
         run: docker compose --profile public up -d --build --pull always --remove-orphans

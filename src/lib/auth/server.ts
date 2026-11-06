@@ -72,14 +72,26 @@ const env = (key: string): string | undefined => {
 
 // Explicit off-switch. The deployer sets `VITE_AUTH_ENABLED=true` when it
 // provisions auth; set it to "false" to force auth off everywhere (dev user).
-const authDisabled = env("VITE_AUTH_ENABLED") === "false";
+const isProduction = process.env.NODE_ENV === "production";
+const authSetting = env("VITE_AUTH_ENABLED");
+const authDisabled = authSetting === "false" || (!authSetting && isProduction);
 
 // Broker federation creds: the deployer injects a per-app client when deployed;
-// otherwise fall back to the shared live-preview client, which the broker accepts
-// for any `*.grok-sandbox.com` callback (see `./preview`).
-const grokIssuer = env("GROK_AUTH_ISSUER") ?? GROK_ISSUER_DEFAULT;
-const grokClientId = env("GROK_AUTH_CLIENT_ID") ?? PREVIEW_CLIENT_ID;
-const grokClientSecret = env("GROK_AUTH_CLIENT_SECRET") ?? PREVIEW_CLIENT_SECRET;
+// only non-production previews may use the shared preview client.
+const grokIssuer = env("GROK_AUTH_ISSUER") ?? (isProduction ? "" : GROK_ISSUER_DEFAULT);
+const grokClientId = env("GROK_AUTH_CLIENT_ID") ?? (isProduction ? undefined : PREVIEW_CLIENT_ID);
+const grokClientSecret =
+  env("GROK_AUTH_CLIENT_SECRET") ?? (isProduction ? undefined : PREVIEW_CLIENT_SECRET);
+
+if (
+  isProduction &&
+  !authDisabled &&
+  (!env("GROK_AUTH_ISSUER") || !grokClientId || !grokClientSecret)
+) {
+  throw new Error(
+    "Production authentication requires GROK_AUTH_ISSUER, GROK_AUTH_CLIENT_ID and GROK_AUTH_CLIENT_SECRET, or set VITE_AUTH_ENABLED=false.",
+  );
+}
 
 /** True when federated sign-in is active (real auth is enforced). */
 export const authConfigured =
@@ -116,7 +128,7 @@ const baseURL = explicitBaseURL ?? {
 // Origins Better Auth accepts on credentialed POSTs (sign-up/sign-in, etc.).
 // Missing entries here surface as FORBIDDEN "Invalid origin".
 const trustedOrigins: string[] = explicitBaseURL
-  ? [explicitBaseURL, ...LOCAL_DEV_ORIGINS]
+  ? [explicitBaseURL, ...(isProduction ? [] : LOCAL_DEV_ORIGINS)]
   : [
       // Host wildcards (matched against Origin's host)
       ...previewAllowedHosts,
@@ -223,6 +235,7 @@ export const auth = betterAuth({
   advanced: {
     useSecureCookies: false,
     defaultCookieAttributes: { secure: true, sameSite: "lax", path: "/" },
+    ipAddress: { ipAddressHeaders: ["cf-connecting-ip"] },
     cookies: {
       session_token: { name: SESSION_TOKEN_COOKIE },
       session_data: { name: "__Host-grok-auth.session_data" },

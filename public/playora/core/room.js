@@ -10,7 +10,30 @@ const hostId = (c) => "h" + c,
   rtcKey = (c) => "g" + c,
   joinId = () => "j" + myId + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const roomLink = () => location.href.split(/[?#]/)[0] + "?room=" + room.code;
-const newCode = () => [...crypto.getRandomValues(new Uint8Array(6))].map((x) => ALPHA[x % 32]).join("");
+const newCode = () => [...crypto.getRandomValues(new Uint8Array(10))].map((x) => ALPHA[x % 32]).join("");
+const peerCredentials = new Map();
+function peerCredential(rtcRoom, peerId) {
+  const key = `playora:rtc-token:${rtcRoom}:${peerId}`;
+  let token = peerCredentials.get(key);
+  if (token) return token;
+  try {
+    token = sessionStorage.getItem(key) || "";
+  } catch (error) {
+    console.warn("[playora] Could not read the saved signaling credential.", error);
+  }
+  if (!/^[a-f0-9]{64}$/.test(token)) {
+    token = [...crypto.getRandomValues(new Uint8Array(32))]
+      .map((byte) => byte.toString(16).padStart(2, "0"))
+      .join("");
+    try {
+      sessionStorage.setItem(key, token);
+    } catch (error) {
+      console.warn("[playora] Could not persist the signaling credential for this tab.", error);
+    }
+  }
+  peerCredentials.set(key, token);
+  return token;
+}
 const parseCode = (s) => {
   s = (s || "").trim();
   const m = s.match(/[?&#]room=([^&#\s]+)/i);
@@ -35,16 +58,36 @@ const iceReady = (async () => {
     if (Array.isArray(config.iceServers) && config.iceServers.length) {
       CFG.iceServers = config.iceServers;
     }
+    window.playoraTurnAvailable = config.turnConfigured === true;
   } catch (error) {
     console.warn("[playora] Could not load TURN configuration; direct connections may still work.", error);
   }
 })();
+async function setRelayOnly(enabled) {
+  await iceReady;
+  const active = Boolean(enabled && window.playoraTurnAvailable);
+  if (enabled && !active) {
+    alert("Privacy mode needs a working TURN server. It is not available right now.");
+  }
+  CFG.iceTransportPolicy = active ? "relay" : "all";
+  ["relayModeLobby", "relayModeJoin"].forEach((id) => {
+    const input = $(id);
+    if (input) input.checked = active;
+  });
+  return active;
+}
+window.playoraSetRelayOnly = setRelayOnly;
+["relayModeLobby", "relayModeJoin"].forEach((id) => {
+  const input = $(id);
+  if (input) input.addEventListener("change", () => void setRelayOnly(input.checked));
+});
 async function sgn(ws, type, dst, payload) {
   if (!ws || ws.closed) return;
   const body = JSON.stringify({
     op: "signal",
     room: ws.rtcRoom,
     from: ws.id,
+    token: ws.token,
     to: dst,
     kind: type === "ANSWER" ? "answer" : "offer",
     payload,
@@ -71,10 +114,13 @@ async function sgn(ws, type, dst, payload) {
   throw err || new Error("signal");
 }
 function sigOpen(id, onmsg, rtcRoom) {
-  const sess = { id, rtcRoom, onmsg, cursor: 0, closed: false, hb: 0, onclose: null, fails: 0, busy: 0, peers: [] };
+  const sess = { id, rtcRoom, token: peerCredential(rtcRoom, id), onmsg, cursor: 0, closed: false, hb: 0, onclose: null, fails: 0, busy: 0, peers: [] };
   const take = async () => {
     const q = new URLSearchParams({ room: rtcRoom, peer: id, name: "", since: String(sess.cursor) });
-    const res = await fetch(api("/api/rtc?" + q), { cache: "no-store" });
+    const res = await fetch(api("/api/rtc?" + q), {
+      cache: "no-store",
+      headers: { authorization: `Bearer ${sess.token}` },
+    });
     if (!res.ok) {
       let detail = "";
       try {
@@ -147,7 +193,7 @@ function sigClose(ws) {
   fetch(api("/api/rtc"), {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ op: "leave", room: ws.rtcRoom, peer: ws.id }),
+    body: JSON.stringify({ op: "leave", room: ws.rtcRoom, peer: ws.id, token: ws.token }),
     keepalive: true,
   }).catch(() => {});
 }
@@ -163,8 +209,9 @@ function roomUI(state, msg) {
 async function startRoom(preferredCode) {
   roomStop();
   room.code = preferredCode || newCode();
-  roomUI("wait", "Creating room…");
   await iceReady;
+  await setRelayOnly($("relayModeLobby")?.checked);
+  roomUI("wait", "Creating room…");
   let failure = null;
   for (let i = 0; i < 4; i++) {
     try {
@@ -261,7 +308,15 @@ function hostMsg(m) {
       console.warn("[playora] Could not confirm the active room host.", error),
     );
   }
-  if (m.type === "OFFER" && p.k === "join") admit(m.src);
+  if (m.type === "OFFER" && p.k === "join") {
+    if (window.confirm("A player wants to join your lobby. Allow this player to connect?")) {
+      void admit(m.src);
+    } else {
+      void sgn(room.ws, "OFFER", m.src, { k: "rejected" }).catch((error) =>
+        console.warn("[playora] Could not notify the declined player.", error),
+      );
+    }
+  }
   if (m.type === "ANSWER" && p.k === "answer") {
     const C = room.pend[m.src];
     if (C) C.pc.setRemoteDescription(p.sdp).catch(() => {});
@@ -301,7 +356,16 @@ async function admit(src) {
     await C.pc.setLocalDescription(await C.pc.createOffer());
     await gath(C.pc);
     await sgn(room.ws, "OFFER", src, { k: "offer", sdp: C.pc.localDescription });
-  } catch {}
+  } catch (error) {
+    console.error("[playora] Could not prepare the approved player's connection.", error);
+    delete room.pend[src];
+    cs = cs.filter((x) => x !== C);
+    C.pc.close();
+    void sgn(room.ws, "OFFER", src, { k: "failed" }).catch((notifyError) =>
+      console.warn("[playora] Could not notify the player that connection setup failed.", notifyError),
+    );
+    return;
+  }
   setTimeout(() => {
     if (room.pend[src] === C) delete room.pend[src];
     if (!C.open) {
@@ -447,6 +511,7 @@ async function joinRoom(raw, reconnectInPlace = false) {
   );
   await iceReady;
   if (room.code !== code || !room.jt) return;
+  await setRelayOnly($("relayModeJoin")?.checked);
   let ws;
   try {
     ws = room.jws = await sigOpen(
@@ -454,6 +519,12 @@ async function joinRoom(raw, reconnectInPlace = false) {
       async (m) => {
         const p = m.payload || {};
         if (m.type === "OFFER" && p.k === "full") return jfail("That room is full.");
+        if (m.type === "OFFER" && p.k === "rejected") {
+          return jfail("The host declined your request to join.");
+        }
+        if (m.type === "OFFER" && p.k === "failed") {
+          return jfail("The host could not prepare the connection. Please try joining again.");
+        }
         if (m.type === "OFFER" && p.k === "offer" && !room.jc) {
           jmsg("Lobby found — finishing connection… Please wait.");
           const C = (room.jc = mkC(null, null));

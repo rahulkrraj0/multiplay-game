@@ -6,6 +6,7 @@
  */
 import { z } from "zod";
 import { createHash } from "node:crypto";
+import { isIP } from "node:net";
 import { dbSource, getSql, type Sql } from "../db.ts";
 import type { PeerRow, RtcPollResponse, SignalRow } from "./p2p";
 
@@ -19,6 +20,8 @@ const SIGNAL_RATE_WINDOW_SECONDS = 60;
 const MAX_SIGNALS_PER_PEER_WINDOW = 120;
 const MAX_SIGNALS_PER_ROOM_WINDOW = 512;
 const MAX_POLL_URL_LENGTH = 2_048;
+const IP_RATE_WINDOW_SECONDS = 60;
+const MAX_RTC_REQUESTS_PER_IP_WINDOW = 300;
 
 function payloadWithinLimit(value: unknown): boolean {
   if (value === undefined) return false;
@@ -51,63 +54,9 @@ const SIGNAL_TTL_SECONDS = 60;
 const PRUNE_INTERVAL_MS = 60_000;
 
 const globalRef = globalThis as typeof globalThis & {
-  __rtcSchemaPromise__?: Promise<void>;
   __rtcLastPruneAt__?: number;
   __rtcPrunePromise__?: Promise<void>;
 };
-
-function ensureSchema(sql: Sql): Promise<void> {
-  globalRef.__rtcSchemaPromise__ ??= (async () => {
-    await sql.query(
-      `CREATE TABLE IF NOT EXISTS webrtc_peers (
-         room TEXT NOT NULL,
-         peer_id TEXT NOT NULL,
-         name TEXT NOT NULL DEFAULT '',
-         auth_token_hash TEXT,
-         last_seen TIMESTAMPTZ NOT NULL DEFAULT now(),
-         PRIMARY KEY (room, peer_id)
-       )`,
-    );
-    await sql.query(
-      `ALTER TABLE webrtc_peers ADD COLUMN IF NOT EXISTS auth_token_hash TEXT`,
-    );
-    await sql.query(
-      `CREATE TABLE IF NOT EXISTS webrtc_signals (
-         id BIGSERIAL PRIMARY KEY,
-         room TEXT NOT NULL,
-         to_peer TEXT NOT NULL,
-         from_peer TEXT NOT NULL,
-         kind TEXT NOT NULL,
-         payload JSONB NOT NULL,
-         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-       )`,
-    );
-    await sql.query(
-      `CREATE INDEX IF NOT EXISTS webrtc_signals_inbox
-         ON webrtc_signals (room, to_peer, id)`,
-    );
-    await sql.query(
-      `CREATE INDEX IF NOT EXISTS webrtc_signals_expiry
-         ON webrtc_signals (created_at)`,
-    );
-    await sql.query(
-      `CREATE INDEX IF NOT EXISTS webrtc_signals_room_rate
-         ON webrtc_signals (room, created_at)`,
-    );
-    await sql.query(
-      `CREATE INDEX IF NOT EXISTS webrtc_signals_peer_rate
-         ON webrtc_signals (room, from_peer, created_at)`,
-    );
-    await sql.query(
-      `CREATE INDEX IF NOT EXISTS webrtc_peers_expiry
-         ON webrtc_peers (last_seen)`,
-    );
-  })().catch((error) => {
-    globalRef.__rtcSchemaPromise__ = undefined;
-    throw error;
-  });
-  return globalRef.__rtcSchemaPromise__;
-}
 
 async function roster(sql: Sql, room: string): Promise<PeerRow[]> {
   const rows = await sql.query<{ peer_id: string; name: string }>(
@@ -183,6 +132,11 @@ async function prune(sql: Sql) {
     sql.query(`DELETE FROM webrtc_peers WHERE last_seen < now() - make_interval(secs => $1)`, [
       PEER_TTL_SECONDS,
     ]),
+    sql.query(
+      `DELETE FROM api_rate_limits
+       WHERE window_start < now() - make_interval(secs => $1)`,
+      [IP_RATE_WINDOW_SECONDS * 10],
+    ),
   ]);
 }
 
@@ -222,6 +176,46 @@ function json(body: unknown, status = 200, headers: HeadersInit = {}): Response 
   });
 }
 
+export async function enforceRequestRateLimit(
+  request: Request,
+  scope: string,
+  limit: number,
+  sqlProvider: () => Promise<Sql> = getSql,
+): Promise<Response | null> {
+  const forwardedIp = request.headers.get("cf-connecting-ip");
+  const ip = forwardedIp?.trim();
+  if (!ip || isIP(ip) === 0) {
+    if (process.env.NODE_ENV === "production") {
+      return json({ error: "client address unavailable" }, 503);
+    }
+    return null;
+  }
+
+  const sql = await sqlProvider();
+  const windowStart = Math.floor(Date.now() / IP_RATE_WINDOW_SECONDS) * IP_RATE_WINDOW_SECONDS;
+  const key = createHash("sha256").update(ip).digest("hex");
+  const rows = await sql.query<{ request_count: number }>(
+    `INSERT INTO api_rate_limits (scope, ip_hash, window_start, request_count)
+     VALUES ($1, $2, to_timestamp($3), 1)
+     ON CONFLICT (scope, ip_hash, window_start)
+     DO UPDATE SET request_count = api_rate_limits.request_count + 1
+     RETURNING request_count`,
+    [scope, key, windowStart],
+  );
+  const pruneTask = maybePrune(sql);
+  if (pruneTask) await pruneTask;
+
+  if ((rows[0]?.request_count ?? 0) > limit) {
+    const retryAfter = IP_RATE_WINDOW_SECONDS - (Math.floor(Date.now() / 1000) % IP_RATE_WINDOW_SECONDS);
+    return json(
+      { error: "request rate limit exceeded" },
+      429,
+      { "retry-after": String(retryAfter) },
+    );
+  }
+  return null;
+}
+
 async function handleGet(
   url: URL,
   token: string | undefined,
@@ -247,9 +241,6 @@ async function handleGet(
   const { room, peer, name, since } = parsed.data;
 
   const sql = await sqlProvider();
-  await ensureSchema(sql);
-  const pruneTask = maybePrune(sql);
-  if (pruneTask) await pruneTask;
   const joinResult = await touchPeer(sql, room, peer, name, hashPeerToken(token));
   if (joinResult === "full") return json({ error: "room full" }, 409);
   if (joinResult === "unauthorized") return json({ error: "invalid peer credentials" }, 403);
@@ -332,7 +323,6 @@ async function handlePost(request: Request, sqlProvider: () => Promise<Sql>): Pr
   if (!parsed.success) return json({ error: "invalid request" }, 400);
   const msg = parsed.data;
   const sql = await sqlProvider();
-  await ensureSchema(sql);
 
   if (msg.op === "signal") {
     const peers = await sql.query<{ peer_id: string; auth_token_hash: string | null }>(
@@ -414,11 +404,27 @@ async function handleSignalingWith(
       );
     }
     if (request.method === "GET") {
+      const rateLimit = await enforceRequestRateLimit(
+        request,
+        "rtc-get",
+        MAX_RTC_REQUESTS_PER_IP_WINDOW,
+        dependencies.getSql,
+      );
+      if (rateLimit) return rateLimit;
       const authorization = request.headers.get("authorization");
       const token = authorization?.match(/^Bearer ([a-f0-9]{64})$/i)?.[1];
       return await handleGet(new URL(request.url), token, dependencies.getSql);
     }
-    if (request.method === "POST") return await handlePost(request, dependencies.getSql);
+    if (request.method === "POST") {
+      const rateLimit = await enforceRequestRateLimit(
+        request,
+        "rtc-post",
+        MAX_RTC_REQUESTS_PER_IP_WINDOW,
+        dependencies.getSql,
+      );
+      if (rateLimit) return rateLimit;
+      return await handlePost(request, dependencies.getSql);
+    }
     return json({ error: "method not allowed" }, 405, { allow: "GET, POST" });
   } catch (error) {
     console.error("[rtc] signaling error:", error);

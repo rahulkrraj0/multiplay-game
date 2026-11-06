@@ -21,11 +21,13 @@ function fakeSql({
   senderSignalCount = 0,
   roomSignalCount = 0,
   pollTooFast = false,
+  ipRateCount = 0,
 }: {
   peers?: Peer[];
   senderSignalCount?: number;
   roomSignalCount?: number;
   pollTooFast?: boolean;
+  ipRateCount?: number;
 } = {}) {
   const activePeers = new Map<string, Peer>();
   for (const peer of peers) {
@@ -37,6 +39,10 @@ function fakeSql({
   let signals = roomSignalCount;
   const query = async <T>(text: string, params: unknown[] = []): Promise<T[]> => {
     if (/^(CREATE|ALTER)/i.test(text.trim())) return [];
+
+    if (text.includes("INSERT INTO api_rate_limits")) {
+      return [{ request_count: ipRateCount }] as T[];
+    }
 
     if (
       text.includes("SELECT peer_id, auth_token_hash FROM webrtc_peers") &&
@@ -230,6 +236,20 @@ test("caps the number of recently queued signals per room", async () => {
   });
   const response = await handler(signalRequest());
   assert.equal(response.status, 429);
+});
+
+test("rate-limits signaling requests by the trusted client IP", async () => {
+  const handler = makeHandler({ ipRateCount: 301 });
+  const response = await handler(
+    new Request("https://gameslord.online/api/rtc?room=room-1&peer=peer-1", {
+      headers: {
+        authorization: `******"peer-1")}`,
+        "cf-connecting-ip": "203.0.113.10",
+      },
+    }),
+  );
+  assert.equal(response.status, 429);
+  assert.match(response.headers.get("retry-after") ?? "", /^\d+$/);
 });
 
 test("relays signaling between active room members", async () => {

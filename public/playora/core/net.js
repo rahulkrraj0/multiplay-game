@@ -2,7 +2,7 @@
    so every attendee is both server and receiver. The lowest-numbered attendee is the host (starts/restarts games);
    if the host leaves, the next player becomes host automatically and the game carries on.
    New players need one copy-paste code exchange with ANY connected player; the rest of the links form by themselves. */
-const CFG={iceServers:(window.PLAYORA&&PLAYORA.iceServers)||[{urls:'stun:stun.l.google.com:19302'}]},myId=Math.random().toString(36).slice(2,8);
+const CFG={iceServers:(window.PLAYORA&&PLAYORA.iceServers)||[{urls:'stun:stun.l.google.com:19302'}],iceTransportPolicy:'all'},myId=Math.random().toString(36).slice(2,8);
 const PLAYER_KEY_STORAGE='playora.player-key.v1';
 const PREVIOUS_GAME_PREFIX='playora.previous-game.v1.';
 function getPlayerKey(){try{const saved=localStorage.getItem(PLAYER_KEY_STORAGE);if(saved&&/^[a-f0-9]{16}$/i.test(saved))return saved;const key=[...crypto.getRandomValues(new Uint8Array(8))].map(x=>x.toString(16).padStart(2,'0')).join('');localStorage.setItem(PLAYER_KEY_STORAGE,key);return key}catch(error){console.warn('[playora] Could not persist this browser’s player identity.',error);return[...Array(16)].map(()=>Math.floor(Math.random()*16).toString(16)).join('')}}
