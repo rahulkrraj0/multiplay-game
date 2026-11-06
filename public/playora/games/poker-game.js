@@ -153,6 +153,7 @@
 .poker .pk-seat__bet { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 .poker .pk-backs { display: flex; gap: 0.15rem; }
 .poker .pk-back {
+  position: relative;
   width: 1.1rem;
   height: 1.55rem;
   border: 2px solid #fff;
