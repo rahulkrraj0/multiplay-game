@@ -91,6 +91,7 @@ function currentGameResult(){
  if(G.id==='watersort'&&S.cleared&&!S.over)options={...options,outcome:'complete',title:'Level '+S.L+' complete!',message:'Completed in '+S.moves+' moves.',actionLabel:'Next level',onAction:()=>act({k:'next'})};
  return options;
 }
+function adoptState(state){S=state;if(G&&typeof G.setState==='function')G.setState(state)}
 function render(){ $('rl').disabled=false;const[h,s]=G.draw();$('bd').innerHTML=h;stackHandCards($('bd'));$('st').textContent=ids.length&&seat===99?'Spectating · '+(S.msg||s):S.msg||s;$('lg').textContent=typeof S.last==='string'?S.last:'';$('rl').classList.toggle('hide',!(G.roll&&canAct()&&G.cr()));const result=currentGameResult();if(result)presentGameResult(result);else closeGameResult()}
 /* begin(game, localPlayers, order): order = list of player ids when playing online (seat = position in the list) */
 function activateGameRuntime(){if(typeof G.onStart==='function')G.onStart();if(ids.length&&typeof startGameChannels==='function')startGameChannels()}
@@ -110,7 +111,7 @@ function showDice(r){const d=$('dice');clearInterval(dt);d.classList.remove('hid
  let k=0;d.classList.add('roll');dt=setInterval(()=>{if(++k<7)d.textContent=1+Math.floor(Math.random()*6);else{clearInterval(dt);d.textContent=r;d.classList.remove('roll')}},70)}
 $('rl').onclick=()=>{if(!ids.length||amHost())return act({r:d6()});const H=peers().find(C=>C.seat===hostSeat());if(H){$('rl').disabled=true;if(typeof requestRollFromHost==='function')requestRollFromHost(H);else snd(H,{k:'rq'})}};
 /* online: rolls are accepted only from the host, moves only from the player whose turn it is, and each game can add a valid(a) check */
-const actOk=(C,a)=>{if(!a||typeof a!=='object'||S.over||disconnectPending)return false;if(G.hostSetup&&S.setup)return a.r===undefined&&C.seat===hostSeat()&&(!G.valid||G.valid(a));if(a.r!==undefined){if(C.seat!==hostSeat()||(G.roll&&!G.cr())||(!G.roll&&typeof G.valid!=='function'))return false}else if(ids.indexOf(C.id)!==S.t&&!(C.seat===hostSeat()&&dead.has(S.t))&&!(C.seat===hostSeat()&&S.t>=ids.length))return false;return !G.valid||G.valid(a)};
+const actOk=(C,a)=>{if(!a||typeof a!=='object'||S.over||disconnectPending)return false;if(G.hostSetup&&S.setup)return a.r===undefined&&C.seat===hostSeat()&&(!G.valid||G.valid(a));if(a.r!==undefined){if(C.seat!==hostSeat()||(G.roll&&!G.cr())||(!G.roll&&typeof G.valid!=='function'))return false}else if(ids.indexOf(C.id)!==S.t&&!(C.seat===hostSeat()&&(dead.has(S.t)||S.t>=ids.length)))return false;return !G.valid||G.valid(a)};
 $('rx').onclick=$('bk').onclick=()=>{if(ids.length&&!confirm('Leave this game?'))return;closeRoom()};$('rs').onclick=()=>ids.length?(amHost()?startNet(true):alert('Only the host can restart')):begin(G.id,np,null,localBot,undefined,true);$('panelRestart').onclick=()=>$('rs').click();
 
 $('mb').onclick=closeRoom;$('ml').onclick=()=>begin(pick,pick==='bluff'?4:2,null,true);

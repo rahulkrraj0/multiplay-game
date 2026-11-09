@@ -35,6 +35,7 @@ test("online game seats are filled by bots up to the selected count", () => {
   assert.equal(fillCount(game, 3, 4), 1);
   assert.equal(fillCount(game, 2, 4), 2);
   assert.equal(fillCount(game, 4, 4), 0);
+  assert.equal(fillCount(game, 2, 2), 0);
   assert.equal(fillCount(game, 3, 2), -1);
   assert.equal(fillCount(game, 1, 4), -1);
   assert.equal(fillCount({ minPlayers: 4, max: 4 }, 3, 4), -1);
@@ -42,7 +43,7 @@ test("online game seats are filled by bots up to the selected count", () => {
 
 test("bot-filled seats are hosted locally while real player seats remain peer-owned", () => {
   assert.match(engine, /amHost\(\)&&S\.t>=ids\.length/);
-  assert.match(engine, /C\.seat===hostSeat\(\)&&S\.t>=ids\.length/);
+  assert.match(engine, /C\.seat===hostSeat\(\)&&\(dead\.has\(S\.t\)\|\|S\.t>=ids\.length\)/);
   assert.match(engine, /Math\.max\(ids\.length,Number\(activeLimit\)\|\|ids\.length\)/);
 });
 
@@ -54,11 +55,12 @@ test("variable-seat online card games use exactly the selected seat count", () =
   }
 });
 
-test("four-seat trick games require four selected seats", () => {
-  for (const file of ["callbreak.js", "spades.js"]) {
-    const source = readFileSync(join(process.cwd(), "public", "playora", "games", file), "utf8");
-    assert.match(source, /minPlayers:\s*2,\s*playerCountMin:\s*4,\s*maxPlayers:\s*4/);
-  }
+test("Call Break supports two to four seats while Spades requires four", () => {
+  const callBreak = readFileSync(join(process.cwd(), "public", "playora", "games", "callbreak.js"), "utf8");
+  const spades = readFileSync(join(process.cwd(), "public", "playora", "games", "spades.js"), "utf8");
+
+  assert.match(callBreak, /minPlayers:\s*2,\s*playerCountMin:\s*2,\s*maxPlayers:\s*4/);
+  assert.match(spades, /minPlayers:\s*2,\s*playerCountMin:\s*4,\s*maxPlayers:\s*4/);
 });
 
 test("online resume snapshots accept fewer human identities than game seats", () => {

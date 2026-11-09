@@ -202,7 +202,7 @@
       index(label === '10' ? ' ten' : '') + face + index((label === '10' ? ' ten' : '') + ' br') + '</' + tag.split(' ')[0] + '>';
   }
   function taken(p) { return p.taken.reduce(function (s, c) { return s + cpts(c); }, 0); }
-  function seat(i) {
+  function drawSeat(i) {
     var p = G.players[i], on = G.phase === 'play' && G.turn === i && !G.collect;
     return '<div class="seat s' + i + (on ? ' on' : '') + '"><div class="card back mini">' + p.hand.length + '</div><span class="nm">' + p.name +
       '</span><span class="st">' + (G.phase === 'play' ? 'taken ' + taken(p) + ' pts' : '') + '</span></div>';
@@ -221,9 +221,9 @@
     var L = myTurn ? legal(me.hand, G.trick, G.first, G.broken) : [];
     h += '<div class="bar"><b class="logo">Hearts</b><span class="sc">' + G.players.map(function (p) { return '<span>' + p.name + ' <b>' + p.total + '</b></span>'; }).join('') +
       '</span><button class="btn small" data-a="new">New game</button></div><div class="sub">Round ' + G.round + ' (pass ' + G.dir + '), hearts ' + (G.broken ? '' : 'not ') + 'broken</div>' +
-      '<div class="table">' + seat(2) + seat(1) + '<div class="trick">';
+      '<div class="table">' + drawSeat(2) + drawSeat(1) + '<div class="trick">';
     G.trick.forEach(function (t, i) { h += cardHTML(t.card, ' t' + t.p + (G.collect && G.win === t.p ? ' win' : '') + (i === G.trick.length - 1 ? ' fresh' : '')); });
-    h += '</div>' + seat(3) + '</div><div class="msg">' + G.msg + '<small>' +
+    h += '</div>' + drawSeat(3) + '</div><div class="msg">' + G.msg + '<small>' +
       (passing ? 'Select 3 cards, then press Pass.' : myTurn ? 'Your turn.' : G.phase === 'play' && !G.collect ? G.players[G.turn].name + ' is playing\u2026' : '') + '</small></div><div class="acts">';
     if (passing) h += '<button class="btn" data-a="pass"' + (G.sel.length === 3 ? '' : ' disabled') + '>Pass ' + G.sel.length + ' of 3 cards ' + G.dir + '</button>';
     h += '</div><div class="hand">';
@@ -501,16 +501,14 @@
       .replace(/card-deal/g, 'hearts-card-deal').replace(/win-glow/g, 'hearts-win-glow')) +
       `#room #bd .hr button.card{width:var(--cw);height:calc(var(--cw)*1.45);flex:0 0 var(--cw);margin:0;padding:0;border:var(--edge);border-radius:calc(var(--cw)*.09);background:var(--face);color:var(--k);font:inherit;text-align:left;box-shadow:var(--sh);appearance:none;-webkit-appearance:none;overflow:hidden}
 #room #bd .hr .hand button.card:first-child{margin-left:auto}#room #bd .hr .hand button.card:last-child{margin-right:auto}
-#room #bd .hr .hand{padding-top:28px;padding-bottom:20px;margin-top:5px}
-#room #bd .hr .hand button.card+button.card{margin-left:calc(var(--w)*-.45)}
-#room #bd .hr .hand{max-width:1160px;margin-left:auto;margin-right:auto}
-#room #bd .hr .acts{order:1;position:relative;z-index:6}#room #bd .hr .acts .btn{width:auto;min-width:0;margin:0;padding:10px 18px;font-size:16px;line-height:1.2}#room #bd .hr .hand{order:2}#room #bd .hr .msg{order:3;margin-top:8px}
-#room #bd .hr{box-sizing:border-box;padding-bottom:calc(5vh + env(safe-area-inset-bottom,0px))}
-@media(min-width:601px){#room #bd .hr .hand{flex-wrap:wrap;justify-content:center;overflow-x:hidden;overflow-y:hidden}#room #bd .hr .hand .card:first-child{margin-left:0}#room #bd .hr .hand .card:last-child{margin-right:0}}
-@media(max-width:600px){#room #bd .hr{--w:clamp(36px,min(18vw,calc((100vw - 40px)/7)),76px)}#room #bd .hr .hand{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:calc(var(--w)*.95);align-content:center;justify-items:center;gap:0;overflow:visible;padding:20px 8px calc(10px + var(--w)*.5 + env(safe-area-inset-bottom,0px));grid-template-columns:repeat(16,minmax(0,1fr))}#room #bd .hr .hand button.card{margin:0;grid-column:span 2}#room #bd .hr .hand button.card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column) / span 2}#room #bd .hr .hand{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:4px 2px;overflow:hidden}#room #bd .hr .hand button.card:first-child,#room #bd .hr .hand button.card:last-child,#room #bd .hr .hand button.card+button.card{margin:0}}
-@media(max-width:520px){#room #bd .hr .hand{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}}
-@media(max-width:520px) and (max-height:700px){#room #bd .hr{--w:clamp(36px,min(12vw,12vh),46px)}#room #bd .hr .hand{padding-top:24px}}
-@media(max-height:520px) and (orientation:landscape){#room #bd .hr{--w:clamp(24px,min(6vh,calc((100vw - 40px)/13)),44px);padding-bottom:4px}#room #bd .hr .hand{flex-wrap:nowrap;overflow:hidden;padding:4px 8px;margin:0}#room #bd .hr .acts{min-height:0;padding:4px 8px;gap:4px}#room #bd .hr .msg{min-height:1em;margin-top:0;padding:2px 8px;font-size:12px}}`;
+#room #bd .hr .hand{max-width:1160px;flex:1 1 auto;min-height:0;align-content:flex-end;gap:4px 2px;overflow-x:hidden;overflow-y:auto;padding:18px 14px 0;margin:5px auto 0}
+#room #bd .hr .hand button.card+button.card{margin-left:0}
+#room #bd .hr .acts{order:1;position:relative;z-index:6}#room #bd .hr .acts .btn{width:auto;min-width:0;margin:0;padding:10px 18px;font-size:16px;line-height:1.2}#room #bd .hr .hand{order:2}#room #bd .hr .msg{order:3;margin-top:0;min-height:0;padding:2px 8px}
+#room #bd .hr{box-sizing:border-box;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+@media(min-width:601px){#room #bd .hr{--w:clamp(40px,min(7.2vw,11vh),76px)}#room #bd .hr .hand{display:flex;flex-wrap:wrap;justify-content:center;overflow-y:auto}#room #bd .hr .hand button.card+button.card{margin-left:calc(var(--w)*-.75)}#room #bd .hr .hand .card:first-child,#room #bd .hr .hand .card:last-child{margin:0}}
+@media(max-width:600px){#room #bd .hr{--w:clamp(34px,min(18vw,calc((100vw - 32px)/4.5)),64px)}#room #bd .hr .hand{display:grid;grid-template-columns:repeat(48,minmax(0,1fr));grid-auto-rows:calc(var(--w)*1.5);align-content:center;justify-items:center;gap:0;overflow-x:hidden;overflow-y:auto;padding:12px 8px calc(12px + env(safe-area-inset-bottom,0px))}#room #bd .hr .hand .card{margin:0;grid-column:span 6}#room #bd .hr .hand .card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column) / span 6}}
+@media(max-width:520px) and (max-height:700px){#room #bd .hr{--w:clamp(34px,min(18vw,calc((100vw - 32px)/8),8vh),46px)}#room #bd .hr .hand{padding-top:8px}}
+@media(max-height:520px) and (orientation:landscape){#room #bd .hr{--w:clamp(24px,min(6vh,calc((100vw - 40px)/13)),44px);padding-bottom:4px}#room #bd .hr .hand{padding:4px 8px}#room #bd .hr .acts{min-height:0;padding:4px 8px;gap:4px}#room #bd .hr .msg{min-height:1em;margin-top:0;padding:2px 8px;font-size:12px}}`;
     document.head.appendChild(style);
   }
   function roomSeat(index) {
@@ -520,12 +518,12 @@
       (G.phase === 'play' ? ' · taken ' + taken(player) + ' pts' : '') + '</span></div>';
   }
   function roomHandGridPosition(index, count) {
-    var columns = 8, row = Math.ceil(count / columns), remainder = count % columns || columns;
-    var lastRowStart = count - remainder;
-    if (index < lastRowStart) return '';
-    var startColumn = Math.floor((columns * 2 - remainder * 2) / 2) + 1;
-    return 'style="--hand-row:' + row + ';--hand-column:' +
-      (startColumn + (index - lastRowStart) * 2) + '"';
+    var columns = 15, cardRow = Math.floor(index / columns) + 1;
+    var rowStart = (cardRow - 1) * columns;
+    var rowCount = Math.min(columns, count - rowStart);
+    var startColumn = Math.floor((48 - 6 - 3 * (rowCount - 1)) / 2) + 1;
+    return 'style="--hand-row:' + cardRow + ';--hand-column:' +
+      (startColumn + (index - rowStart) * 3) + '"';
   }
   function roomDraw() {
     syncRoomState();
@@ -612,12 +610,12 @@
     '.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 14px;flex:none;font-size:13px}.bar .logo{font-size:20px;font-weight:800}' +
     '.sc{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}.sub{text-align:center;font-size:12px;opacity:.85;flex:none}' +
     '.btn{font:inherit;font-weight:800;padding:.6em 1.2em;border:0;border-radius:999px;background:#ffd45c;color:#2a0f17;cursor:pointer}.btn.small{padding:.45em 1em;font-size:13px}.btn:disabled{opacity:.45;cursor:default}' +
-    '.table{position:relative;flex:1;min-height:0;display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto minmax(0,1fr);padding:0 8px}' +
-    '.seat{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 8px;border-radius:12px;font-size:12px;border:2px solid transparent;min-width:64px}' +
+    '.table{position:relative;flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);column-gap:clamp(12px,2vw,24px);padding:0 12px}' +
+    '.seat{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 8px;border-radius:12px;font-size:12px;border:2px solid transparent;min-width:0}' +
     '.seat.on{border-color:#ffd45c;background:rgba(255,212,92,.14)}.seat .st{opacity:.85;font-size:11px;text-align:center;min-height:1.2em}.seat .nm{font-weight:800;font-size:13px}' +
     '.s2{grid-column:1/-1;justify-self:center}.s1{grid-column:1;grid-row:2;align-self:center}.s3{grid-column:3;grid-row:2;align-self:center}' +
-    '.trick{grid-column:2;grid-row:2;justify-self:center;align-self:center;position:relative;width:calc(var(--w)*.9);height:min(calc(var(--w)*1.2),100%)}' +
-    '.trick .card{--cw:calc(var(--w)*.38);position:absolute}.t0{bottom:0;left:50%;transform:translateX(-50%)}.t2{top:0;left:50%;transform:translateX(-50%)}' +
+    '.trick{grid-column:2;grid-row:2;justify-self:center;align-self:center;position:relative;width:min(calc(var(--w)*2.2),100%);height:min(calc(var(--w)*2.6),100%)}' +
+    '.trick .card{--cw:var(--w);width:min(calc(var(--w)*1.1),100%);height:auto;aspect-ratio:1/1.45;position:absolute}.t0{bottom:0;left:50%;transform:translateX(-50%)}.t2{top:0;left:50%;transform:translateX(-50%)}' +
     '.t1{left:0;top:50%;transform:translateY(-50%)}.t3{right:0;top:50%;transform:translateY(-50%)}.trick .win{box-shadow:0 0 0 4px #ffd45c,0 6px 14px rgba(0,0,0,.5)}' +
     '.card{--cw:var(--w);--k:#171a24;--face:linear-gradient(158deg,#fffefa,#fbf8f1 52%,#eee6d4);--edge:1px solid rgba(23,26,36,.2);--sh:0 1px 1px rgba(0,0,0,.28),0 5px 12px rgba(0,0,0,.34);position:relative;flex:none;width:var(--cw);height:calc(var(--cw)*1.45);padding:0;border-radius:calc(var(--cw)*.09);background:var(--face);border:var(--edge);color:var(--k);font:inherit;box-shadow:var(--sh);overflow:hidden}.card.r{--k:#c4202f}.card.b{--k:#171a24}.card svg{display:block;fill:currentColor}' +
     '.ix{position:absolute;left:7%;top:4.5%;display:flex;flex-direction:column;align-items:center;font-family:Georgia,"Times New Roman",serif;font-weight:800;font-style:normal;font-size:calc(var(--cw)*.22);line-height:1}.ix svg{width:calc(var(--cw)*.17);height:calc(var(--cw)*.17);margin-top:calc(var(--cw)*.03)}.ix.ten{letter-spacing:-.09em}.ix.br{left:auto;top:auto;right:7%;bottom:4.5%;transform:rotate(180deg)}' +

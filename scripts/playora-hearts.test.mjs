@@ -62,6 +62,22 @@ test("Hearts applies an incoming synchronized snapshot to its active game state"
   assert.deepEqual(Array.from(guest.state.selected[0]), [cardId]);
 });
 
+test("online Hearts renders the hand for each player's own seat", () => {
+  for (const playerSeat of [0, 1]) {
+    const hearts = createHearts({ playerIds: ["host", "guest"], playerCount: 2 });
+    hearts.sandbox.seat = playerSeat;
+    const state = hearts.game.init();
+    hearts.state = state;
+
+    const html = hearts.game.draw()[0];
+
+    assert.equal(state.players[playerSeat].hand.length, 26);
+    assert.equal((html.match(/class="card/g) || []).length, 27);
+    if (playerSeat === 0) assert.match(html, /data-m="select:/);
+    else assert.doesNotMatch(html, /data-m="select:/);
+  }
+});
+
 test("Hearts deals identical later rounds from the synchronized random state", () => {
   const host = createHearts({ random: 0.1 });
   const guest = createHearts({ random: 0.9 });

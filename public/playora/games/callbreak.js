@@ -204,7 +204,7 @@
     var startColumn = Math.floor((columns * 2 - remainder * 2) / 2) + 1;
     return 'style="--hand-row:' + row + ';--hand-column:' + (startColumn + (index - lastRowStart) * 2) + '"';
   }
-  function seat(i) {
+  function localSeat(i) {
     var p = G.players[i], on = (G.phase === 'bid' || G.phase === 'play') && G.turn === i && !G.collect;
     var st = p.bid ? 'bid ' + p.bid + ', won ' + p.tricks : (G.phase === 'bid' ? (on ? 'bidding\u2026' : 'waiting') : '');
     return '<div class="seat s' + i + (on ? ' on' : '') + '"><div class="card back mini">' + p.hand.length + '</div><span class="nm">' + p.name +
@@ -222,9 +222,9 @@
     var me = G.players[0], myTurn = G.phase === 'play' && G.turn === 0 && !G.collect, bidding = G.phase === 'bid' && G.turn === 0;
     var L = myTurn ? legal(me.hand, G.trick) : [];
     h += '<div class="bar"><b class="logo">Call Break</b><span>Round ' + G.round + ' of ' + ROUNDS + ', spades \u2660 are trump</span><button class="btn" data-a="new">New game</button></div>' +
-      '<div class="table">' + seat(2) + seat(1) + '<div class="trick">';
+      '<div class="table">' + localSeat(2) + localSeat(1) + '<div class="trick">';
     G.trick.forEach(function (t, i) { h += cardHTML(t.card, ' t' + t.p + (G.collect && G.win === t.p ? ' win' : '') + (i === G.trick.length - 1 ? ' fresh' : '')); });
-    h += '</div>' + seat(3);
+    h += '</div>' + localSeat(3);
     if (bidding) {
       h += '<div class="bidbox"><p>Your bid: how many tricks will you win?</p><div class="bids">';
       for (var n = 1; n <= 13; n++) h += '<button class="btn" data-a="bid" data-v="' + n + '">' + n + '</button>';
@@ -325,7 +325,7 @@
       };
       return S;
     }
-    var playerCount = online ? Math.max(4, Number(np) || 4) : 4;
+    var playerCount = online ? Math.max(ids.length, Math.min(4, Number(np) || 4)) : 4;
     var rng = Math.floor(Math.random() * 4294967296) >>> 0;
     S = {
       phase: 'bid', round: 1, dealer: playerCount - 2, trick: [], collect: false, turn: 0, t: 0, lead: 0,
@@ -474,7 +474,7 @@
 #room #bd .cb .hand{padding-top:28px;padding-bottom:20px;margin-top:5px}
 #room #bd .cb .hand button.card+button.card{margin-left:calc(var(--w)*-.45)}
 #room #bd .cb .hand{width:100%;min-width:0;max-width:1160px;margin-left:auto;margin-right:auto}
-#room #bd .cb .room-action{order:1}#room #bd .cb .hand{order:2}#room #bd .cb .msg{order:3;margin-top:8px}#room #bd .cb .mine{order:4}
+#room #bd .cb .collect-action{order:1;align-self:center;flex:none;position:relative;z-index:6;white-space:nowrap;margin:0 auto 4px}#room #bd .cb .hand{order:2}#room #bd .cb .msg{order:3;margin-top:8px}#room #bd .cb .mine{order:4}
 #room #bd .cb{box-sizing:border-box;padding-bottom:calc(5vh + env(safe-area-inset-bottom,0px))}
 #room #bd .cb .bar .logo{display:none}
 @media(min-width:601px){#room #bd .cb .hand{flex-wrap:wrap;justify-content:center;overflow-x:hidden;overflow-y:hidden}#room #bd .cb .hand .card:first-child{margin-left:0}#room #bd .cb .hand .card:last-child{margin-right:0}}
@@ -526,7 +526,9 @@
       (active ? 'Start the next round.' : S.players[S.t].name + ' can start the next round.') :
       S.collect ? (active ? 'Collect the trick.' : S.players[S.t].name + ' won the trick.') :
       active ? 'Your turn.' : S.players[S.t].name + (S.phase === 'bid' ? ' is bidding…' : ' is playing…');
-    html += '</div><div class="msg">' + roomEscape(S.msg || '') + '<small>' + roomEscape(hint) +
+    html += '</div>' + (active && S.collect ?
+      '<button class="btn collect-action" data-m="collect">Collect trick</button>' : '') +
+      '<div class="msg">' + roomEscape(S.msg || '') + '<small>' + roomEscape(hint) +
       '</small></div><div class="mine">' + (player ? roomEscape(player.name) + ': ' +
         (player.bid == null ? 'no bid yet' : 'bid ' + player.bid + ', won ' + player.tricks) : 'Waiting for your turn') +
       '</div><div class="hand">';
@@ -540,7 +542,6 @@
         (allowed ? 'data-m="card:' + card.id + '"' : '') + ' ' + handGridPosition(index, hand.length));
     });
     html += '</div>';
-    if (active && S.collect) html += '<div class="room-action"><button class="btn" data-m="collect">Collect trick</button></div>';
     if (S.phase === 'roundend') {
       var ranked = S.players.slice().sort(function (a, b) { return b.total - a.total; });
       html += '<div class="ovl"><h1>' + (S.over ? roomEscape(ranked[0].name) + ' wins!' : 'Round ' + S.round + ' done') +
@@ -660,7 +661,7 @@
   var api = {
     id: 'callbreak', name: 'Call Break', t: 'Call Break', i: '♠️',
     d: 'Bid for tricks, follow suit, and use spades as trump. Play with 2–4 total players.',
-    minPlayers: 2, playerCountMin: 4, maxPlayers: 4, max: 4, cat: 'classic strategy', tag: 'Bid & trump',
+    minPlayers: 2, playerCountMin: 2, maxPlayers: 4, max: 4, cat: 'classic strategy', tag: 'Bid & trump',
     diff: 'Medium', art: 'art-cards', logo: 'callbreak.svg',
     init: roomInit, valid: roomValid, apply: roomApply, bot: roomBot, draw: roomDraw, click: roomClick,
     mount: mount, start: start, _t: { get G() { return G; }, botBid: botBid, botPlay: botPlay, resolve: resolve, next: next, legal: legal },

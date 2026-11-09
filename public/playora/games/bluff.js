@@ -182,7 +182,7 @@
     return 'style="--hand-row:' + wideRow + ';--hand-column:' + wideColumn +
       ';--mobile-row:' + mobileRow + ';--mobile-column:' + mobileColumn + '"';
   }
-  function seat(i) {
+  function localSeat(i) {
     var p = G.players[i], on = G.phase !== 'over' && G.focus === i, st = '';
     if (G.phase === 'play' && G.turn === i) st = 'to play';
     else if ((G.phase === 'call' || G.phase === 'ask') && G.last) st = G.last.p === i ? 'just played' : (on ? 'deciding\u2026' : '');
@@ -202,7 +202,7 @@
     var me = G.players[0], myTurn = G.phase === 'play' && G.turn === 0, asking = G.phase === 'ask', n = G.sel.length;
     var show = G.last && (G.phase === 'call' || G.phase === 'ask' || G.phase === 'reveal');
     h += '<div class="bar"><b class="logo">Bluff</b><span>Pile: ' + cards(G.pile.length) + '</span><button class="btn" data-a="new">New game</button></div>' +
-      '<div class="table">' + seat(2) + seat(1) + '<div class="mid"><div class="need">Claim <b>' + RK[G.rank] + '</b></div><div class="pilebox">';
+      '<div class="table">' + localSeat(2) + localSeat(1) + '<div class="mid"><div class="need">Claim <b>' + RK[G.rank] + '</b></div><div class="pilebox">';
     if (G.pile.length) {
       h += '<div class="stack">';
       for (var k = 0; k < Math.min(4, Math.ceil(G.pile.length / 4)); k++) h += '<div class="card back p' + k + '"></div>';
@@ -212,7 +212,7 @@
     if (G.phase === 'reveal') {
       h += '<div class="rev">' + G.last.cards.map(function (c) { return cardHTML(c, c.r === G.last.rank ? '' : ' bad'); }).join('') + '</div>';
     }
-    h += '</div>' + seat(3) + '</div><div class="msg">' + G.msg + '<small>' +
+    h += '</div>' + localSeat(3) + '</div><div class="msg">' + G.msg + '<small>' +
       (myTurn ? 'Your turn. Choose 1 to 4 cards to put down.' : asking ? 'Do you think they are lying?' : '') + '</small></div><div class="acts">';
     if (myTurn) h += '<button class="btn" data-a="put"' + (n ? '' : ' disabled') + '>' + (n ? 'Put down ' + cards(n) + ' as ' + RK[G.rank] : 'Select cards') + '</button>';
     if (asking) h += '<button class="btn red" data-a="call">Call bluff!</button><button class="btn alt" data-a="pass">Let it go</button>';
@@ -410,7 +410,7 @@
   }
   function roomBot() {
     var index = S.t, player = S.players[index];
-    if (!player || !player.bot || (typeof seat !== 'undefined' && index === seat) || S.over) return null;
+    if (!player || !player.bot || S.over) return null;
     if (S.phase === 'play') {
       var wanted = S.rank + 1;
       var own = player.hand.filter(function (card) { return card.r === wanted; });

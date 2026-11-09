@@ -160,7 +160,6 @@ test("games hide duplicate bottom status except Chess and Ludo", () => {
 test("card-game status follows each hand with five-percent bottom spacing", () => {
   const games = [
     { source: bluffSource, root: ".bl-room .bl", hand: ".bl-room .hand", msg: ".bl-room .msg", action: ".bl-room .acts" },
-    { source: callBreakSource, root: ".cb", hand: ".cb .hand", msg: ".cb .msg", action: ".cb .room-action" },
     { source: crazyEightsSource, root: ".ce-room .ce", hand: ".ce-room .hand", msg: ".ce-room .msg", action: ".ce-room .acts" },
     { source: heartsSource, root: ".hr", hand: ".hr .hand", msg: ".hr .msg", action: ".hr .acts" },
     { source: spadesSource, root: ".sp-room .sp", hand: ".sp-room .hand", msg: ".sp-room .msg", action: ".sp-room .acts" },
@@ -170,8 +169,20 @@ test("card-game status follows each hand with five-percent bottom spacing", () =
     assert.ok(game.source.includes(`#room #bd ${game.root}`), `${game.root} keeps its room styles in its own script`);
     assert.ok(game.source.includes(`#room #bd ${game.action}{order:1`), `${game.root} keeps actions above its hand`);
     assert.ok(game.source.includes(`#room #bd ${game.hand}{order:2}`), `${game.root} keeps its hand after actions`);
-    assert.ok(game.source.includes(`#room #bd ${game.msg}{order:3;margin-top:8px}`), `${game.root} keeps its message below the hand`);
+    const messageStyle = game.root === ".hr" ? `${game.msg}{order:3;margin-top:0;min-height:0;padding:2px 8px}` :
+      `${game.msg}{order:3;margin-top:8px}`;
+    assert.ok(game.source.includes(`#room #bd ${messageStyle}`), `${game.root} keeps its message below the hand`);
   }
+  assert.match(heartsSource, /#room #bd \.hr\{box-sizing:border-box;padding-bottom:calc\(8px \+ env\(safe-area-inset-bottom,0px\)\)\}/,
+    "Hearts removes unused bottom spacing below its status message");
+  assert.match(heartsSource, /#room #bd \.hr \.hand\{max-width:1160px;flex:1 1 auto;min-height:0;align-content:flex-end;/,
+    "Hearts aligns wrapped hand rows next to the status message");
+  assert.ok(callBreakSource.includes('#room #bd .cb .collect-action{order:1;align-self:center;'),
+    ".cb centers the collect action above the hand");
+  assert.ok(callBreakSource.includes('#room #bd .cb .hand{order:2}'), ".cb keeps its hand below the collect action");
+  assert.ok(callBreakSource.includes('#room #bd .cb .msg{order:3;margin-top:8px}'), ".cb keeps its message below the hand");
+  assert.match(callBreakSource, /class="btn collect-action" data-m="collect"/,
+    "Call Break renders the collect action above the player's hand");
 });
 
 test("Spades unplayable cards stay legible while remaining visually muted", () => {
@@ -224,14 +235,25 @@ test("Call Break mobile hand centers its final row", () => {
   assert.match(callBreakSource, /#room #bd \.cb \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2;translate:calc\(var\(--w\)\*\.3\) 0\}/);
 });
 
-test("Hearts centers its final mobile row and Spades keeps the hand in one row", () => {
+test("Hearts mobile fan uses the full row width with readable overlap", () => {
   const helper = heartsSource.match(/function roomHandGridPosition\(index, count\)\s*\{[\s\S]*?\n  \}/)?.[0];
   assert.ok(helper, "Hearts exposes mobile card row positioning");
   const position = vm.runInNewContext("(" + helper + ")");
-  assert.equal(position(8, 13), 'style="--hand-row:2;--hand-column:4"');
-  assert.equal(position(12, 13), 'style="--hand-row:2;--hand-column:12"');
+  assert.equal(position(0, 13), 'style="--hand-row:1;--hand-column:4"');
+  assert.equal(position(12, 13), 'style="--hand-row:1;--hand-column:40"');
+  assert.equal(position(0, 26), 'style="--hand-row:1;--hand-column:1"');
+  assert.equal(position(14, 26), 'style="--hand-row:1;--hand-column:43"');
+  assert.equal(position(15, 26), 'style="--hand-row:2;--hand-column:7"');
+  assert.equal(position(25, 26), 'style="--hand-row:2;--hand-column:37"');
+  assert.match(heartsSource, /@media\(min-width:601px\)\{#room #bd \.hr\{--w:clamp\(40px,min\(7\.2vw,11vh\),76px\)\}#room #bd \.hr \.hand\{display:flex;flex-wrap:wrap;justify-content:center;overflow-y:auto\}#room #bd \.hr \.hand button\.card\+button\.card\{margin-left:calc\(var\(--w\)\*-\.75\)\}/);
+  assert.match(heartsSource, /\.table\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(0,2fr\) minmax\(0,1fr\);grid-template-rows:auto minmax\(0,1fr\);column-gap:clamp\(12px,2vw,24px\);padding:0 12px\}/);
+  assert.match(heartsSource, /\.seat\{[^}]*min-width:0\}/);
+  assert.match(heartsSource, /\.trick\{[^}]*width:min\(calc\(var\(--w\)\*2\.2\),100%\);height:min\(calc\(var\(--w\)\*2\.6\),100%\)\}/);
+  assert.match(heartsSource, /\.trick \.card\{--cw:var\(--w\);width:min\(calc\(var\(--w\)\*1\.1\),100%\);height:auto;aspect-ratio:1\/1\.45;position:absolute\}/);
   assert.doesNotMatch(spadesSource, /function roomHandGridPosition/);
-  assert.match(heartsSource, /#room #bd \.hr \.hand button\.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 2\}/);
+  assert.match(heartsSource, /@media\(max-width:600px\)\{#room #bd \.hr\{--w:clamp\(34px,min\(18vw,calc\(\(100vw - 32px\)\/4\.5\)\),64px\)\}#room #bd \.hr \.hand\{display:grid;grid-template-columns:repeat\(48,minmax\(0,1fr\)\);grid-auto-rows:calc\(var\(--w\)\*1\.5\)/);
+  assert.match(heartsSource, /#room #bd \.hr \.hand \.card\{margin:0;grid-column:span 6\}/);
+  assert.match(heartsSource, /#room #bd \.hr \.hand \.card\[style\*="--hand-row"\]\{grid-row:var\(--hand-row\);grid-column:var\(--hand-column\) \/ span 6\}/);
   assert.match(spadesSource, /#room #bd \.sp-room \.sp \.hand\{display:flex;flex-wrap:nowrap;justify-content:center;overflow:hidden;padding-left:calc\(var\(--w\)\*\.275\);padding-right:calc\(var\(--w\)\*\.275\)\}/);
 });
 
@@ -239,12 +261,12 @@ test("card hands wrap to fit the game viewport and Ludo wide styles stay scoped 
   for (const [source, selector] of [
     [callBreakSource, ".cb"],
     [crazyEightsSource, ".ce-room .ce"],
-    [heartsSource, ".hr"],
   ]) {
     assert.ok(source.includes(`#room #bd ${selector}`));
     assert.match(source, /@media\(min-width:601px\)\{#room #bd /);
     assert.match(source, /flex-wrap:wrap;justify-content:center;overflow-x:hidden;overflow-y:hidden/);
   }
+  assert.match(heartsSource, /@media\(min-width:601px\)\{#room #bd \.hr\{--w:clamp\(40px,min\(7\.2vw,11vh\),76px\)\}#room #bd \.hr \.hand\{display:flex;flex-wrap:wrap;justify-content:center;overflow-y:auto\}/);
   assert.match(spadesSource, /#room #bd \.sp-room \.sp \.hand\{display:flex;flex-wrap:nowrap;justify-content:center;overflow:hidden/);
   assert.match(unoSource, /#room #bd \.uno \.hand\{flex-wrap:wrap;justify-content:center;overflow:visible/);
   assert.match(ludoSource, /#room\.ludo-game \.lui-wide\{--lui-size:min\(calc\(100dvh - 76px\),calc\(100vw - 340px\)\)/);
@@ -354,7 +376,7 @@ test("Bluff cards overlap on narrow mobile and wide desktop viewports", () => {
   assert.match(bluffSource, /@media\(max-width:600px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}#room #bd \.bl-room \.bl \.setup-choice\{width:3\.6rem;font-size:1\.35rem\}#room #bd \.bl-room \.hand\{grid-template-columns:repeat\(20,minmax\(0,1fr\)\);grid-template-rows:none;grid-auto-rows:calc\(var\(--w\)\*\.95\)\}/);
 });
 
-test("Call Break, Crazy Eights, and Hearts use larger eight-column mobile hands", () => {
+test("Call Break, Crazy Eights, and Hearts size mobile hands to the available width", () => {
   const gameClasses = [
     [callBreakSource, "#room #bd .cb"],
     [crazyEightsSource, "#room #bd .ce-room .ce"],
@@ -366,7 +388,7 @@ test("Call Break, Crazy Eights, and Hearts use larger eight-column mobile hands"
   }
   assert.match(callBreakSource, /@media\(max-width:600px\)\{#room #bd \.cb\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/8\)\),76px\)\}/);
   assert.match(crazyEightsSource, /@media\(max-width:600px\)\{#room #bd \.ce-room \.ce\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)/);
-  assert.match(heartsSource, /@media\(max-width:600px\)\{#room #bd \.hr\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)/);
+  assert.match(heartsSource, /@media\(max-width:600px\)\{#room #bd \.hr\{--w:clamp\(34px,min\(18vw,calc\(\(100vw - 32px\)\/4\.5\)\),64px\)/);
   assert.match(spadesSource, /@media\(max-width:600px\)\{#room #bd \.sp-room \.sp\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)/);
 });
 
