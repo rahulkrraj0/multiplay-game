@@ -289,13 +289,7 @@ function hostMsg(m) {
     );
   }
   if (m.type === "OFFER" && p.k === "join") {
-    if (window.confirm("A player wants to join your lobby. Allow this player to connect?")) {
-      void admit(m.src);
-    } else {
-      void sgn(room.ws, "OFFER", m.src, { k: "rejected" }).catch((error) =>
-        console.warn("[playora] Could not notify the declined player.", error),
-      );
-    }
+    void admit(m.src);
   }
   if (m.type === "ANSWER" && p.k === "answer") {
     const C = room.pend[m.src];
