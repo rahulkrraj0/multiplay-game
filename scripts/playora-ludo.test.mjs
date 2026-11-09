@@ -6,7 +6,14 @@ import vm from "node:vm";
 
 const source = readFileSync(join(process.cwd(), "public", "playora", "games", "ludo.js"), "utf8");
 
-function createLudo({ players = 2, names, rotation = null, seat = 99, orientationColor = null } = {}) {
+function createLudo({
+  players = 2,
+  names,
+  playerIds = [],
+  rotation = null,
+  seat = 99,
+  orientationColor = null,
+} = {}) {
   let game;
   const actions = [];
   const document = {
@@ -31,6 +38,8 @@ function createLudo({ players = 2, names, rotation = null, seat = 99, orientatio
     document,
     window,
     np: players,
+    ids: playerIds,
+    gamePlayerNames: names || [],
     seat,
     S: null,
     nm: (seat) => (names || ["Red", "Green", "Yellow", "Blue"])[seat],
@@ -46,6 +55,35 @@ function createLudo({ players = 2, names, rotation = null, seat = 99, orientatio
     set state(value) { sandbox.S = value; },
   };
 }
+
+test("Ludo fills selected online seats beyond the connected players with computer turns", () => {
+  const names = ["Host", "Guest", "Computer 1", "Computer 2"];
+  const ludo = createLudo({ players: 4, playerIds: ["host", "guest"], names });
+  const state = ludo.game.init();
+  ludo.state = state;
+
+  assert.equal(state.p.length, 4);
+  assert.equal(ludo.game.minPlayers, 2);
+  assert.equal(ludo.game.maxPlayers, 4);
+
+  ludo.game.apply({ color: 0 });
+  assert.equal(state.setup, 0);
+  ludo.game.draw();
+  assert.deepEqual(Array.from(ludo.game.n), names);
+
+  for (const botSeat of [2, 3]) {
+    state.t = botSeat;
+    state.die = 0;
+    const roll = ludo.game.bot();
+    assert.ok(roll && Number.isInteger(roll.r), `computer seat ${botSeat} should roll`);
+    assert.equal(ludo.game.valid(roll), true);
+    ludo.game.apply(roll);
+    const moves = ludo.game.bot();
+    if (moves && moves.token !== undefined) {
+      assert.equal(ludo.game.valid(moves), true, `computer seat ${botSeat} should make a legal move`);
+    }
+  }
+});
 
 test("Ludo rotation control tracks the board center", () => {
   assert.match(source, /\.lui-rot\{position:fixed;left:var\(--lui-center-x,50vw\);top:var\(--lui-center-y,50vh\)/);

@@ -407,6 +407,12 @@ test("Bluff claim and pile are arranged side by side", () => {
   assert.match(bluffSource, /'\.need\{grid-area:need\}\.pilebox\{grid-area:pile;justify-self:center\}\.claim\{grid-area:claim\}/);
 });
 
+test("Bluff compresses the table on short laptop viewports to keep status clear", () => {
+  assert.match(bluffSource, /@media\(min-width:601px\) and \(max-height:700px\)\{#room #bd \.bl-room \.bl\{--w:clamp\(32px,min\(5vw,10vh\),58px\)\}#room #bd \.bl-room \.bar\{padding:4px 10px\}#room #bd \.bl-room \.table\{flex:1 1 0;grid-template-rows:auto minmax\(0,1fr\)\}/);
+  assert.match(bluffSource, /@media\(min-width:601px\) and \(max-height:700px\)\{\.bl\{--w:clamp\(32px,min\(5vw,10vh\),58px\)\}\.bar\{padding:4px 10px\}\.table\{flex:1 1 0;grid-template-rows:auto minmax\(0,1fr\)\}/);
+  assert.match(bluffSource, /#room #bd \.bl-room \.msg\{min-height:2\.4em;padding:2px 8px;font-size:12px\}/);
+});
+
 test("Bluff claim label and rank are inline on mobile", () => {
   assert.match(bluffSource, /@media\(max-width:600px\)\{[^']*\.mid\{grid-template-columns:minmax\(0,1fr\);grid-template-areas:"need" "pile" "claim" "rev"\}\.need\{display:flex;align-items:center;justify-content:center;gap:4px\}\.need b\{display:inline-block;margin:0;font-size:calc\(var\(--w\)\*\.55\)\}\}/);
 });

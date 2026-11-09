@@ -1697,6 +1697,8 @@
     n: SEAT_NAMES.slice(),
     max: 4,
     min: 2,
+    minPlayers: 2,
+    maxPlayers: 4,
     cat: "classic casual",
     tag: "Roll & race",
     diff: "Easy to learn",
