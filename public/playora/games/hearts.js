@@ -505,8 +505,8 @@
 #room #bd .hr .hand button.card+button.card{margin-left:0}
 #room #bd .hr .acts{order:1;position:relative;z-index:6}#room #bd .hr .acts .btn{width:auto;min-width:0;margin:0;padding:10px 18px;font-size:16px;line-height:1.2}#room #bd .hr .hand{order:2}#room #bd .hr .msg{order:3;margin-top:0;min-height:0;padding:2px 8px}
 #room #bd .hr{box-sizing:border-box;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
-@media(min-width:601px){#room #bd .hr{--w:clamp(40px,min(7.2vw,11vh),76px)}#room #bd .hr .hand{display:flex;flex-wrap:wrap;justify-content:center;overflow-y:auto}#room #bd .hr .hand button.card+button.card{margin-left:calc(var(--w)*-.75)}#room #bd .hr .hand .card:first-child,#room #bd .hr .hand .card:last-child{margin:0}}
-@media(max-width:600px){#room #bd .hr{--w:clamp(34px,min(18vw,calc((100vw - 32px)/4.5)),64px)}#room #bd .hr .hand{display:grid;grid-template-columns:repeat(48,minmax(0,1fr));grid-auto-rows:calc(var(--w)*1.5);align-content:center;justify-items:center;gap:0;overflow-x:hidden;overflow-y:auto;padding:12px 8px calc(12px + env(safe-area-inset-bottom,0px))}#room #bd .hr .hand .card{margin:0;grid-column:span 6}#room #bd .hr .hand .card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column) / span 6}}
+@media(min-width:601px){#room #bd .hr{--w:clamp(36px,min(8vw,calc((100vw - 56px)/11)),92px)}#room #bd .hr .hand{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));grid-auto-rows:calc(var(--w)*.95);align-content:center;justify-items:center;gap:0;overflow-x:hidden;overflow-y:auto;padding:28px 8px calc(10px + var(--w)*.5)}#room #bd .hr .hand .card{grid-column:span 2;width:var(--w);height:calc(var(--w)*1.45);justify-self:center;margin:0}#room #bd .hr .hand .card[style*="--wide-row"]{grid-row:var(--wide-row);grid-column:var(--wide-column) / span 2}}
+@media(max-width:600px){#room #bd .hr{--w:clamp(36px,min(18vw,calc((100vw - 40px)/7)),76px)}#room #bd .hr .hand{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));grid-auto-rows:calc(var(--w)*.95);align-content:center;justify-items:center;gap:0;overflow-x:hidden;overflow-y:auto;padding:28px 8px calc(10px + var(--w)*.5 + env(safe-area-inset-bottom,0px))}#room #bd .hr .hand .card{grid-column:span 2;width:var(--w);height:calc(var(--w)*1.45);margin:0}#room #bd .hr .hand .card[style*="--mobile-row"]{grid-row:var(--mobile-row);grid-column:var(--mobile-column) / span 2}}
 @media(max-width:520px) and (max-height:700px){#room #bd .hr{--w:clamp(34px,min(18vw,calc((100vw - 32px)/8),8vh),46px)}#room #bd .hr .hand{padding-top:8px}}
 @media(max-height:520px) and (orientation:landscape){#room #bd .hr{--w:clamp(24px,min(6vh,calc((100vw - 40px)/13)),44px);padding-bottom:4px}#room #bd .hr .hand{padding:4px 8px}#room #bd .hr .acts{min-height:0;padding:4px 8px;gap:4px}#room #bd .hr .msg{min-height:1em;margin-top:0;padding:2px 8px;font-size:12px}}`;
     document.head.appendChild(style);
@@ -518,12 +518,15 @@
       (G.phase === 'play' ? ' · taken ' + taken(player) + ' pts' : '') + '</span></div>';
   }
   function roomHandGridPosition(index, count) {
-    var columns = 15, cardRow = Math.floor(index / columns) + 1;
-    var rowStart = (cardRow - 1) * columns;
-    var rowCount = Math.min(columns, count - rowStart);
-    var startColumn = Math.floor((48 - 6 - 3 * (rowCount - 1)) / 2) + 1;
-    return 'style="--hand-row:' + cardRow + ';--hand-column:' +
-      (startColumn + (index - rowStart) * 3) + '"';
+    var wideCapacity = 13, mobileCapacity = 8, wideColumns = 30, mobileColumns = 20;
+    var wideRow = Math.floor(index / wideCapacity) + 1, wideStart = (wideRow - 1) * wideCapacity;
+    var wideCount = Math.min(wideCapacity, count - wideStart);
+    var wideColumn = Math.floor((wideColumns - wideCount * 2) / 2) + 1 + (index - wideStart) * 2;
+    var mobileRow = Math.floor(index / mobileCapacity) + 1, mobileStart = (mobileRow - 1) * mobileCapacity;
+    var mobileCount = Math.min(mobileCapacity, count - mobileStart);
+    var mobileColumn = Math.floor((mobileColumns - mobileCount * 2) / 2) + 1 + (index - mobileStart) * 2;
+    return 'style="--wide-row:' + wideRow + ';--wide-column:' + wideColumn +
+      ';--mobile-row:' + mobileRow + ';--mobile-column:' + mobileColumn + '"';
   }
   function roomDraw() {
     syncRoomState();

@@ -126,10 +126,10 @@ const gamePages: Record<GameSeoPageId, SeoPageContent> = {
     true,
   ),
   checkers: gameGuide(
-    "Checkers",
-    "Move diagonally, jump opposing pieces, chain captures, and crown kings in this classic board game.",
-    "Move pieces diagonally across the board. Jump an opponent's piece to capture it, continue a capture chain when available, and reach the far side to crown a king.",
-    "Check for forced captures before choosing a move, and protect pieces that could be trapped by a chain jump.",
+    "Indian Checkers",
+    "Move diagonally, choose when to jump opposing pieces, chain captures, and crown kings in this classic board game.",
+    "Move pieces diagonally across the board. Captures are optional, but once you begin a jump chain, continue capturing with that piece when another jump is available. Reach the far side to crown a king.",
+    "Capturing is not compulsory, so weigh a jump against the position you can create with a regular move.",
     true,
   ),
   "connect-four": gameGuide(
@@ -190,9 +190,9 @@ const gamePages: Record<GameSeoPageId, SeoPageContent> = {
   ),
   spades: gameGuide(
     "Spades",
-    "Bid for tricks with your partner, follow suit, and use spades as trump to meet your contract.",
-    "Estimate the tricks your team can win, make a bid, and play one card per trick. Follow the led suit when possible; spades can trump cards from other suits.",
-    "Coordinate your bid with your hand's high cards and spades, and remember which trump cards have already been played.",
+    "Play Spades with two to four players: bid solo in two- or three-player games, or partner up in four-player games.",
+    "Estimate how many tricks you can win and bid before playing one card per trick. In four-player games, combine your bid and tricks with your partner. Follow the led suit when possible; spades can trump cards from other suits.",
+    "Plan bids around your high cards and spades, and remember which trump cards have already been played.",
     true,
   ),
   sudoku: gameGuide(

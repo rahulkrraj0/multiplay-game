@@ -1,5 +1,5 @@
 /* checkers-game.js
-   American checkers (8x8): 2 players, or play against the computer.
+   Indian Checkers (8x8): 2 players, or play against the computer.
    The starting color alternates each time a new game is created.
    - Pure engine: init / legalMoves / valid / apply (no DOM, easy to reuse in a host runtime)
    - Computer opponent: minimax with alpha-beta pruning
@@ -10,7 +10,7 @@
 
   // ---------- Engine ----------
   // Cells: null | 'r' | 'R' | 'b' | 'B' (uppercase = king).
-  // Red starts at the bottom; the opening side alternates between new games. Capturing is mandatory,
+  // Red starts at the bottom; the opening side alternates between new games. Captures are optional,
   // and a piece that becomes a king mid-jump ends its turn.
   const N = 8;
   const owner = p => (p ? p.toLowerCase() : null);
@@ -73,7 +73,7 @@
           steps.push(...m.steps);
           jumps.push(...m.jumps);
         }
-    return jumps.length ? jumps : steps;
+    return jumps.concat(steps);
   }
 
   function findMove(s, m) {
@@ -327,10 +327,10 @@
   // ---------- Registration ----------
   const api = {
     id: 'checkers',
-    name: 'Checkers',
-    t: 'Checkers',
+    name: 'Indian Checkers',
+    t: 'Indian Checkers',
     i: '🔴',
-    d: 'Jump opposing pieces, chain captures, and crown kings. Play against the computer or take turns with another player.',
+    d: 'Choose whether to capture, chain jumps, and crown kings. Play against the computer or take turns with another player.',
     minPlayers: 2,
     maxPlayers: 2,
     max: 2,
@@ -364,7 +364,7 @@
         ? moves.filter(move => move.from[0] * N + move.from[1] === sel)
         : [];
       const movable = new Set(moves.map(move => move.from[0] * N + move.from[1]));
-      let html = '<div class="ck-wrap"><div class="ck-play-layout"><div class="ck-board" role="grid" aria-label="Checkers board">';
+      let html = '<div class="ck-wrap"><div class="ck-play-layout"><div class="ck-board" role="grid" aria-label="Indian Checkers board">';
       for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
         const index = r * N + c, piece = S.board[r][c];
         const target = selectedMoves.find(move => move.to[0] === r && move.to[1] === c);

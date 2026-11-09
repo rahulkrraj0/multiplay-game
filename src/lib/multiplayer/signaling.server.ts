@@ -49,7 +49,7 @@ const leaveSchema = z.object({
 });
 const postSchema = z.discriminatedUnion("op", [signalSchema, leaveSchema]);
 
-const PEER_TTL_SECONDS = 30;
+const PEER_TTL_SECONDS = 300;
 const SIGNAL_TTL_SECONDS = 60;
 const PRUNE_INTERVAL_MS = 60_000;
 

@@ -198,11 +198,15 @@
       index(label === '10' ? ' ten' : '') + face + index((label === '10' ? ' ten' : '') + ' br') + '</' + tag.split(' ')[0] + '>';
   }
   function handGridPosition(index, count) {
-    var columns = 8, row = Math.ceil(count / columns), remainder = count % columns || columns;
-    var lastRowStart = count - remainder;
-    if (index < lastRowStart || remainder === columns) return '';
-    var startColumn = Math.floor((columns * 2 - remainder * 2) / 2) + 1;
-    return 'style="--hand-row:' + row + ';--hand-column:' + (startColumn + (index - lastRowStart) * 2) + '"';
+    var wideCapacity = 13, mobileCapacity = 8, wideColumns = 30, mobileColumns = 20;
+    var wideRow = Math.floor(index / wideCapacity) + 1, wideStart = (wideRow - 1) * wideCapacity;
+    var wideCount = Math.min(wideCapacity, count - wideStart);
+    var wideColumn = Math.floor((wideColumns - wideCount * 2) / 2) + 1 + (index - wideStart) * 2;
+    var mobileRow = Math.floor(index / mobileCapacity) + 1, mobileStart = (mobileRow - 1) * mobileCapacity;
+    var mobileCount = Math.min(mobileCapacity, count - mobileStart);
+    var mobileColumn = Math.floor((mobileColumns - mobileCount * 2) / 2) + 1 + (index - mobileStart) * 2;
+    return 'style="--wide-row:' + wideRow + ';--wide-column:' + wideColumn +
+      ';--mobile-row:' + mobileRow + ';--mobile-column:' + mobileColumn + '"';
   }
   function localSeat(i) {
     var p = G.players[i], on = (G.phase === 'bid' || G.phase === 'play') && G.turn === i && !G.collect;
@@ -477,8 +481,8 @@
 #room #bd .cb .collect-action{order:1;align-self:center;flex:none;position:relative;z-index:6;white-space:nowrap;margin:0 auto 4px}#room #bd .cb .hand{order:2}#room #bd .cb .msg{order:3;margin-top:8px}#room #bd .cb .mine{order:4}
 #room #bd .cb{box-sizing:border-box;padding-bottom:calc(5vh + env(safe-area-inset-bottom,0px))}
 #room #bd .cb .bar .logo{display:none}
-@media(min-width:601px){#room #bd .cb .hand{flex-wrap:wrap;justify-content:center;overflow-x:hidden;overflow-y:hidden}#room #bd .cb .hand .card:first-child{margin-left:0}#room #bd .cb .hand .card:last-child{margin-right:0}}
-@media(max-width:600px){#room #bd .cb{--w:clamp(36px,min(18vw,calc((100vw - 40px)/8)),76px)}#room #bd .cb .hand{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:calc(var(--w)*.95);align-content:center;justify-items:center;gap:0;overflow:visible;padding:20px 12px calc(10px + var(--w)*.5 + env(safe-area-inset-bottom,0px))}#room #bd .cb .hand button.card{margin:0}#room #bd .cb .hand{grid-template-columns:repeat(16,minmax(0,1fr))}#room #bd .cb .hand button.card+button.card{margin-left:0}#room #bd .cb{padding-bottom:5vh}#room #bd .cb .hand button.card{grid-column:span 2}#room #bd .cb .hand button.card[style*="--hand-row"]{grid-row:var(--hand-row);grid-column:var(--hand-column) / span 2;translate:calc(var(--w)*.3) 0}}
+@media(min-width:601px){#room #bd .cb{--w:clamp(36px,min(8vw,calc((100vw - 56px)/11)),92px)}#room #bd .cb .hand{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));grid-auto-rows:calc(var(--w)*.95);align-content:center;justify-items:center;overflow-x:hidden;overflow-y:hidden;padding:28px 8px calc(10px + var(--w)*.5)}#room #bd .cb .hand .card{grid-column:span 2;width:var(--w);height:calc(var(--w)*1.45);justify-self:center;margin:0}#room #bd .cb .hand .card[style*="--wide-row"]{grid-row:var(--wide-row);grid-column:var(--wide-column) / span 2}}
+@media(max-width:600px){#room #bd .cb{--w:clamp(36px,min(18vw,calc((100vw - 40px)/7)),76px)}#room #bd .cb .hand{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:calc(var(--w)*.95);align-content:center;justify-items:center;gap:0;overflow:visible;padding:28px 8px calc(10px + var(--w)*.5 + env(safe-area-inset-bottom,0px))}#room #bd .cb .hand button.card{margin:0}#room #bd .cb .hand button.card+button.card{margin-left:0}#room #bd .cb{padding-bottom:5vh}#room #bd .cb .hand button.card{grid-column:span 2}#room #bd .cb .hand button.card[style*="--mobile-row"]{grid-row:var(--mobile-row);grid-column:var(--mobile-column) / span 2}}
 @media(max-width:520px){#room #bd .cb .hand{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}}
 @media(max-width:520px) and (max-height:700px){#room #bd .cb{--w:clamp(36px,min(12vw,12vh),46px)}#room #bd .cb .hand{padding-top:24px}#room #bd .cb .bidbox{top:0;transform:translateX(-50%);z-index:30}}` +
         `@media(min-width:601px) and (max-height:520px) and (orientation:landscape){#room #bd .cb{--w:clamp(36px,min(7.5vw,13vh,calc((100vw - 40px)/14.75)),58px)}}` +

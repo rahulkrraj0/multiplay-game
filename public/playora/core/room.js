@@ -131,6 +131,10 @@ function sigOpen(id, onmsg, rtcRoom) {
   const dispatch = (msgs) => {
     for (const m of msgs) if (!sess.closed) sess.onmsg(m);
   };
+  const onVisibilityChange = () => {
+    if (document.visibilityState === "visible") void tick();
+  };
+  sess.onVisibilityChange = onVisibilityChange;
   const tick = async () => {
     if (sess.closed || sess.busy) return;
     sess.busy = 1;
@@ -141,6 +145,7 @@ function sigOpen(id, onmsg, rtcRoom) {
       if (++sess.fails >= 8 && !sess.closed) {
         sess.closed = true;
         clearInterval(sess.hb);
+        document.removeEventListener("visibilitychange", onVisibilityChange);
         if (sess.onclose) sess.onclose();
       }
     } finally {
@@ -161,6 +166,7 @@ function sigOpen(id, onmsg, rtcRoom) {
       }
       if (sess.closed) return;
       sess.hb = setInterval(() => void tick(), 2000);
+      document.addEventListener("visibilitychange", onVisibilityChange);
       resolve(sess);
       setTimeout(() => dispatch(first), 0);
     })();
@@ -171,6 +177,9 @@ function sigClose(ws) {
   ws.closed = true;
   ws.onclose = null;
   clearInterval(ws.hb);
+  if (ws.onVisibilityChange) {
+    document.removeEventListener("visibilitychange", ws.onVisibilityChange);
+  }
   fetch(api("/api/rtc"), {
     method: "POST",
     headers: { "content-type": "application/json" },

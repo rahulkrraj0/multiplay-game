@@ -891,14 +891,14 @@
         : opts && typeof opts === "object" ? (opts.players || opts.n || opts.count || opts.np) : 0;
       const hinted = Number.isInteger(raw) && raw >= MIN_P && raw <= MAX_P ? raw
         : typeof ids !== "undefined" && ids.length && Number.isInteger(np) && np >= MIN_P && np <= MAX_P ? np : 0;
-      const np = hinted || 2;
+      const playerCount = hinted || 2;
       return {
         ph: hinted ? "deal" : "setup", t: 0, over: 0, msg: "", seq: 0,
-        np, dealer: 0, hn: 1,
+        np: playerCount, dealer: 0, hn: 1,
         boot: BOOT, st: BOOT, maxst: MAX_STAKE, cap: POT_CAP, pot: 0,
-        ch: Array(np).fill(START), cs: Array(np).fill(START),
-        ou: Array(np).fill(false), al: Array(np).fill(false), sn: Array(np).fill(false),
-        h: Array.from({ length: np }, () => []),
+        ch: Array(playerCount).fill(START), cs: Array(playerCount).fill(START),
+        ou: Array(playerCount).fill(false), al: Array(playerCount).fill(false), sn: Array(playerCount).fill(false),
+        h: Array.from({ length: playerCount }, () => []),
         lh: null, last: null,
       };
     },

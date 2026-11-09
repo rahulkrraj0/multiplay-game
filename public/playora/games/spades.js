@@ -347,13 +347,16 @@
       };
       return S;
     }
+    var playerCount = roomOnline() ? Math.max(ids.length, Number(np) || ids.length) : Number(np) || 4;
     var seed = Math.floor(Math.random() * 4294967296) >>> 0;
     S = {
       phase: 'bid', round: 0, dealer: 2, trick: [], collect: false, turn: 0, t: 0, lead: 0,
-      players: Array.from({ length: 4 }, function (_, index) {
+      players: Array.from({ length: playerCount }, function (_, index) {
         return { name: roomName(index), bot: roomBotSeat(index), hand: [], bid: null, tricks: 0 };
       }),
-      teams: [{ score: 0, bags: 0 }, { score: 0, bags: 0 }],
+      teams: Array.from({ length: playerCount === 4 ? 2 : playerCount }, function () {
+        return { score: 0, bags: 0 };
+      }),
       rng: seed || 1, broken: false, over: false, winner: -1, animationSeq: 0, animation: null
     };
     roomNewRound();
@@ -769,8 +772,8 @@
 
   var api = {
     id: 'spades', name: 'Spades', t: 'Spades', i: '♠️',
-    d: 'Bid tricks with your partner, follow suit, and win the contract with spades as trump.',
-    minPlayers: 2, playerCountMin: 4, maxPlayers: 4, max: 4, cat: 'classic strategy', tag: 'Bid & team up',
+    d: 'Play with 2 to 4 players: bid solo with 2 or 3, or partner up with 4. Follow suit and use spades as trump.',
+    minPlayers: 2, playerCountMin: 2, maxPlayers: 4, max: 4, cat: 'classic strategy', tag: 'Bid & team up',
     diff: 'Medium', art: 'art-cards', logo: 'spades.svg',
     init: roomInit, valid: roomValid, apply: roomApply, bot: roomBot, draw: roomDraw, click: roomClick,
     soundEvents: roomSoundEvents,

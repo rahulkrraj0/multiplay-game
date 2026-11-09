@@ -41,6 +41,39 @@ test("online game seats are filled by bots up to the selected count", () => {
   assert.equal(fillCount({ minPlayers: 4, max: 4 }, 3, 4), -1);
 });
 
+test("Spades multiplayer uses the selected two, three, or four seats", () => {
+  const source = readFileSync(join(process.cwd(), "public", "playora", "games", "spades.js"), "utf8");
+  for (const count of [2, 3, 4]) {
+    let game;
+    const context = {
+      ids: ["host", "guest"],
+      np: count,
+      localBot: false,
+      S: {},
+      registerGame: (registered) => { game = registered; },
+    };
+    vm.runInNewContext(source, context, { filename: "spades.js" });
+    const state = game.init();
+    assert.equal(state.players.length, count);
+    assert.equal(state.teams.length, count === 4 ? 2 : count);
+    assert.equal(state.handSize, Math.floor(52 / count));
+    assert.deepEqual(Array.from(state.players, (player) => player.bot),
+      [false, false, ...Array(count - 2).fill(true)]);
+    assert.ok(state.players.every((player) => player.hand.length === state.handSize));
+
+    for (let turn = 0; turn < count; turn++) {
+      const bid = { type: "bid", player: state.turn, value: 0 };
+      assert.equal(game.valid(bid), true, `${count}-player game accepts each player's bid`);
+      game.apply(bid);
+    }
+    assert.equal(state.phase, "play", `${count}-player game reaches the trick phase`);
+    const hand = state.players[state.turn].hand;
+    const firstCard = hand.find((card) => card.s !== "S") || hand[0];
+    const play = { type: "play", player: state.turn, cardId: firstCard.id };
+    assert.equal(game.valid(play), true, `${count}-player game accepts its first card`);
+  }
+});
+
 test("bot-filled seats are hosted locally while real player seats remain peer-owned", () => {
   assert.match(engine, /amHost\(\)&&S\.t>=ids\.length/);
   assert.match(engine, /C\.seat===hostSeat\(\)&&\(dead\.has\(S\.t\)\|\|S\.t>=ids\.length\)/);
@@ -55,12 +88,12 @@ test("variable-seat online card games use exactly the selected seat count", () =
   }
 });
 
-test("Call Break supports two to four seats while Spades requires four", () => {
+test("Call Break and Spades support two to four seats", () => {
   const callBreak = readFileSync(join(process.cwd(), "public", "playora", "games", "callbreak.js"), "utf8");
   const spades = readFileSync(join(process.cwd(), "public", "playora", "games", "spades.js"), "utf8");
 
   assert.match(callBreak, /minPlayers:\s*2,\s*playerCountMin:\s*2,\s*maxPlayers:\s*4/);
-  assert.match(spades, /minPlayers:\s*2,\s*playerCountMin:\s*4,\s*maxPlayers:\s*4/);
+  assert.match(spades, /minPlayers:\s*2,\s*playerCountMin:\s*2,\s*maxPlayers:\s*4/);
 });
 
 test("online resume snapshots accept fewer human identities than game seats", () => {

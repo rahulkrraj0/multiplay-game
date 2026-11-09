@@ -30,6 +30,7 @@ function fakeSql({
   ipRateCount?: number;
 } = {}) {
   const activePeers = new Map<string, Peer>();
+  const peerTtlSeconds: number[] = [];
   for (const peer of peers) {
     activePeers.set(`${peer.room}:${peer.peer_id}`, {
       ...peer,
@@ -39,6 +40,9 @@ function fakeSql({
   let signals = roomSignalCount;
   const query = async <T>(text: string, params: unknown[] = []): Promise<T[]> => {
     if (/^(CREATE|ALTER)/i.test(text.trim())) return [];
+    if (text.includes("last_seen > now() - make_interval(secs =>")) {
+      peerTtlSeconds.push(Number(params.at(-1)));
+    }
 
     if (text.includes("INSERT INTO api_rate_limits")) {
       return [{ request_count: ipRateCount }] as T[];
@@ -118,7 +122,7 @@ function fakeSql({
     throw new Error(`Unexpected SQL in signaling test: ${text}`);
   };
   const sql = Object.assign(async () => [], { query }) as unknown as Sql;
-  return { sql, activePeers };
+  return { sql, activePeers, peerTtlSeconds };
 }
 
 function makeHandler(
@@ -181,6 +185,20 @@ test("refuses a ninth active attendee in a room", async () => {
     }),
   );
   assert.equal(response.status, 409);
+});
+
+test("keeps backgrounded peers registered for a five-minute heartbeat grace period", async () => {
+  const { sql, peerTtlSeconds } = fakeSql({
+    peers: [
+      { room: "room-1", peer_id: "peer-1", name: "" },
+      { room: "room-1", peer_id: "peer-2", name: "" },
+    ],
+  });
+  const handler = makeHandler({}, async () => sql);
+  const response = await handler(signalRequest());
+  assert.equal(response.status, 200);
+  assert.ok(peerTtlSeconds.length > 0);
+  assert.ok(peerTtlSeconds.every((seconds) => seconds === 300));
 });
 
 test("throttles signaling polls that arrive too quickly", async () => {

@@ -93,6 +93,7 @@ test("the lazy-load catalog maps every game script exactly once", () => {
     if (id === "checkers" || id === "uno") {
       assert.match(source, new RegExp(`max:\\s*${game.max}\\b`));
     }
+    assert.equal(catalog.find((game) => game.id === "checkers")?.t, "Indian Checkers");
     if (id === "2048" || id === "arrows" || id === "sudoku") {
       assert.equal(game.standalone, true);
       assert.match(source, /standalone\s*:\s*true/);
@@ -608,6 +609,22 @@ test("Checkers and UNO expose Playora multiplayer game actions", () => {
   assert.match(unoStyle.textContent, /#room \.uno \.card/);
 });
 
+test("Teen Patti initializes multiplayer games from the configured room seats", () => {
+  const teenpatti = createGame("teenpatti.js", { ids: ["host", "guest"], np: 2 });
+  const state = teenpatti.game.init();
+
+  assert.equal(state.ph, "deal");
+  assert.equal(state.np, 2);
+  assert.equal(state.h.length, 2);
+  teenpatti.context.S = state;
+  const deal = { deal: [1, 2, 3, 4, 5, 6] };
+  assert.equal(teenpatti.game.valid(deal), true);
+  teenpatti.game.apply(deal);
+  assert.equal(state.ph, "play");
+  assert.equal(state.h[0].length, 3);
+  assert.equal(state.h[1].length, 3);
+});
+
 test("UNO animates a newly drawn card and a card played to the discard pile", () => {
   const uno = createGame("uno.js", { np: 2 });
   uno.context.S = uno.game.init();
@@ -655,8 +672,9 @@ test("Checkers alternates the opening color on each new game", () => {
   assert.equal(state.t, 0);
 });
 
-test("Checkers enforces mandatory captures and forward-only man moves", () => {
+test("Indian Checkers allows regular moves when captures are available", () => {
   const checkers = createGame("checkers-game.js");
+  assert.equal(checkers.game.t, "Indian Checkers");
   const board = Array.from({ length: 8 }, () => Array(8).fill(null));
   board[5][0] = "r";
   board[4][1] = "b";
@@ -664,16 +682,16 @@ test("Checkers enforces mandatory captures and forward-only man moves", () => {
   checkers.context.S = { board, turn: "r", chain: null, winner: null, quiet: 0 };
 
   const moves = checkers.game.legalMoves(checkers.context.S);
-  assert.equal(moves.length, 1);
+  assert.equal(moves.length, 3);
   assert.deepEqual(Array.from(moves[0].from), [5, 0]);
   assert.deepEqual(Array.from(moves[0].to), [3, 2]);
-  assert.equal(checkers.game.valid({ from: [5, 4], to: [4, 3] }), false,
-    "a quiet move is forbidden while a capture is available");
+  assert.equal(checkers.game.valid({ from: [5, 4], to: [4, 3] }), true,
+    "a quiet move is allowed while a capture is available");
   assert.equal(checkers.game.valid({ from: [5, 4], to: [6, 3] }), false,
     "a man cannot move backwards");
 });
 
-test("Checkers keeps a multi-jump with the same piece and crowns at turn end", () => {
+test("Indian Checkers keeps a multi-jump with the same piece and crowns at turn end", () => {
   const checkers = createGame("checkers-game.js");
   checkers.context.S = checkers.game.init();
   checkers.game.draw();
@@ -706,11 +724,12 @@ test("Checkers keeps a multi-jump with the same piece and crowns at turn end", (
   promotionBoard[1][4] = "b";
   checkers.context.S = { board: promotionBoard, turn: "r", chain: null, winner: null, quiet: 0 };
   moves = checkers.game.legalMoves(checkers.context.S);
-  assert.equal(moves.length, 1);
-  assert.deepEqual(Array.from(moves[0].to), [0, 3]);
-  checkers.game.apply(moves[0]);
+  assert.ok(moves.some((move) => move.capture));
+  assert.equal(checkers.game.valid({ from: [2, 1], to: [1, 0] }), true,
+    "a regular move remains allowed when a capture is available");
+  checkers.game.apply({ from: [2, 1], to: [0, 3] });
   assert.equal(checkers.context.S.board[0][3], "R");
-  assert.equal(checkers.context.S.chain, null, "crowning ends a capture turn in American checkers");
+  assert.equal(checkers.context.S.chain, null, "crowning ends the capture turn");
   assert.equal(checkers.context.S.turn, "b");
 });
 
