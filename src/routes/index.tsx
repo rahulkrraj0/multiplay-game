@@ -9,7 +9,7 @@ const rootCanonical = canonicalUrl("/");
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>) => ({
-    room: typeof search.room === "string" ? search.room : "",
+    room: typeof search.room === "string" && search.room.trim() ? search.room : undefined,
   }),
   head: () => ({
     links: rootCanonical ? [{ rel: "canonical", href: rootCanonical }] : [],
@@ -144,7 +144,7 @@ function bootScripts() {
 }
 
 function Home() {
-  const { room } = Route.useSearch();
+  const { room = "" } = Route.useSearch();
   const inviteCode = getInviteRoomCode(room);
   const pageMarkup = inviteCode
     ? markup
