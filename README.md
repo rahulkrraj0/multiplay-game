@@ -153,9 +153,11 @@ deployments.
   source IP. The app also enforces shared-database limits (300 signaling
   requests and 20 ICE-configuration requests per IP per minute), but edge
   limits protect the database from floods before requests reach the app.
-- The game transport is peer-to-peer. Players can see each other's public IP
-  unless every participant enables the lobby's TURN-only privacy option; it
-  requires a working TURN service and can reduce connection reliability.
+- The game transport is peer-to-peer, but all game connections use TURN
+  relays, so players do not see each other's public IP addresses. Multiplayer
+  requires a working, internet-reachable TURN
+  service; if TURN is unavailable, peer connections fail instead of falling
+  back to direct connections.
 - Poker and other games exchange their full state among browsers. They are
   suitable for casual play, not prizes or trusted leaderboards; preventing
   clients from inspecting hidden information requires a server-authoritative

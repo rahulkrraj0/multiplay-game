@@ -21,10 +21,10 @@ test("host approval happens before a new peer connection offer", () => {
   assert.match(room, /Could not prepare the approved player's connection/);
 });
 
-test("online connections automatically allow direct and TURN relay candidates", () => {
-  assert.match(net, /iceTransportPolicy:'all'/);
+test("online connections use TURN relay candidates only", () => {
+  assert.match(net, /iceTransportPolicy:'relay'/);
   assert.match(room, /CFG\.iceServers = config\.iceServers/);
-  assert.doesNotMatch(room, /setRelayOnly|relayModeLobby|relayModeJoin|iceTransportPolicy = "relay"/);
+  assert.doesNotMatch(room, /setRelayOnly|relayModeLobby|relayModeJoin/);
   assert.doesNotMatch(markup, /relayModeLobby|relayModeJoin|Hide your public IP/);
   assert.match(room, /connection services may be busy because many players are active/);
   assert.match(room, /Please try again in a little while/);
