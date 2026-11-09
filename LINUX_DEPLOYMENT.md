@@ -143,6 +143,10 @@ sudo ufw allow 49160:49200/udp
 sudo ufw status
 ```
 
+The coturn Compose service adds only the `NET_BIND_SERVICE` capability required
+by the image's `turnserver` executable; it drops all other capabilities and
+keeps `no-new-privileges` enabled.
+
 Do not expose the PostgreSQL port to the internet. This Compose file does not
 publish PostgreSQL on the host.
 

@@ -32,7 +32,29 @@ function acceptPreviousGameSnapshot(C,snapshot){if(!amHost()||!C.playerKey||!val
 const enc=d=>btoa(JSON.stringify(d)),dec=s=>JSON.parse(atob(s.trim()));
 const MAX_MANUAL_CODE_LENGTH=65536;
 function parsePeerMessage(data){if(typeof data!=='string'||data.length>262144)throw new Error('Peer message exceeds the supported size');const message=JSON.parse(data);if(message&&message.k==='m'&&(typeof message.m!=='string'||message.m.length>200))throw new Error('Peer chat message exceeds 200 characters');return message}
-const gath=pc=>Promise.race([new Promise(r=>{let done=0;const finish=()=>{if(!done){done=1;r()}};if(pc.iceGatheringState==='complete')return finish();pc.addEventListener('icegatheringstatechange',()=>{if(pc.iceGatheringState==='complete')finish()});pc.addEventListener('icecandidate',e=>{if(!e.candidate)finish()})}),new Promise(r=>setTimeout(r,4000))]);
+const gath = (pc, timeout = 20000) =>
+ new Promise((resolve, reject) => {
+  let timer = 0;
+  const cleanup = () => {
+   clearTimeout(timer);
+   pc.removeEventListener('icegatheringstatechange', finish);
+  };
+  const finish = () => {
+   if (pc.iceGatheringState !== 'complete') return;
+   cleanup();
+   if (!/^a=candidate:[^\r\n]*\btyp relay\b/im.test(pc.localDescription?.sdp || '')) {
+    reject(new Error('No TURN relay candidate was gathered.'));
+    return;
+   }
+   resolve();
+  };
+  pc.addEventListener('icegatheringstatechange', finish);
+  timer = setTimeout(() => {
+   cleanup();
+   reject(new Error('Timed out waiting for TURN relay candidates.'));
+  }, timeout);
+  finish();
+ });
 const snd=(C,o)=>{if(C&&C.dc&&C.dc.readyState==='open')C.dc.send(JSON.stringify(o))},bcast=(o,ex)=>cs.forEach(C=>C!==ex&&snd(C,o));
 const peers=()=>cs.filter(C=>C.open&&C.id),hostSeat=()=>Math.min(js,...peers().map(C=>C.seat)),amHost=()=>js===hostSeat();
 const ready=()=>{const n=peers().length;return n>0&&peers().every(C=>rep[C.id]===n)};
