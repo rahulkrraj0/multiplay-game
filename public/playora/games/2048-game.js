@@ -1,5 +1,5 @@
 /* 2048-game.js
-   2048 sliding-tile puzzle (solo).
+   2048 sliding-tile puzzle (solo).hgjghjg
    - Pure engine: init / legalMoves / valid / apply (no DOM, easy to reuse in a host runtime)
    - UI: mount(rootElement) with arrow keys / WASD, swipe, undo, saved game and best score
    Registers with registerGame() if the host defines it, otherwise runs standalone. */
