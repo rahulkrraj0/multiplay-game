@@ -43,7 +43,7 @@ const gath = (pc, timeout = 8000) =>
   const cleanup = () => {
    clearTimeout(timer);
    clearTimeout(grace);
-   pc.removeEventListener('icegatheringstatechange', settle);
+   pc.removeEventListener('icegatheringstatechange', onGatheringStateChange);
    pc.removeEventListener('icecandidate', onCandidate);
   };
   const end = (error) => {
@@ -52,7 +52,7 @@ const gath = (pc, timeout = 8000) =>
    cleanup();
    error ? reject(error) : resolve();
   };
-  const wanted = CFG.iceServers.some((x) => [].concat(x.urls).some((u) => /^turns?:/i.test(u))) ? 'relay' : 'srflx';
+  const wanted = forceRelay ? 'relay' : 'srflx';
   const arm = () => { if (!grace && !done) grace = setTimeout(settle, 1200); };
   function settle() {
    if (done) return;
@@ -66,7 +66,8 @@ const gath = (pc, timeout = 8000) =>
    const type = (/ typ (\w+)/.exec(e.candidate.candidate) || [])[1];
    if (type === wanted) arm();
   }
-  pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') settle(); });
+  function onGatheringStateChange() { if (pc.iceGatheringState === 'complete') settle(); }
+  pc.addEventListener('icegatheringstatechange', onGatheringStateChange);
   pc.addEventListener('icecandidate', onCandidate);
   timer = setTimeout(settle, timeout);
   if (pc.iceGatheringState === 'complete') settle();
