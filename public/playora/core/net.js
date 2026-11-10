@@ -2,7 +2,7 @@
    so every attendee is both server and receiver. The lowest-numbered attendee is the host (starts/restarts games);
    if the host leaves, the next player becomes host automatically and the game carries on.
    New players need one copy-paste code exchange with ANY connected player; the rest of the links form by themselves. */
-const CFG={iceServers:(window.PLAYORA&&PLAYORA.iceServers)||[{urls:'stun:stun.l.google.com:19302'}],iceTransportPolicy:'relay'},myId=Math.random().toString(36).slice(2,8);
+const CFG={iceServers:(window.PLAYORA&&PLAYORA.iceServers)||[{urls:'stun:stun.l.google.com:19302'}],iceTransportPolicy:(window.PLAYORA&&PLAYORA.forceRelay)?'relay':'all'},myId=Math.random().toString(36).slice(2,8);
 const PLAYER_KEY_STORAGE='playora.player-key.v1';
 const PREVIOUS_GAME_PREFIX='playora.previous-game.v1.';
 function getPlayerKey(){try{const saved=localStorage.getItem(PLAYER_KEY_STORAGE);if(saved&&/^[a-f0-9]{16}$/i.test(saved))return saved;const key=[...crypto.getRandomValues(new Uint8Array(8))].map(x=>x.toString(16).padStart(2,'0')).join('');localStorage.setItem(PLAYER_KEY_STORAGE,key);return key}catch(error){console.warn('[playora] Could not persist this browser’s player identity.',error);return[...Array(16)].map(()=>Math.floor(Math.random()*16).toString(16)).join('')}}
@@ -32,28 +32,43 @@ function acceptPreviousGameSnapshot(C,snapshot){if(!amHost()||!C.playerKey||!val
 const enc=d=>btoa(JSON.stringify(d)),dec=s=>JSON.parse(atob(s.trim()));
 const MAX_MANUAL_CODE_LENGTH=65536;
 function parsePeerMessage(data){if(typeof data!=='string'||data.length>262144)throw new Error('Peer message exceeds the supported size');const message=JSON.parse(data);if(message&&message.k==='m'&&(typeof message.m!=='string'||message.m.length>200))throw new Error('Peer chat message exceeds 200 characters');return message}
-const gath = (pc, timeout = 20000) =>
+/* Wait for ICE candidates to be in the local description (the offer/answer is sent whole, not trickled).
+   Resolves when gathering completes, or shortly after the first srflx/relay candidate, or at the timeout if anything
+   usable was found. Only rejects when nothing was gathered, or - if PLAYORA.forceRelay is on - no TURN relay was. */
+const gath = (pc, timeout = 8000) =>
  new Promise((resolve, reject) => {
-  let timer = 0;
+  const forceRelay = !!(window.PLAYORA && PLAYORA.forceRelay);
+  let timer = 0, grace = 0, done = false;
+  const sdp = () => pc.localDescription?.sdp || '';
   const cleanup = () => {
    clearTimeout(timer);
-   pc.removeEventListener('icegatheringstatechange', finish);
+   clearTimeout(grace);
+   pc.removeEventListener('icegatheringstatechange', settle);
+   pc.removeEventListener('icecandidate', onCandidate);
   };
-  const finish = () => {
-   if (pc.iceGatheringState !== 'complete') return;
+  const end = (error) => {
+   if (done) return;
+   done = true;
    cleanup();
-   if (!/^a=candidate:[^\r\n]*\btyp relay\b/im.test(pc.localDescription?.sdp || '')) {
-    reject(new Error('No TURN relay candidate was gathered.'));
-    return;
-   }
-   resolve();
+   error ? reject(error) : resolve();
   };
-  pc.addEventListener('icegatheringstatechange', finish);
-  timer = setTimeout(() => {
-   cleanup();
-   reject(new Error('Timed out waiting for TURN relay candidates.'));
-  }, timeout);
-  finish();
+  function settle() {
+   if (done) return;
+   const text = sdp();
+   if (!/^a=candidate:/im.test(text)) return end(new Error('No network candidates were gathered.'));
+   if (forceRelay && !/^a=candidate:[^\r\n]*\btyp relay\b/im.test(text)) return end(new Error('No TURN relay candidate was gathered.'));
+   end();
+  }
+  function onCandidate(e) {
+   if (done || !e.candidate) return;
+   const type = (/ typ (\w+)/.exec(e.candidate.candidate) || [])[1];
+   const wantRelay = CFG.iceServers.some((x) => [].concat(x.urls).some((u) => /^turns?:/i.test(u)));
+   if (type === (wantRelay ? 'relay' : 'srflx') && !grace) grace = setTimeout(settle, 1200);
+  }
+  pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') settle(); });
+  pc.addEventListener('icecandidate', onCandidate);
+  timer = setTimeout(settle, timeout);
+  if (pc.iceGatheringState === 'complete') settle();
  });
 const snd=(C,o)=>{if(C&&C.dc&&C.dc.readyState==='open')C.dc.send(JSON.stringify(o))},bcast=(o,ex)=>cs.forEach(C=>C!==ex&&snd(C,o));
 const peers=()=>cs.filter(C=>C.open&&C.id),hostSeat=()=>Math.min(js,...peers().map(C=>C.seat)),amHost=()=>js===hostSeat();
@@ -297,7 +312,7 @@ $('panelLeave').onclick=()=>{if(!$('gm').classList.contains('hide'))$('bk').clic
 $('panelChangeGame').onclick=()=>{if(!amHost()||!G||!S||!ids.length)return;const game=G.id,limit=activeLimit;bcast({k:'lobby',g:game,limit});resetToLobby(game,limit)};
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('callPanel').hidden){event.stopImmediatePropagation();closeCallPanel();$('topMenu').focus()}},true);
 /* invite: create a code for one new player (any connected player can do this) */
-async function invite(){await iceReady;if(inv&&!inv.open&&inv.pc.signalingState==='have-local-offer')return; /* a fresh code is already waiting */
+async function invite(){await ensureIce();if(inv&&!inv.open&&inv.pc.signalingState==='have-local-offer')return; /* a fresh code is already waiting */
  if(inv&&!inv.open){cs=cs.filter(x=>x!==inv);try{inv.pc.close()}catch{}}
  const C=mkC(null,null);inv=C;$('oc').value='Creating code…';$('ar').value='';const ch=C.pc.createDataChannel('g');wire(C,ch);
  try{await C.pc.setLocalDescription(await C.pc.createOffer());await gath(C.pc);if(inv===C){const code=enc(C.pc.localDescription);if(code.length>MAX_MANUAL_CODE_LENGTH)throw new Error('Manual connection code exceeds 65,536 characters.');$('oc').value=code}}catch(error){console.warn('[playora] Could not create a manual connection code.',error)}}
@@ -313,7 +328,7 @@ $('gameChoice').addEventListener('focus',updateLobbyControls);
 $('playerCount').addEventListener('focus',updateLobbyControls);
 function readManualCode(id){const value=$(id).value;if(value.length>MAX_MANUAL_CODE_LENGTH){alert('That manual connection code is too long.');return null}return value}
 $('hc').onclick=async()=>{const code=readManualCode('ar');if(code===null)return;try{await inv.pc.setRemoteDescription(dec(code))}catch{alert('That code is not valid')}};
-$('gc').onclick=async()=>{const code=readManualCode('oi');if(code===null)return;try{await iceReady;const C=mkC(null,null);C.first=1;C.pc.ondatachannel=e=>wire(C,e.channel);await C.pc.setRemoteDescription(dec(code));await C.pc.setLocalDescription(await C.pc.createAnswer());await gath(C.pc);const reply=enc(C.pc.localDescription);if(reply.length>MAX_MANUAL_CODE_LENGTH)throw new Error('Manual connection code exceeds 65,536 characters.');$('ac').value=reply}catch(error){alert(error instanceof Error&&error.message.includes('65,536')?error.message:'That code is not valid')}}
+$('gc').onclick=async()=>{const code=readManualCode('oi');if(code===null)return;try{await ensureIce();const C=mkC(null,null);C.first=1;C.pc.ondatachannel=e=>wire(C,e.channel);await C.pc.setRemoteDescription(dec(code));await C.pc.setLocalDescription(await C.pc.createAnswer());await gath(C.pc);const reply=enc(C.pc.localDescription);if(reply.length>MAX_MANUAL_CODE_LENGTH)throw new Error('Manual connection code exceeds 65,536 characters.');$('ac').value=reply}catch(error){alert(error instanceof Error&&error.message.includes('65,536')?error.message:'That code is not valid')}}
 document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{const t=$(b.dataset.copy);t.select();if(/Android|iPhone|iPad/.test(navigator.userAgent)&&navigator.share)navigator.share({text:t.value}).catch(()=>{});else try{navigator.clipboard.writeText(t.value)}catch{document.execCommand('copy')}});
 /* leave the room: close every link, stop camera/mic, clear the game */
 function leave(){clearTimeout(aiTimer);localBot=false;clearDisconnectRecovery();if(G&&typeof G.onStop==='function')G.onStop();roomStop();const L=cs;cs=[];rep={};inv=null;js=0;hiSeat=0;activeLimit=2;L.forEach(C=>{try{C.pc.close()}catch{}C.tile?.remove();C.remoteAudio?.remove()});

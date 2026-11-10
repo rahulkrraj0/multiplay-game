@@ -3,5 +3,8 @@ window.PLAYORA={
  /* STUN finds a direct route. /api/ice adds TURN from server-side environment
     variables for players on strict networks. */
  iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.cloudflare.com:3478']}],
- iceUrl:'/api/ice'
+ iceUrl:'/api/ice',
+ /* false (default): try direct/STUN routes first and use TURN as the fallback, so lobbies still connect even if
+    TURN is unavailable. true: TURN-only (hides IPs, but nobody can connect unless /api/ice returns working TURN). */
+ forceRelay:false
 };

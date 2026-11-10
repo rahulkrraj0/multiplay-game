@@ -49,19 +49,45 @@ function api(path) {
   }
   return pre + path;
 }
-const iceReady = (async () => {
-  if (!window.PLAYORA?.iceUrl) return;
-  try {
-    const response = await fetch(api(PLAYORA.iceUrl), { cache: "no-store" });
-    const config = await response.json();
-    if (!response.ok) throw new Error(config.error || "ICE configuration unavailable");
-    if (Array.isArray(config.iceServers) && config.iceServers.length) {
-      CFG.iceServers = config.iceServers;
+/* TURN credentials come from /api/ice. Load them with a timeout + retries, and refresh them when they get old
+   (they expire), instead of trying once at page load and silently running with STUN only forever. */
+const ICE_MAX_AGE = 10 * 60 * 1000;
+let iceFetchedAt = 0, iceFailedAt = 0, iceLoading = null;
+async function fetchIce() {
+  if (!window.PLAYORA?.iceUrl) return true;
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 5000);
+    try {
+      const response = await fetch(api(PLAYORA.iceUrl), { cache: "no-store", signal: ctl.signal });
+      const config = await response.json();
+      if (!response.ok) throw new Error(config.error || "ICE configuration unavailable (" + response.status + ")");
+      if (Array.isArray(config.iceServers) && config.iceServers.length) {
+        CFG.iceServers = config.iceServers;
+        iceFetchedAt = Date.now();
+        iceFailedAt = 0;
+        return true;
+      }
+      throw new Error("ICE configuration had no servers");
+    } catch (error) {
+      lastError = error;
+      await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+    } finally {
+      clearTimeout(timer);
     }
-  } catch (error) {
-    console.warn("[playora] Could not load TURN configuration; direct connections may still work.", error);
   }
-})();
+  iceFailedAt = Date.now();
+  console.warn("[playora] Could not load TURN configuration; only STUN/direct connections will work.", lastError);
+  return false;
+}
+function ensureIce(force) {
+  if (!force && iceFetchedAt && Date.now() - iceFetchedAt < ICE_MAX_AGE) return Promise.resolve();
+  if (!force && iceFailedAt && Date.now() - iceFailedAt < 30000) return Promise.resolve(); /* don't stall every join while /api/ice is down */
+  if (!iceLoading) iceLoading = fetchIce().finally(() => { iceLoading = null; });
+  return iceLoading;
+}
+const iceReady = ensureIce();
 async function sgn(ws, type, dst, payload) {
   if (!ws || ws.closed) return;
   const body = JSON.stringify({
@@ -199,7 +225,7 @@ function roomUI(state, msg) {
 async function startRoom(preferredCode) {
   roomStop();
   room.code = preferredCode || newCode();
-  await iceReady;
+  await ensureIce();
   roomUI("wait", "Creating room…");
   let failure = null;
   for (let i = 0; i < 4; i++) {
@@ -390,7 +416,7 @@ function linkFailed(C) {
       "A player could not connect. " +
         (hasTurn()
           ? "TURN is configured, but this player's network may still block it. Ask them to try another network."
-          : "TURN is not configured. Add METERED_DOMAIN and METERED_API_KEY in Vercel, then redeploy."),
+          : "No TURN server was loaded from /api/ice, so only direct connections work. Check that /api/ice returns TURN servers (METERED_DOMAIN and METERED_API_KEY set on the host), then redeploy."),
     );
 }
 function setJoinProgress(active) {
@@ -488,9 +514,9 @@ async function joinRoom(raw, reconnectInPlace = false) {
           ? strictMsg()
           : "Could not connect. Check the Room ID and that the host is still waiting in the lobby. If this keeps happening, try the manual code below.",
       ),
-    25000,
+    40000,
   );
-  await iceReady;
+  await ensureIce();
   if (room.code !== code || !room.jt) return;
   let ws;
   try {
@@ -515,7 +541,8 @@ async function joinRoom(raw, reconnectInPlace = false) {
             await C.pc.setLocalDescription(await C.pc.createAnswer());
             await gath(C.pc);
             await sgn(ws, "ANSWER", host, { k: "answer", sdp: C.pc.localDescription });
-          } catch {
+          } catch (error) {
+            console.warn("[playora] Guest could not set up the connection.", error);
             jfail("Could not set up the connection. Please try again.");
           }
 
