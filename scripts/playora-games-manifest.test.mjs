@@ -267,10 +267,16 @@ test("interactive cards in the new games keep their card dimensions in room UI",
       "standard card hands should retain their intended overlap");
   assert.match(cardGameSources[3], /#room #bd \.hr \.hand\{max-width:1160px;flex:1 1 auto;min-height:0;align-content:flex-end;gap:4px 2px;overflow-x:hidden;overflow-y:auto;/,
     "Hearts cards should wrap without clipping on laptop-sized screens");
-  assert.match(cardGameSources[3], /@media\(min-width:601px\)\{#room #bd \.hr\{--w:clamp\(40px,min\(7\.2vw,11vh\),76px\)\}#room #bd \.hr \.hand\{display:flex;flex-wrap:wrap;justify-content:center;overflow-y:auto\}#room #bd \.hr \.hand button\.card\+button\.card\{margin-left:calc\(var\(--w\)\*-\.75\)\}/,
-    "Hearts desktop cards should show at least one quarter of each overlapping card");
-  assert.match(cardGameSources[3], /@media\(max-width:600px\)\{#room #bd \.hr\{--w:clamp\(34px,min\(18vw,calc\(\(100vw - 32px\)\/4\.5\)\),64px\)\}#room #bd \.hr \.hand\{display:grid;grid-template-columns:repeat\(48,minmax\(0,1fr\)\)/,
-    "Hearts mobile cards should distribute across the full row width");
+  assert.match(cardGameSources[3], /@media\(min-width:601px\)\{#room #bd \.hr\{--w:clamp\(36px,min\(8vw,calc\(\(100vw - 56px\)\/11\)\),92px\)\}#room #bd \.hr \.hand\{display:grid;grid-template-columns:repeat\(30,minmax\(0,1fr\)\);grid-auto-rows:calc\(var\(--w\)\*\.95\)/,
+    "Hearts desktop cards should use the responsive, wrapped grid layout");
+  assert.match(cardGameSources[3], /@media\(max-width:600px\)\{#room #bd \.hr\{--w:clamp\(36px,min\(18vw,calc\(\(100vw - 40px\)\/7\)\),76px\)\}#room #bd \.hr \.hand\{display:grid;grid-template-columns:repeat\(20,minmax\(0,1fr\)\);grid-auto-rows:calc\(var\(--w\)\*\.95\)/,
+    "Hearts mobile cards should use a narrower responsive grid");
+  assert.match(cardGameSources[3], /function roomHandGridPosition\(index, count\)\s*\{\s*var wideCapacity = 13, mobileCapacity = 8, wideColumns = 30, mobileColumns = 20;/,
+    "Hearts should center each desktop and mobile card row");
+  assert.match(cardGameSources[3], /\.hand \.card\[style\*="--wide-row"\]\{grid-row:var\(--wide-row\);grid-column:var\(--wide-column\) \/ span 2\}/,
+    "Hearts desktop cards should use their assigned grid positions");
+  assert.match(cardGameSources[3], /\.hand \.card\[style\*="--mobile-row"\]\{grid-row:var\(--mobile-row\);grid-column:var\(--mobile-column\) \/ span 2\}/,
+    "Hearts mobile cards should use their assigned grid positions");
   assert.match(bluffSource, /#room #bd \.bl-room \.acts button\.btn\{width:auto;min-width:min\(220px,100%\);margin:0;padding:10px 24px\}/,
     "Bluff's single action button should be compact and centered like Poker's actions");
   assert.match(bluffSource, /\.hand\{display:grid;grid-template-columns:repeat\(30,minmax\(0,1fr\)\);grid-auto-rows:calc\(var\(--w\)\*\.95\)/,

@@ -6,7 +6,9 @@ import test from "node:test";
 
 const root = process.cwd();
 const engine = readFileSync(join(root, "public", "playora", "core", "engine.js"), "utf8");
-const resultSource = engine.match(/function currentGameResult\(\)\{[\s\S]*?\n(?=function render\()/)?.[0];
+const resultStart = engine.indexOf("function currentGameResult(){");
+const resultEnd = engine.indexOf("\nfunction adoptState(", resultStart);
+const resultSource = resultStart >= 0 && resultEnd >= 0 ? engine.slice(resultStart, resultEnd) : null;
 
 assert.ok(resultSource, "engine result detection function should be available");
 
