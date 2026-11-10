@@ -52,6 +52,8 @@ const gath = (pc, timeout = 8000) =>
    cleanup();
    error ? reject(error) : resolve();
   };
+  const wanted = CFG.iceServers.some((x) => [].concat(x.urls).some((u) => /^turns?:/i.test(u))) ? 'relay' : 'srflx';
+  const arm = () => { if (!grace && !done) grace = setTimeout(settle, 1200); };
   function settle() {
    if (done) return;
    const text = sdp();
@@ -62,13 +64,13 @@ const gath = (pc, timeout = 8000) =>
   function onCandidate(e) {
    if (done || !e.candidate) return;
    const type = (/ typ (\w+)/.exec(e.candidate.candidate) || [])[1];
-   const wantRelay = CFG.iceServers.some((x) => [].concat(x.urls).some((u) => /^turns?:/i.test(u)));
-   if (type === (wantRelay ? 'relay' : 'srflx') && !grace) grace = setTimeout(settle, 1200);
+   if (type === wanted) arm();
   }
   pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') settle(); });
   pc.addEventListener('icecandidate', onCandidate);
   timer = setTimeout(settle, timeout);
   if (pc.iceGatheringState === 'complete') settle();
+  else if (new RegExp('^a=candidate:[^\\r\\n]*\\btyp ' + wanted + '\\b', 'im').test(sdp())) arm(); /* it may already be there */
  });
 const snd=(C,o)=>{if(C&&C.dc&&C.dc.readyState==='open')C.dc.send(JSON.stringify(o))},bcast=(o,ex)=>cs.forEach(C=>C!==ex&&snd(C,o));
 const peers=()=>cs.filter(C=>C.open&&C.id),hostSeat=()=>Math.min(js,...peers().map(C=>C.seat)),amHost=()=>js===hostSeat();

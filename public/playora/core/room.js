@@ -367,10 +367,12 @@ async function admit(src) {
     await sgn(room.ws, "OFFER", src, { k: "offer", sdp: C.pc.localDescription });
   } catch (error) {
     console.error("[playora] Could not prepare the approved player's connection.", error);
+    const why = String((error && error.message) || error || "unknown error").slice(0, 160);
+    roomUI("ok", "A player could not join – connection setup failed: " + why);
     delete room.pend[src];
     cs = cs.filter((x) => x !== C);
     C.pc.close();
-    void sgn(room.ws, "OFFER", src, { k: "failed" }).catch((notifyError) =>
+    void sgn(room.ws, "OFFER", src, { k: "failed", why }).catch((notifyError) =>
       console.warn("[playora] Could not notify the player that connection setup failed.", notifyError),
     );
     return;
@@ -529,7 +531,7 @@ async function joinRoom(raw, reconnectInPlace = false) {
           return jfail("The host declined your request to join.");
         }
         if (m.type === "OFFER" && p.k === "failed") {
-          return jfail("The host could not prepare the connection. Please try joining again.");
+          return jfail("The host could not prepare the connection" + (typeof p.why === "string" && p.why ? " (" + p.why.slice(0, 160) + ")" : "") + ". Please try joining again.");
         }
         if (m.type === "OFFER" && p.k === "offer" && !room.jc) {
           jmsg("Lobby found — finishing connection… Please wait.");
