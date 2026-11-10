@@ -6,5 +6,5 @@ window.PLAYORA={
  iceUrl:'/api/ice',
  /* false (default): try direct/STUN routes first and use TURN as the fallback, so lobbies still connect even if
     TURN is unavailable. true: TURN-only (hides IPs, but nobody can connect unless /api/ice returns working TURN). */
- forceRelay:false
+ forceRelay:true
 };
